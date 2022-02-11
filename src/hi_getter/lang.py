@@ -154,12 +154,22 @@ class Language:
     def __getitem__(self, key) -> str:
         return self.get_raw(key)
 
-    def get(self, __key: str, *args, default: str | None = None) -> str | None:
-        result = self._data.get(__key, default)
+    def get(self, key: str, *args, default: str | None = None) -> str | None:
+        """Get a translation key and format with the given arguments.
+
+        :param key: Key to get in JSON data.
+        :param args: Formatting arguments; packed into tuple and used with str modulus.
+        :param default: Default string if __key doesn't exist. (Is not formatted)
+        """
+        result = self._data.get(key, default)
         if result is not default:
             result = result % args
 
         return result
 
     def get_raw(self, key: str) -> str:
+        """Get raw result, no formatting or defaults.
+
+        :raises KeyError: If key is not in JSON data.
+        """
         return self._data[key]

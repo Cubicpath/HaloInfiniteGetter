@@ -1,6 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
+"""Module for the main application classes."""
 from pathlib import Path
 
 from PyQt6.QtCore import *
@@ -16,16 +17,26 @@ __all__ = (
 
 
 class Theme:
+    """Object containing data about a Theme."""
+
     def __init__(self, id: str, style: str = '', display_name: str | None = None) -> None:
+        """Create a new Theme using a unique ID, the style data (.qss file content), and an optional display name.
+
+        :param id: Uniquely identifying string, must be a valid TOML Table name.
+        :param style: String read from a .qss file to use as a stylesheet.
+        :param display_name: Optional display name to represent the theme, as opposed to the id.
+        """
         self.id:           str = id
         self.style:        str = style
         self.display_name: str = display_name if display_name is not None else self.id
 
 
 class GetterApp(QApplication):
+    """The main HaloInfiniteGetter PyQt application that runs in the background and manages the process."""
     _legacy_style: str = None
 
     def __init__(self, argv: list[str], settings: TomlFile) -> None:
+        """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
@@ -39,6 +50,10 @@ class GetterApp(QApplication):
         self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
 
     def load_themes(self) -> None:
+        """Load all theme locations from settings and store them in self.themes.
+
+        Also set current theme from settings.
+        """
         if self._legacy_style is None:
             self.__class__._legacy_style = self.styleSheet()
         self.themes['legacy'] = Theme('legacy', self._legacy_style, 'Legacy (Default PyQt)')

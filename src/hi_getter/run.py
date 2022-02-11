@@ -1,6 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
+"""Initialize values and runs the application."""
 import os
 import sys
 from sys import platform
@@ -74,6 +75,7 @@ def run(*args, **kwargs) -> int:
 
     _patch_windows_taskbar_icon()
 
+    # Create files and paths if they do not exist
     if not CONFIG_PATH.is_dir():
         os.makedirs(CONFIG_PATH)
     if not settings_path.is_file():
@@ -90,7 +92,6 @@ def run(*args, **kwargs) -> int:
         max(kwargs.pop('y_size', APP.settings['gui/window/y_size']), 100)
     )
     WINDOW:     Final[AppWindow] = AppWindow(CLIENT, APP, SIZE)
-
     WINDOW.show()
     return APP.exec()
 

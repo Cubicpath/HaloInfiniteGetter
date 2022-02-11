@@ -1,6 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
+"""Module containing :py:class:`QMenu` Context Menus."""
 import sys
 import webbrowser
 from importlib import metadata
@@ -23,10 +24,13 @@ __all__ = (
 
 # noinspection PyArgumentList
 class HelpContextMenu(QMenu):
+    """Context menu that shows actions to help the user."""
+
     _about: tuple[str, str] | None = None
     _github_icon: bytes | None = None
 
     def __init__(self, parent) -> None:
+        """Create a new :py:class:`HelpContextMenu`."""
         super().__init__(parent)
 
         self.license_window = LicenseViewer()
@@ -50,21 +54,30 @@ class HelpContextMenu(QMenu):
 
     @staticmethod
     def open_github() -> None:
+        """Open the project's GitHub repository in the user's default browser."""
         webbrowser.open('https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True)
 
     @staticmethod
     def open_issues() -> None:
+        """Creates a new GitHub issue using the user's default browser."""
         webbrowser.open('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new', new=2, autoraise=True)
 
     def open_license(self) -> None:
+        """Show the :py:class:`LicenseViewer` window."""
         self.license_window.show()
 
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
+        """Open the application's about section."""
         self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())
 
     def about_message(self) -> tuple[str, str]:
+        """Generate the 'About' information regarding the application's environment.
+        Since this takes a while the first time, the result is cached as a class value.
+
+        :return: Tuple containing the title and the message
+        """
         if self._about is None:
             self.__class__._about = ('About', f'''
 HaloInfiniteGetter by Cubicpath. A simple way to get live Halo data straight from Halo Waypoint.
@@ -73,7 +86,7 @@ Version Info: major:{ver[0]}, minor:{ver[1]}, micro:{ver[2]}, releaselevel:{ver[
 
 Running on:
 \t{platform()}
-\t{sys.implementation.name} {sys.version.split("[")[0]}
+\t{sys.implementation.name} {sys.version.split('[', maxsplit=1)[0]}
 
 Using requests: {metadata.version("requests")}
 Using PyQT6: {metadata.version("PyQT6")}
@@ -86,7 +99,9 @@ MIT Licence (C) 2022 Cubicpath@Github
 
 # noinspection PyArgumentList
 class FileContextMenu(QMenu):
+    """Context menu that shows actions to manipulate files."""
     def __init__(self, parent) -> None:
+        """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
         open_in = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
@@ -102,10 +117,13 @@ class FileContextMenu(QMenu):
 
     @staticmethod
     def open_explorer() -> None:
+        """Open the user's file explorer in the current application's export directory."""
         webbrowser.open('file:///' + str(Path.cwd() / 'hi_data'))
 
     def import_data(self) -> None:
+        """Import data from..."""
         ...
 
     def export_data(self) -> None:
+        """Export data to..."""
         ...

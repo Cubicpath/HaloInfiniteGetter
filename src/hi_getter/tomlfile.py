@@ -126,6 +126,7 @@ class TomlFile:
 
     @property
     def path(self) -> Path:
+        """Current OS path that TomlFile with save and reload from."""
         return self._path
 
     @path.setter
@@ -133,6 +134,12 @@ class TomlFile:
         self._path = Path(value)
 
     def get_key(self, key: str) -> TOML_VALUE | None:
+        """Get a key from path. Searches with each '/' defining a new table to check.
+
+        Calls event $get:{key}.
+
+        :param key: Key to get value from.
+        """
         scope, path = self._search_scope(key, 'get')
 
         for sub in self._event_subscribers.get(f'$get:{key}', []):
@@ -146,6 +153,14 @@ class TomlFile:
         return val
 
     def set_key(self, key: str, value: TOML_VALUE, comment: str | None = None) -> None:
+        """Set a key at path. Searches with each '/' defining a new table to check.
+
+        Calls event $set:{key}.
+
+        :param key: Key to set.
+        :param value: Value to set key as.
+        :param comment: Append an optional comment to the value.
+        """
         scope, path = self._search_scope(key, 'set')
 
         # Preserve comments, or edit them if comment argument was filled
@@ -156,7 +171,7 @@ class TomlFile:
             if comment is not None:
                 prev_val.comment = comment
         if not isinstance(value, CommentValue) and comment is not None:
-            value = CommentValue(val=value, comment=comment, beginline=True, _dict=dict)
+            value = CommentValue(val=value, comment=f'# {comment}', beginline=True, _dict=dict)
 
         scope[path] = value
 

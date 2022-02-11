@@ -1,6 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
+"""Module containing miscellaneous :py:class:`QWidget` Widgets."""
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -13,7 +14,13 @@ __all__ = (
 
 
 class LicenseViewer(QWidget):
+    """Widget that formats and shows the project's license file."""
+
     def __init__(self) -> None:
+        """Create a new LicenseViewer. Gets license from the RESOURCE_PATH/LICENSE file
+
+        Has a fixed size of 750x380.
+        """
         super().__init__()
         self.setWindowTitle('License Viewer')
         self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/copyright.ico')))
@@ -30,11 +37,11 @@ class LicenseViewer(QWidget):
 
         layout.addWidget(license_text)
 
-        blockFmt = QTextBlockFormat()
-        blockFmt.setLineHeight(40, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
-        theCursor = license_text.textCursor()
-        theCursor.clearSelection()
-        theCursor.select(QTextCursor.SelectionType.Document)
-        theCursor.mergeBlockFormat(blockFmt)
+        block_format = QTextBlockFormat()
+        block_format.setLineHeight(40, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+        cursor = license_text.textCursor()
+        cursor.clearSelection()
+        cursor.select(QTextCursor.SelectionType.Document)
+        cursor.mergeBlockFormat(block_format)
         license_text.setFont(QFont('consolas', 12))
         license_text.setDisabled(True)

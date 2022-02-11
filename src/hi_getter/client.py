@@ -1,6 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
+"""Loads data and defines the HTTP Client."""
 import json
 import os
 import random
@@ -24,6 +25,7 @@ load_dotenv(verbose=True)
 
 
 class Client:
+    """HTTP REST Client that interfaces with HaloWaypoint to get data."""
     HOST: str = 'svc.halowaypoint.com'
     PARENT_PATH: str = '/hi/'
 
@@ -37,7 +39,7 @@ class Client:
         user_key_path = CONFIG_PATH / 'api_key'
         self._auth: str = kwargs.pop('auth', os.getenv('SPARTAN_AUTH', user_key_path.read_text(encoding='utf8').strip() if user_key_path.is_file() else None))
         self._sub_host: str = 'gamecms-hacs-origin'
-        self.searched_paths = dict()
+        self.searched_paths = {}
         self.session: Session = Session()
         self.session.headers = {
             'Accept': ', '.join(('application/json', 'text/plain', '*/*')),
@@ -67,6 +69,11 @@ class Client:
     #     self._AUTH = ...
 
     def get(self, path: str, **kwargs) -> Response:
+        """Get a :py:class:`Response` from HaloWaypoint and update cookies.
+
+        :param path: path to append to the API root
+        :param kwargs: Key word arguments to pass to the requests GET Request.
+        """
         response: Response = self.session.get(self.api_root + path.strip(), **kwargs)
         self.session.cookies.update(response.cookies)
         if not response.ok:
@@ -132,6 +139,7 @@ class Client:
 
     @property
     def auth_key(self) -> str:
+        """343 auth token to authenticate self to HaloWaypoint."""
         return self._auth
 
     @auth_key.setter
@@ -142,10 +150,12 @@ class Client:
 
     @property
     def api_root(self) -> str:
+        """Root of sent API requests."""
         return f'https://{self.host}{self.PARENT_PATH}'
 
     @property
     def host(self) -> str:
+        """Host to send to."""
         return f'{self._sub_host}.{self.HOST}'
 
     @host.setter
