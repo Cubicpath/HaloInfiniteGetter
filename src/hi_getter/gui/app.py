@@ -67,5 +67,5 @@ class GetterApp(QApplication):
     @property
     def sorted_themes(self) -> list[Theme]:
         """List of themes sorted by their display name."""
-        # FI#XME: Doesn't crash, but also doesn't sort by display_name
+        # FIXME: Doesn't crash, but also doesn't sort by display_name
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)

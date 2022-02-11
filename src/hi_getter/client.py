@@ -71,7 +71,7 @@ class Client:
         if not response.ok:
             if response.status_code == 401:
                 ...
-                # TO#DO: Automatically refresh api key
+                # TODO: Automatically refresh api key
                 # print('test')
                 # self._refresh_auth()
                 # time.sleep(1)

@@ -27,7 +27,7 @@ TOML_VALUE: UnionType = dict | list | float | int | str | bool | PurePath
 
 SPECIAL_PATH_PREFIX = '$PATH$|'
 
-# TOD#O: Move event_subscribers to an EventBus class
+# TODO: Move event_subscribers to an EventBus class
 
 
 class BetterTomlDecoder(TomlPreserveCommentDecoder):
@@ -70,7 +70,7 @@ class TomlFile:
 
     def __init__(self, path: Path | str, default: dict[str, TOML_VALUE] | None = None) -> None:
         self.path = path
-        # FIX#ME: Default not working as expected during import
+        # FIXME: Default not working as expected during import
         self._data: dict[str, TOML_VALUE | CommentValue] = default if default is not None else {}
         self._event_subscribers: dict[str, list[tuple[
             Callable[[...], None],  # Callable to call
@@ -173,7 +173,7 @@ class TomlFile:
 
         :return: True if successful, otherwise False.
         """
-        # TO#DO: upgrade similarly to import_from
+        # TODO: upgrade similarly to import_from
         path = Path(path)  # Make sure path is of type Path
         if path.parent.is_dir():
             with path.open(mode='w', encoding='utf8') as file:
