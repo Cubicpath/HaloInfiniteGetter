@@ -3,7 +3,8 @@
 ###################################################################################################
 import json
 import os
-from collections.abc import Mapping, Iterable
+from collections.abc import Iterable
+from collections.abc import Mapping
 from pathlib import Path
 
 __all__ = (
@@ -40,8 +41,8 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
         path.write_text(data, encoding=encoding or default_encoding)
     elif isinstance(data, bytes):
         if encoding is not None:
-            data = data.decode(encoding)
-            path.write_text(data, encoding)
+            data = data.decode(encoding=encoding)
+            path.write_text(data, encoding=encoding)
         else:
             path.write_bytes(data)
     elif isinstance(data, dict):

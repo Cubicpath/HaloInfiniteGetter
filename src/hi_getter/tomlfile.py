@@ -4,16 +4,17 @@
 """Module used for TOML configurations."""
 import warnings
 from collections.abc import Callable
-from types import UnionType
-from typing import Any
 from pathlib import Path
 from pathlib import PurePath
+from types import UnionType
+from typing import Any
 
 import toml
 from toml.decoder import CommentValue
-from toml.decoder import TomlPreserveCommentDecoder
 from toml.decoder import TomlDecodeError
-from toml.encoder import TomlPathlibEncoder
+from toml.decoder import TomlPreserveCommentDecoder
+from toml.encoder import _dump_str
+from toml.encoder import TomlEncoder
 
 __all__ = (
     'BetterTomlDecoder',
@@ -43,7 +44,7 @@ class BetterTomlDecoder(TomlPreserveCommentDecoder):
         return super().load_value(v=v, strictly_valid=strictly_valid)
 
 
-class BetterTomlEncoder(TomlPathlibEncoder):
+class BetterTomlEncoder(TomlEncoder):
     """Combines both the effects of :py:class:`toml.TomlPreserveCommentEncoder` and of :py:class:`toml.TomlPathlibEncoder`.
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
@@ -53,13 +54,16 @@ class BetterTomlEncoder(TomlPathlibEncoder):
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[PurePath] = self._dump_pathlib_path
 
+    def _dump_pathlib_path(self, v):
+        return _dump_str(str(v))
+
     def dump_value(self, v: TOML_VALUE):
         """Support :py:class:`Path` decoding by prefixing a :py:class:`PurePath` string with a special marker."""
         if isinstance(v, PurePath):
             if isinstance(v, Path):
                 v = v.resolve()
             v = f'{SPECIAL_PATH_PREFIX}{v}'
-        return super(TomlPathlibEncoder, self).dump_value(v=v)
+        return super().dump_value(v=v)
 
 
 class TomlFile:
@@ -96,6 +100,7 @@ class TomlFile:
         :param mode: Mode that determines which exceptions to raise.
         :return: Tuple containing the scope where the value is found, and the value key to access.
         :raises KeyError: If mode is 'set' and path is a table OR if mode is 'get' and path doesn't exist.
+        :raises ValueError: If path is an empty string.
         """
         if not path: raise ValueError('Path can not be an empty string.')
 

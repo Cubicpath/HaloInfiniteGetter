@@ -3,18 +3,18 @@
 ###################################################################################################
 import os
 import sys
+from sys import platform
 from typing import Final
 
-from sys import platform
-
 import toml
+from PyQt6.QtCore import *
 from toml.decoder import CommentValue
-from PyQt6.QtCore import QSize
 
 from ._version import __version__
 from .client import Client
 from .constants import *
-from .gui import AppWindow, GetterApp
+from .gui import AppWindow
+from .gui import GetterApp
 from .tomlfile import *
 
 __all__ = (

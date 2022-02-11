@@ -1,9 +1,9 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-from importlib import metadata
 import sys
 import webbrowser
+from importlib import metadata
 from pathlib import Path
 from platform import platform
 
@@ -23,8 +23,8 @@ __all__ = (
 
 # noinspection PyArgumentList
 class HelpContextMenu(QMenu):
-    _about = None
-    _github_icon = None
+    _about: tuple[str, str] | None = None
+    _github_icon: bytes | None = None
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -59,6 +59,7 @@ class HelpContextMenu(QMenu):
     def open_license(self) -> None:
         self.license_window.show()
 
+    # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())

@@ -2,8 +2,54 @@
 requires = ["setuptools>=42.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-addopts = "--cov=hi_getter --cov-report=html"
-testpaths = [
-    "tests",
+[tool.pylint.'MASTER']
+jobs=0
+load-plugins=[
+    "pylint.extensions.docparams",
+    "pylint.extensions.docstyle",
+    "pylint.extensions.typing"
 ]
+py-version="3.10"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "C",    # Conventions
+    "R",    # Reformats
+    "unnecessary-lambda",       # W0108
+    "protected-access",         # W0212
+    "wildcard-import",          # W0401
+    "fixme",                    # W0511
+    "unused-wildcard-import",   # W0614
+    "redefined-builtin",        # W0622
+    # These do not work with starred parameter names
+    "missing-param-doc",        # W9015
+    "differing-param-doc",      # W9017
+    # These do not work with wildcard imports using __all__
+    "import-error",             # E0401
+    "undefined-variable",       # E0602
+    "undefined-all-variable",   # E0603
+    # Doesn't work with PrivateProxy attribute access
+    "no-member",                # E1101
+]
+enable = [
+    "missing-class-docstring",      # C0115
+    "missing-function-docstring",   # C0116
+    "line-too-long",                # C0301
+    "consider-using-ternary",       # R1706
+]
+
+[tool.pylint.'REPORTS']
+output-format = "parseable"
+reports = "no"
+
+[tool.pylint.'FORMAT']
+good-names = [
+    "a", "b", "c",
+    "e",
+    "i", "j", "k", "l",
+    "o",
+    "x", "y", "z",
+    "_",
+    "__",
+]
+max-line-length=160

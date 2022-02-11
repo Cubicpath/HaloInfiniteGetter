@@ -8,8 +8,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from requests import Session, Response
 from dotenv import load_dotenv
+from requests import Response
+from requests import Session
 from requests.utils import guess_json_utf
 
 from .constants import CONFIG_PATH

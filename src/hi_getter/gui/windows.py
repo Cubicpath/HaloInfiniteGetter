@@ -111,7 +111,7 @@ class SettingsWindow(QWidget):
         # Modify properties of widgets
         theme_label.setMaximumWidth(85)
 
-        self.theme_dropdown.addItems((theme.display_name for theme in self.getter_window.APP.sorted_themes))
+        self.theme_dropdown.addItems(theme.display_name for theme in self.getter_window.APP.sorted_themes)
         self.theme_dropdown.setCurrentIndex(self.getter_window.APP.theme_index_map[self.settings['gui/themes/selected']])
 
         aspect_ratio_label.setMaximumWidth(70)
@@ -223,6 +223,8 @@ class SettingsWindow(QWidget):
 
 # noinspection PyArgumentList
 class AppWindow(QMainWindow):
+    """Main window for the HaloInfiniteGetter application."""
+
     shown_key_warning: bool = False
 
     def __init__(self, client: Client, app: GetterApp, size: QSize) -> None:
@@ -488,7 +490,8 @@ class AppWindow(QMainWindow):
                     self.copy_text.setDisabled(False)
                     self.text_output.setDisabled(False)
                     self.text_output.setText(data)
-                    self.text_size_label.setText(f'Text Output: {len(data.splitlines())} lines {len(data)} characters ({round(len(data.encode("utf8")) / 1024, 4)} KiB)')
+                    self.text_size_label.setText(f'Text Output: {len(data.splitlines())} lines {len(data)} characters '
+                                                 f'({round(len(data.encode("utf8")) / 1024, 4)} KiB)')
             elif op_code == 20:
                 self.client.recursive_search(user_input)
                 self.use_input(op_code=10)
@@ -519,9 +522,11 @@ class AppWindow(QMainWindow):
             self.__class__.shown_key_warning = True
             QMessageBox.warning(
                 self,
-                'Empty API Token',
-                'The SPARTAN_AUTH environment variable is not set!\nYou will be unable to acquire new data until a new token is provided.\n\nYou can manually set it in the Settings window.'
-            )
+                'Empty API Token', '''
+The SPARTAN_AUTH environment variable is not set!
+You will be unable to acquire new data until a new token is provided.
+
+You can manually set it in the Settings window.''')
 
     def closeEvent(self, event: QCloseEvent) -> None:
         super().closeEvent(event)

@@ -3,7 +3,6 @@
 ###################################################################################################
 """Module containing code related to translation and language files."""
 import json
-from collections.abc import Sequence
 from pathlib import Path
 from string import ascii_letters
 from string import digits
@@ -35,6 +34,8 @@ class Language:
         :type variants: Sequence[str] | None
         :type extensions: Sequence[tuple[Annotated[str, 1], str]] | None
         :type private_use: Sequence[str] | None
+
+        :raises ValueError: If a given subtag is invalid.
         """
 
         (ext_lang, script, variants, extensions, private_use) = (

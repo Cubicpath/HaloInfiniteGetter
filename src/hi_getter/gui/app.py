@@ -3,8 +3,8 @@
 ###################################################################################################
 from pathlib import Path
 
-from PyQt6.QtCore import QDir, QFile, QTextStream
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import *
+from PyQt6.QtWidgets import *
 from toml.decoder import CommentValue
 
 from ..tomlfile import *
