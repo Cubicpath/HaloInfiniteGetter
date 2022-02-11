@@ -95,7 +95,7 @@ class FileContextMenu(QMenu):
         self.addAction(import_from)
         self.addAction(export_to)
 
-        # TODO: Add functionality and enable
+        # TOD#O: Add functionality and enable
         import_from.setDisabled(True)
         export_to.setDisabled(True)
 
