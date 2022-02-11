@@ -121,5 +121,5 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     return v_number
 
 
-__version__ = _stringify(*__version_info__)
+__version__ = _stringify(*__version_info__, post=1)
 """String representation of version number."""
