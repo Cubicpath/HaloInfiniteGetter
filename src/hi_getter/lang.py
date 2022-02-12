@@ -28,7 +28,7 @@ class Language:
         :keyword script: Script used to write the language | Section 2.2.3
         :keyword variants: A variant of the given language subtag | Section 2.2.5
         :keyword extensions: Extension to the given language, prefixed with a singleton | Section 2.2.6
-        :keyword private_use: Any subtags that are not publicly defined | Section 2.2.7
+        :keyword private_use: Any subtag that is not publicly defined | Section 2.2.7
         :type ext_lang: Annotated[str, 3] | None
         :type script: Annotated[str, 4] | None = None
         :type variants: Sequence[str] | None

@@ -15,6 +15,7 @@ from toml.decoder import TomlDecodeError
 from toml.decoder import TomlPreserveCommentDecoder
 from toml.encoder import _dump_str
 from toml.encoder import TomlEncoder
+# noinspection PyProtectedMember
 
 __all__ = (
     'BetterTomlDecoder',
@@ -37,7 +38,7 @@ class BetterTomlDecoder(TomlPreserveCommentDecoder):
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
     def load_value(self, v: str, strictly_valid=True):
-        """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value inclosed in quotes as a :py:class:`Path`."""
+        """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(SPECIAL_PATH_PREFIX):
             v = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
             return v, strictly_valid
@@ -54,7 +55,9 @@ class BetterTomlEncoder(TomlEncoder):
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[PurePath] = self._dump_pathlib_path
 
-    def _dump_pathlib_path(self, v):
+    @staticmethod
+    def _dump_pathlib_path(v: PurePath):
+        """Translate :py:class:`PurePath` to string and dump."""
         return _dump_str(str(v))
 
     def dump_value(self, v: TOML_VALUE):
@@ -102,7 +105,8 @@ class TomlFile:
         :raises KeyError: If mode is 'set' and path is a table OR if mode is 'get' and path doesn't exist.
         :raises ValueError: If path is an empty string.
         """
-        if not path: raise ValueError('Path can not be an empty string.')
+        if not path:
+            raise ValueError('Path can not be an empty string.')
 
         scope = self._data
         paths = path.split('/')
@@ -122,6 +126,7 @@ class TomlFile:
         else:
             key = path
 
+        # noinspection PyUnboundLocalVariable
         return scope, key
 
     @property

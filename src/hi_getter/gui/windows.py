@@ -342,6 +342,7 @@ class AppWindow(QMainWindow):
         self.outputs.addWidget(self.media_frame)
         self.outputs.addWidget(self.text_frame)
 
+        # noinspection Duplicates
         self.media_frame.setLayout(media_layout)
         media_layout.addLayout(media_top)
         media_layout.addWidget(self.media_output)
@@ -351,6 +352,7 @@ class AppWindow(QMainWindow):
         media_bottom.addWidget(self.clear_picture, Qt.AlignmentFlag.AlignLeft)
         media_bottom.addWidget(self.copy_picture, Qt.AlignmentFlag.AlignLeft)
 
+        # noinspection Duplicates
         self.text_frame.setLayout(text_layout)
         text_layout.addLayout(text_top)
         text_layout.addWidget(self.text_output)
