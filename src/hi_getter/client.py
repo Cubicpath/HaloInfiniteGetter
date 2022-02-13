@@ -38,7 +38,8 @@ class Client:
         """
         user_key_path = CONFIG_PATH / 'api_key'
         self._auth: str = kwargs.pop('auth', os.getenv('SPARTAN_AUTH', user_key_path.read_text(encoding='utf8').strip() if user_key_path.is_file() else None))
-        self._sub_host: str = 'gamecms-hacs-origin'
+        self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
+
         self.searched_paths = {}
         self.session: Session = Session()
         self.session.headers = {
@@ -156,8 +157,8 @@ class Client:
     @property
     def host(self) -> str:
         """Host to send to."""
-        return f'{self._sub_host}.{self.HOST}'
+        return f'{self.sub_host}.{self.HOST}'
 
     @host.setter
     def host(self, value: str) -> None:
-        self._sub_host = value
+        self.sub_host = value

@@ -219,8 +219,7 @@ class SettingsWindow(QWidget):
 
     def set_key(self) -> None:
         """Set the client's auth_key to the current text in the key field."""
-        self.save_button.setDisabled(False)
-        self.client.auth_key = self.key_field.text()
+        self.client.auth_key = self.key_field.text().strip().removeprefix('x-343-authorization-spartan: ')
 
     def hidden_key(self) -> str:
         """:return: The first 5 and last 4 characters of the API key, seperated by periods."""
@@ -307,7 +306,7 @@ class AppWindow(QMainWindow):
         self.clear_text = QPushButton('Clear', clicked=self.clear_current_text)
         self.copy_text = QPushButton('Copy Text', clicked=self.copy_current_text)
 
-        subdomain_field = QLineEdit(self.client._sub_host)
+        subdomain_field = QLineEdit(self.client.sub_host)
         root_folder_field = QLineEdit(self.client.PARENT_PATH)
         get_button = QPushButton('GET', clicked=self.get_resource)
         scan_button = QPushButton('SCAN', clicked=self.scan_resource)
