@@ -40,8 +40,10 @@ class SettingsWindow(QWidget):
         self.resize(size)
         self.setFixedWidth(self.width())
         self.settings.hook_event('$fail:import', lambda: QMessageBox.warning(
-            self, 'Import Error', f'Could not import settings from "{self.settings.path}". Make sure both the file and '
-                                  f'the parent folder exist, and that the file contains valid TOML.'))
+            self, 'Import Error',
+            f'Could not import settings from "{self.settings.path}". Make sure both the file and '
+            f'the parent folder exist, and that the file contains valid TOML.'
+        ))
 
         self.save_button:             QPushButton
         self.theme_dropdown:          QComboBox
@@ -208,6 +210,7 @@ class SettingsWindow(QWidget):
             self.key_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
             self.key_field.setText(self.client.auth_key)
             self.key_field.setDisabled(False)
+            self.key_field.setFocus()
             self.key_set_button.setDisabled(False)
         else:
             self.hide_key()
@@ -220,6 +223,7 @@ class SettingsWindow(QWidget):
     def set_key(self) -> None:
         """Set the client's auth_key to the current text in the key field."""
         self.client.auth_key = self.key_field.text().strip().removeprefix('x-343-authorization-spartan: ')
+        self.show_key()
 
     def hidden_key(self) -> str:
         """:return: The first 5 and last 4 characters of the API key, seperated by periods."""
@@ -367,7 +371,7 @@ class AppWindow(QMainWindow):
         root_folder_field.setFixedWidth(28)
         root_folder_field.setDisabled(True)
         self.input_field.mousePressEvent = self._destroy_text_on_first_click(self.input_field.mousePressEvent)
-        # subdomainField.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomainField.text()))
+        # subdomain_field.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomain_field.text()))
         get_button.setMaximumWidth(40)
         scan_button.setMaximumWidth(55)
         self.image_size_label.setMinimumWidth(50)
