@@ -5,8 +5,8 @@
 import sys
 import webbrowser
 from importlib import metadata
-from pathlib import Path
 from platform import platform
+from shutil import rmtree
 
 import requests
 from PyQt6.QtGui import *
@@ -105,20 +105,29 @@ class FileContextMenu(QMenu):
         super().__init__(parent)
 
         open_in = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
+        flush_cache = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
         import_from = QAction(QIcon(str(RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
         export_to = QAction(QIcon(str(RESOURCE_PATH / 'icons/export.ico')), 'Export Data', self, triggered=self.export_data)
         self.addAction(open_in)
+        self.addAction(flush_cache)
         self.addAction(import_from)
         self.addAction(export_to)
 
         # TODO: Add functionality and enable
+        flush_cache.setDisabled(tuple(CACHE_PATH.iterdir()) == ())  # Set disabled if CACHE_PATH directory is empty
         import_from.setDisabled(True)
         export_to.setDisabled(True)
 
     @staticmethod
     def open_explorer() -> None:
         """Open the user's file explorer in the current application's export directory."""
-        webbrowser.open('file:///' + str(Path.cwd() / 'hi_data'))
+        webbrowser.open(f'file:///{CACHE_PATH}')
+
+    @staticmethod
+    def flush_cache() -> None:
+        """Remove all data from cache."""
+        rmtree(CACHE_PATH)
+        CACHE_PATH.mkdir()
 
     def import_data(self) -> None:
         """Import data from..."""
