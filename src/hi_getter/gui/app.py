@@ -39,7 +39,7 @@ class GetterApp(QApplication):
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self.settings:        TomlFile = settings
-        self.themes:          dict[str, Theme] = {}
+        self.themes:          dict[str, Theme] = {}  # PyCharm detects this as a dict[str, str], despite explicit type hints.
         self.theme_index_map: dict[str, int] = {}
 
         self.settings.hook_event('$reload', self.load_themes)
@@ -76,11 +76,12 @@ class GetterApp(QApplication):
                 self.themes[id_] = Theme(**theme)
                 file.close()
 
+        # noinspection PyUnresolvedReferences
         self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes)}
         self.update_stylesheet()
 
     @property
     def sorted_themes(self) -> list[Theme]:
         """List of themes sorted by their display name."""
-        # FIXME: Doesn't crash, but also doesn't sort by display_name
+        # noinspection PyTypeChecker
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)
