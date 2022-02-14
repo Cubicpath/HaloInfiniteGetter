@@ -14,6 +14,11 @@ A simple way to get live Halo data straight from Halo Waypoint.
 
 **Note: This project is in a public alpha, and as such, many features are not complete.**
 
+###Disclaimer:
+_**HaloInfiniteGetter is in no way associated with, endorsed by, or otherwise affiliated with the
+Microsoft Corporation, Xbox Game Studios, or 343 Industries. Depending on how you use it, use of this app
+may or may not be considered abuse by the aforementioned parties.**_
+
 About:
 ---------------
 HaloInfiniteGetter is a GUI application written using [PyQt6][pyqt] that allows you to easily view data
@@ -33,7 +38,7 @@ How to use:
 
 ### Authentication:
 As this app is unofficial, you must use your own API key, which you can get by logging in to [HaloWaypoint] and getting
-fata from the authentication headers.
+data from the authentication headers.
 
 **Note: Auto-renewal of authentication keys is not currently implemented,
 so you will only be authenticated for a short amount of time.**
@@ -80,11 +85,32 @@ Outputs the original resource's data.
 Both the media and the text output can be detached and reattached from the main window.
 This allows greater flexibility, like viewing only the image in fullscreen.
 
+![Imgur](https://i.imgur.com/sS9rf4Q.png)
+
 #### Media Output:
-(TODO)
+The media output shows the currently loaded image to the user, scaled to fit the current window.
+
+It has two settings:
+1. Aspect Ratio Mode --- Changes how the aspect-ratio is transformed to fit the window
+   - Ignore --- Transform the aspect ratio to meet the output's dimensions
+   - Keep (Default) --- Keep the aspect ratio without expanding past the output's dimensions
+   - Expanding --- Expand the image's size to keep its aspect ratio
+2. Image Transform Mode --- Changes how the image is rendered to a different size
+   - Fast (Default) --- Faster
+   - Smooth --- May look better in some cases
 
 #### Text Output:
-(TODO)
+The text output displays any text data loaded by the given path, or an error response from the server.
+
+Path are automatically detected and hyperlinked for ease of use, which allows you to easily browse
+multiple paths in succession.
+
+It has one setting:
+1. Line Wrap Mode --- Changes how lines are wrapped inside the text output
+   - No Wrap --- No line wrapping, use the horizontal scroll wheel instead
+   - Widgets (Default) --- Line wrap if a word does not fit the text output's dimensions
+   - Fixed Pixel --- Line wrap after every space/seperator
+   - Fixed Column --- Line wrap after every character (excluding spaces)
 
 ### Themes:
 Themes are a way to style already-existing elements (Think CSS). They are held in a directory with their resources
@@ -105,7 +131,7 @@ The current builtin themes are:
 - Breeze Light
 - Legacy (Default PyQt)
 
-While the current breeze themes are slightly modified versions, and can view the original themes at [BreezeStyleSheets].
+While the current breeze themes are slightly modified versions, you can view the original themes at [BreezeStyleSheets].
 
 [BreezeStyleSheets]: https://github.com/Alexhuszagh/BreezeStyleSheets "BreezeStyleSheets"
 [HaloWaypoint]: https://www.halowaypoint.com "Halo Waypoint"
