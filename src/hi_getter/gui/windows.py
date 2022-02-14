@@ -475,6 +475,7 @@ class AppWindow(QMainWindow):
 
     def clear_current_pixmap(self) -> None:
         """Clear the current image from the media output."""
+        self.image_size_label.setText('Image Output: ')
         self.clear_picture.setDisabled(True)
         self.copy_picture.setDisabled(True)
         self.media_output.scene().clear()
@@ -487,6 +488,7 @@ class AppWindow(QMainWindow):
 
     def clear_current_text(self) -> None:
         """Clear the current text from the text output."""
+        self.text_size_label.setText('Text Output: ')
         self.clear_text.setDisabled(True)
         self.copy_text.setDisabled(True)
         self.text_output.setDisabled(True)
