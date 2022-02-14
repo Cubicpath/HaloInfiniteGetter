@@ -268,7 +268,7 @@ class AppWindow(QMainWindow):
         self.current_image: QPixmap | None = None
         self.input_field:   QLineEdit
         self.media_output:  QGraphicsView
-        self.text_output:   QTextEdit
+        self.text_output:   QTextBrowser
         self.clear_picture: QPushButton
         self.copy_picture:  QPushButton
         self.clear_text: QPushButton
@@ -303,7 +303,7 @@ class AppWindow(QMainWindow):
         self.text_frame = QFrame()
         self.text_size_label = QLabel('Text Output:')
         self.text_detach_button = QPushButton('Detach', clicked=self.text_detach_handler)
-        self.text_output = QTextEdit()
+        self.text_output = QTextBrowser()
 
         self.clear_picture = QPushButton('Clear', clicked=self.clear_current_pixmap)
         self.copy_picture = QPushButton('Copy Picture', clicked=self.copy_current_pixmap)
@@ -386,6 +386,7 @@ class AppWindow(QMainWindow):
         self.text_detach_button.setMaximumWidth(80)
         self.text_output.setMinimumHeight(28)
         self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(self.APP.settings['gui/text_output/line_wrap_mode']))
+        # self.text_output.setOpenLinks(False)
         self.text_output.setDisabled(True)
         self.clear_picture.setMaximumWidth(80)
         self.clear_picture.setMinimumWidth(40)
@@ -536,10 +537,28 @@ class AppWindow(QMainWindow):
                         data = json.dumps(data, indent=2)
 
                     data = str(data)
+                    output = data
                     self.clear_text.setDisabled(False)
                     self.copy_text.setDisabled(False)
                     self.text_output.setDisabled(False)
-                    self.text_output.setText(data)
+                    replaced = set()
+                    for match in PATH_PATTERN.finditer(data):
+                        match = match[0].replace('"', '')
+                        if match not in replaced:
+                            output = output.replace(match, f'<a href={match}>{match}</a>')
+                            print(match)
+                        replaced.add(match)
+                    print(output)
+                    self.text_output.setText(f"""
+<!DOCTYPE html>
+<html>
+<body>
+<div white-space=pre-wrap>
+{output}
+</div>
+</body>
+</html>
+""")
                     self.text_size_label.setText(f'Text Output: {len(data.splitlines())} lines {len(data)} characters '
                                                  f'({round(len(data.encode("utf8")) / 1024, 4)} KiB)')
             elif op_code == 20:
