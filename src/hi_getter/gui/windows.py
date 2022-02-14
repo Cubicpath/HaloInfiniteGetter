@@ -15,6 +15,7 @@ from .._version import __version__
 from ..client import Client
 from ..constants import *
 from ..tomlfile import *
+from ..utils import HTTP_CODE_MAP
 from .app import *
 from .menus import *
 
@@ -549,20 +550,24 @@ You can manually set it in the Settings window.''')
                     self.image_size_label.setText(f'Image Output: {size.width()}x{size.height()} ({round(len(data) / 1024, 4)} KiB)')
                     self.resize_image()
                 else:
-                    if isinstance(data, dict):
-                        data = json.dumps(data, indent=2)
-
-                    data = str(data)
-                    output = data
                     self.clear_text.setDisabled(False)
                     self.copy_text.setDisabled(False)
                     self.text_output.setDisabled(False)
+
+                    if isinstance(data, dict):
+                        data = json.dumps(data, indent=2)
+                    elif isinstance(data, int):
+                        data = f'{data}: {HTTP_CODE_MAP[data][0]}\n{HTTP_CODE_MAP[data][1]}'
+
+                    output = data
                     replaced = set()
+
                     for match in PATH_PATTERN.finditer(data):
                         match = match[0].replace('"', '')
                         if match not in replaced:
                             output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                             replaced.add(match)
+
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
                     self.text_size_label.setText(f'Text Output: '
                                                  f'{len(data.splitlines())} lines; '

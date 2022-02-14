@@ -6,12 +6,17 @@ import json
 import os
 from collections.abc import Iterable
 from collections.abc import Mapping
+from http import HTTPStatus
 from pathlib import Path
 
 __all__ = (
     'dump_data',
+    'HTTP_CODE_MAP',
     'unique_values',
 )
+
+# pylint: disable=not-an-iterable
+HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 
 
 def unique_values(data: Iterable) -> set:
