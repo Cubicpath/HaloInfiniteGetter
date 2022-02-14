@@ -277,6 +277,15 @@ class AppWindow(QMainWindow):
         self._init_toolbar()
         self._init_ui()
 
+        if self.client.auth_key is None:
+            QMessageBox.warning(
+                self,
+                'Empty API Token', '''
+The SPARTAN_AUTH environment variable is not set!
+You will be unable to acquire new data until a new token is provided.
+
+You can manually set it in the Settings window.''')
+
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
         self.toolbar = QToolBar('Toolbar', self)
@@ -297,13 +306,13 @@ class AppWindow(QMainWindow):
         """Initialize the UI, including Layouts and widgets."""
         self.media_frame = QFrame()
         self.image_size_label = QLabel('Image Output:')
-        self.image_detach_button = QPushButton('Detach', clicked=self.media_detach_handler)
+        self.image_detach_button = QPushButton('Detach', clicked=self.toggle_media_detach)
         self.media_output = QGraphicsView()
 
         self.text_frame = QFrame()
         self.text_size_label = QLabel('Text Output:')
-        self.text_detach_button = QPushButton('Detach', clicked=self.text_detach_handler)
-        self.text_output = QTextBrowser()
+        self.text_detach_button = QPushButton('Detach', clicked=self.toggle_text_detach)
+        self.text_output = QTextBrowser(anchorClicked=lambda e: self.navigate_to(e.toDisplayString()))
 
         self.clear_picture = QPushButton('Clear', clicked=self.clear_current_pixmap)
         self.copy_picture = QPushButton('Copy Picture', clicked=self.copy_current_pixmap)
@@ -386,7 +395,7 @@ class AppWindow(QMainWindow):
         self.text_detach_button.setMaximumWidth(80)
         self.text_output.setMinimumHeight(28)
         self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(self.APP.settings['gui/text_output/line_wrap_mode']))
-        # self.text_output.setOpenLinks(False)
+        self.text_output.setOpenLinks(False)
         self.text_output.setDisabled(True)
         self.clear_picture.setMaximumWidth(80)
         self.clear_picture.setMinimumWidth(40)
@@ -421,7 +430,7 @@ class AppWindow(QMainWindow):
         window = QMainWindow(self)
         window.setWindowTitle(title if title is not None else self.windowTitle())
         window.setCentralWidget(frame)
-        window.closeEvent = lambda *_: handler()
+        window.closeEvent = lambda *_: handler() if self.detached['media'] is not None else None
         window.setMinimumHeight(200)
         window.setMinimumWidth(300)
         return window
@@ -444,10 +453,15 @@ class AppWindow(QMainWindow):
         self.settings_window.activateWindow()
         self.settings_window.raise_()
 
-    def media_detach_handler(self) -> None:
-        """Handler for detaching and reattaching the medio output."""
+    def navigate_to(self, path: str) -> None:
+        """Set input field text to path and get resource."""
+        self.input_field.setText(path)
+        self.get_resource()
+
+    def toggle_media_detach(self) -> None:
+        """Handler for detaching and reattaching the media output."""
         if self.detached['media'] is None:
-            self.detached['media'] = window = self._setup_detached_window(self.media_frame, self.media_detach_handler, 'Detached Image Output')
+            self.detached['media'] = window = self._setup_detached_window(self.media_frame, self.toggle_media_detach, 'Detached Image Output')
             self.image_detach_button.setText('Reattach')
             window.resizeEvent = lambda *_: self.resize_image()
             window.show()
@@ -459,10 +473,10 @@ class AppWindow(QMainWindow):
             self.outputs.insertWidget(0, self.media_frame)
             self.image_detach_button.setText('Detach')
 
-    def text_detach_handler(self) -> None:
+    def toggle_text_detach(self) -> None:
         """Handler for detaching and reattaching the text output."""
         if self.detached['text'] is None:
-            self.detached['text'] = window = self._setup_detached_window(self.text_frame, self.text_detach_handler, 'Detached Text Output')
+            self.detached['text'] = window = self._setup_detached_window(self.text_frame, self.toggle_text_detach, 'Detached Text Output')
             self.text_detach_button.setText('Reattach')
             window.show()
         else:
@@ -547,21 +561,12 @@ class AppWindow(QMainWindow):
                     for match in PATH_PATTERN.finditer(data):
                         match = match[0].replace('"', '')
                         if match not in replaced:
-                            output = output.replace(match, f'<a href={match}>{match}</a>')
-                            print(match)
-                        replaced.add(match)
-                    print(output)
-                    self.text_output.setText(f"""
-<!DOCTYPE html>
-<html>
-<body>
-<div white-space=pre-wrap>
-{output}
-</div>
-</body>
-</html>
-""")
-                    self.text_size_label.setText(f'Text Output: {len(data.splitlines())} lines {len(data)} characters '
+                            output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
+                            replaced.add(match)
+                    self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
+                    self.text_size_label.setText(f'Text Output: '
+                                                 f'{len(data.splitlines())} lines; '
+                                                 f'{len(data)} characters '
                                                  f'({round(len(data.encode("utf8")) / 1024, 4)} KiB)')
             elif op_code == 20:
                 self.client.recursive_search(user_input)
@@ -587,19 +592,6 @@ class AppWindow(QMainWindow):
         """Resize image on resize of window."""
         super().resizeEvent(event)
         self.resize_image()
-
-    def showEvent(self, event: QShowEvent) -> None:
-        """Shows warnings on startup."""
-        super().showEvent(event)
-        if not self.shown_key_warning and self.client.auth_key is None:
-            self.__class__.shown_key_warning = True
-            QMessageBox.warning(
-                self,
-                'Empty API Token', '''
-The SPARTAN_AUTH environment variable is not set!
-You will be unable to acquire new data until a new token is provided.
-
-You can manually set it in the Settings window.''')
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closes all detached/children windows and quit application."""
