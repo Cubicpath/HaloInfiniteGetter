@@ -453,7 +453,7 @@ class AppWindow(QMainWindow):
         else:
             window = self.detached['media']
             self.detached['media'] = None
-            window.destroy()
+            window.close()
 
             self.outputs.insertWidget(0, self.media_frame)
             self.image_detach_button.setText('Detach')
@@ -467,7 +467,7 @@ class AppWindow(QMainWindow):
         else:
             window = self.detached['text']
             self.detached['text'] = None
-            window.destroy()
+            window.close()
 
             self.outputs.insertWidget(-1, self.text_frame)
             self.text_detach_button.setText('Detach')
@@ -581,6 +581,6 @@ You will be unable to acquire new data until a new token is provided.
 You can manually set it in the Settings window.''')
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        """Closes all detached/children windows."""
+        """Closes all detached/children windows and quit application."""
         super().closeEvent(event)
-        self.APP.closeAllWindows()
+        self.APP.quit()
