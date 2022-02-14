@@ -14,7 +14,7 @@ A simple way to get live Halo data straight from Halo Waypoint.
 
 **Note: This project is in a public alpha, and as such, many features are not complete.**
 
-###Disclaimer:
+### Disclaimer:
 _**HaloInfiniteGetter is in no way associated with, endorsed by, or otherwise affiliated with the
 Microsoft Corporation, Xbox Game Studios, or 343 Industries. Depending on how you use it, use of this app
 may or may not be considered abuse by the aforementioned parties.**_
