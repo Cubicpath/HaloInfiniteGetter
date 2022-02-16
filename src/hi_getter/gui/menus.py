@@ -9,8 +9,8 @@ from platform import platform
 from shutil import rmtree
 
 import requests
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from .._version import __version_info__ as ver
 from ..constants import *
@@ -89,7 +89,7 @@ Running on:
 \t{sys.implementation.name} {sys.version.split('[', maxsplit=1)[0]}
 
 Using requests: {metadata.version("requests")}
-Using PyQT6: {metadata.version("PyQT6")}
+Using PySide6: {metadata.version("PySide6")}
 Using python-dotenv: {metadata.version("python-dotenv")}
 
 MIT Licence (C) 2022 Cubicpath@Github
@@ -104,17 +104,17 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
-        open_in = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
-        flush_cache = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
-        import_from = QAction(QIcon(str(RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
-        export_to = QAction(QIcon(str(RESOURCE_PATH / 'icons/export.ico')), 'Export Data', self, triggered=self.export_data)
+        open_in:     QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
+        flush_cache: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
+        import_from: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
+        export_to:   QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/export.ico')), 'Export Data', self, triggered=self.export_data)
         self.addAction(open_in)
         self.addAction(flush_cache)
         self.addAction(import_from)
         self.addAction(export_to)
 
-        # TODO: Add functionality and enable
         flush_cache.setDisabled(tuple(CACHE_PATH.iterdir()) == ())  # Set disabled if CACHE_PATH directory is empty
+        # TODO: Add functionality and enable
         import_from.setDisabled(True)
         export_to.setDisabled(True)
 

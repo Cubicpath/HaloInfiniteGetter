@@ -7,9 +7,9 @@ import webbrowser
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from .._version import __version__
 from ..client import Client
@@ -56,23 +56,28 @@ class SettingsWindow(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.save_button = QPushButton('Save', clicked=self.save_settings)
-        reload_button = QPushButton('Reload', clicked=self.reload_settings)
-        import_button = QPushButton('Import Settings', clicked=self.import_settings)
-        export_button = QPushButton('Export Settings', clicked=self.export_settings)
-        theme_label = QLabel('Current Theme: ')
-        aspect_ratio_label = QLabel('Aspect Ratio: ')
-        transformation_label = QLabel('Image Transform: ')
-        line_wrap_label = QLabel('Line Wrap: ')
-        self.theme_dropdown = QComboBox(self, activated=self.set_theme)
-        self.aspect_ratio_dropdown = QComboBox(self, activated=self.set_aspect_ratio_method)
-        self.transformation_dropdown = QComboBox(self, activated=self.set_transformation_method)
-        self.line_wrap_dropdown = QComboBox(self, activated=self.set_line_wrap_method)
-        open_editor_button = QPushButton('Open Settings in Editor', clicked=self.open_editor)
-        key_show_button = QPushButton('Edit Auth Key', clicked=self.show_key)
-        key_copy_button = QPushButton('Copy to Clipboard', clicked=self.copy_key)
-        self.key_set_button = QPushButton('Set', clicked=self.set_key)
-        self.key_field = QLineEdit(returnPressed=self.key_set_button.click)
+        self.save_button:             QPushButton = QPushButton('Save', clicked=self.save_settings)
+        reload_button:                QPushButton = QPushButton('Reload', clicked=self.reload_settings)
+        import_button:                QPushButton = QPushButton('Import Settings', clicked=self.import_settings)
+        export_button:                QPushButton = QPushButton('Export Settings', clicked=self.export_settings)
+        theme_label:                  QLabel = QLabel('Current Theme: ')
+        aspect_ratio_label:           QLabel = QLabel('Aspect Ratio: ')
+        transformation_label:         QLabel = QLabel('Image Transform: ')
+        line_wrap_label:              QLabel = QLabel('Line Wrap: ')
+        self.theme_dropdown:          QComboBox = QComboBox(self)
+        self.aspect_ratio_dropdown:   QComboBox = QComboBox(self)
+        self.transformation_dropdown: QComboBox = QComboBox(self)
+        self.line_wrap_dropdown:      QComboBox = QComboBox(self)
+        open_editor_button:           QPushButton = QPushButton('Open Settings in Editor', clicked=self.open_editor)
+        key_show_button:              QPushButton = QPushButton('Edit Auth Key', clicked=self.show_key)
+        key_copy_button:              QPushButton = QPushButton('Copy to Clipboard', clicked=self.copy_key)
+        self.key_set_button:          QPushButton = QPushButton('Set', clicked=self.set_key)
+        self.key_field:               QLineEdit = QLineEdit(returnPressed=self.key_set_button.click)
+
+        self.theme_dropdown.activated.connect(self.set_theme)
+        self.transformation_dropdown.activated.connect(self.set_transformation_method)
+        self.line_wrap_dropdown.activated.connect(self.set_line_wrap_method)
+        self.aspect_ratio_dropdown.activated.connect(self.set_aspect_ratio_method)
 
         # Define layouts
         layout = QGridLayout()  # Main layout
@@ -85,9 +90,9 @@ class SettingsWindow(QWidget):
 
         # Assign positions of layouts
         self.setLayout(layout)
-        layout.addLayout(top, 0, 0, Qt.AlignmentFlag.AlignTop)
-        layout.addLayout(middle, 10, 0, Qt.AlignmentFlag.AlignTop)
-        layout.addLayout(bottom, 20, 0, Qt.AlignmentFlag.AlignBottom)
+        layout.addLayout(top, 0, 0, Qt.AlignTop)
+        layout.addLayout(middle, 10, 0, Qt.AlignTop)
+        layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
 
         # Add top widgets
         top.addWidget(self.save_button)
@@ -118,7 +123,7 @@ class SettingsWindow(QWidget):
         # Modify properties of widgets
         theme_label.setMaximumWidth(85)
 
-        self.theme_dropdown.addItems(theme.display_name for theme in self.getter_window.APP.sorted_themes)
+        self.theme_dropdown.addItems([theme.display_name for theme in self.getter_window.APP.sorted_themes])
         self.theme_dropdown.setCurrentIndex(self.getter_window.APP.theme_index_map[self.settings['gui/themes/selected']])
 
         aspect_ratio_label.setMaximumWidth(70)
@@ -134,7 +139,7 @@ class SettingsWindow(QWidget):
         self.save_button.setDisabled(True)
         reload_button.setMaximumWidth(60)
 
-        self.key_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setMinimumWidth(220)
         self.key_field.setFont(QFont('segoe ui', 8))
         self.key_set_button.setMinimumWidth(40)
@@ -203,12 +208,12 @@ class SettingsWindow(QWidget):
         self.key_set_button.setDisabled(True)
         self.key_field.setDisabled(True)
         self.key_field.setText(self.hidden_key())
-        self.key_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.key_field.setAlignment(Qt.AlignCenter)
 
     def show_key(self) -> None:
         """Toggle hiding and showing the API key."""
         if not self.key_field.isEnabled():
-            self.key_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            self.key_field.setAlignment(Qt.AlignLeft)
             self.key_field.setText(self.client.auth_key)
             self.key_field.setDisabled(False)
             self.key_field.setFocus()
@@ -239,6 +244,7 @@ class SettingsWindow(QWidget):
         """Auto hides the key upon un-minimizing."""
         super().showEvent(event)
         self.key_set_button.setDisabled(True)
+        self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setDisabled(True)
         self.key_field.setText(self.hidden_key())
 
@@ -252,40 +258,31 @@ class AppWindow(QMainWindow):
     def __init__(self, client: Client, app: GetterApp, size: QSize) -> None:
         """Create the window for the application."""
         super().__init__()
-        self.APP: GetterApp = app
-        self.client = client
-        self.clipboard: QClipboard | None = app.clipboard()
-        self.detached: dict[str, QMainWindow | None] = {'media': None, 'text': None}
+        self.APP:                   GetterApp = app
+        self.client:                Client = client
+        self.clipboard:             QClipboard = app.clipboard()
+        self.current_image:         QPixmap | None = None
+        self._clicked_input_field:  bool = False
+        self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
         # self.themes: dict[str, str] = themes
         self.setWindowTitle(f'HaloInfiniteGetter v{__version__}')
         self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
-        self.settings_window = SettingsWindow(self, QSize(420, 600))
-
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
-        self._clicked_input_field: bool = False
-        self.current_image: QPixmap | None = None
         self.input_field:   QLineEdit
         self.media_output:  QGraphicsView
         self.text_output:   QTextBrowser
         self.clear_picture: QPushButton
         self.copy_picture:  QPushButton
-        self.clear_text: QPushButton
-        self.copy_text:  QPushButton
+        self.clear_text:    QPushButton
+        self.copy_text:     QPushButton
 
         self._init_toolbar()
         self._init_ui()
 
-        if self.client.auth_key is None:
-            QMessageBox.warning(
-                self,
-                'Empty API Token', '''
-The SPARTAN_AUTH environment variable is not set!
-You will be unable to acquire new data until a new token is provided.
-
-You can manually set it in the Settings window.''')
+        self.settings_window = SettingsWindow(self, QSize(420, 600))
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
@@ -313,7 +310,8 @@ You can manually set it in the Settings window.''')
         self.text_frame = QFrame()
         self.text_size_label = QLabel('Text Output:')
         self.text_detach_button = QPushButton('Detach', clicked=self.toggle_text_detach)
-        self.text_output = QTextBrowser(anchorClicked=lambda e: self.navigate_to(e.toDisplayString()))
+        self.text_output = QTextBrowser()
+        self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
 
         self.clear_picture = QPushButton('Clear', clicked=self.clear_current_pixmap)
         self.copy_picture = QPushButton('Copy Picture', clicked=self.copy_current_pixmap)
@@ -341,9 +339,9 @@ You can manually set it in the Settings window.''')
 
         self.setCentralWidget(main_widget)
         main_widget.setLayout(layout)
-        layout.addLayout(top, 0, 0, Qt.AlignmentFlag.AlignTop)
-        layout.addLayout(self.outputs, 10, 0, Qt.AlignmentFlag.AlignHCenter)
-        layout.addLayout(bottom, 20, 0, Qt.AlignmentFlag.AlignBottom)
+        layout.addLayout(top, 0, 0, Qt.AlignTop)
+        layout.addLayout(self.outputs, 10, 0, Qt.AlignHCenter)
+        layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
 
         top.addWidget(subdomain_field)
         top.addWidget(root_folder_field)
@@ -360,20 +358,20 @@ You can manually set it in the Settings window.''')
         media_layout.addLayout(media_top)
         media_layout.addWidget(self.media_output)
         media_layout.addLayout(media_bottom)
-        media_top.addWidget(self.image_size_label, Qt.AlignmentFlag.AlignLeft)
-        media_top.addWidget(self.image_detach_button, Qt.AlignmentFlag.AlignRight)
-        media_bottom.addWidget(self.clear_picture, Qt.AlignmentFlag.AlignLeft)
-        media_bottom.addWidget(self.copy_picture, Qt.AlignmentFlag.AlignLeft)
+        media_top.addWidget(self.image_size_label, Qt.AlignLeft)
+        media_top.addWidget(self.image_detach_button, Qt.AlignRight)
+        media_bottom.addWidget(self.clear_picture, Qt.AlignLeft)
+        media_bottom.addWidget(self.copy_picture, Qt.AlignLeft)
 
         # noinspection Duplicates
         self.text_frame.setLayout(text_layout)
         text_layout.addLayout(text_top)
         text_layout.addWidget(self.text_output)
         text_layout.addLayout(text_bottom)
-        text_top.addWidget(self.text_size_label, Qt.AlignmentFlag.AlignLeft)
-        text_top.addWidget(self.text_detach_button, Qt.AlignmentFlag.AlignRight)
-        text_bottom.addWidget(self.clear_text, Qt.AlignmentFlag.AlignLeft)
-        text_bottom.addWidget(self.copy_text, Qt.AlignmentFlag.AlignLeft)
+        text_top.addWidget(self.text_size_label, Qt.AlignLeft)
+        text_top.addWidget(self.text_detach_button, Qt.AlignRight)
+        text_bottom.addWidget(self.clear_text, Qt.AlignLeft)
+        text_bottom.addWidget(self.copy_text, Qt.AlignLeft)
         text_bottom.setSpacing(5)
 
         subdomain_field.setFixedWidth(125)
@@ -592,6 +590,17 @@ You can manually set it in the Settings window.''')
             self.media_output.scene().addPixmap(new)
 
     # # # # # Events
+    def show(self) -> None:
+        """After window is displayed, show warnings if not already warned."""
+        super().show()
+        if not self.shown_key_warning and self.client.auth_key is None:
+            QMessageBox.warning(
+                self,
+                'Empty API Token', '''
+The spartan authorization token is not set, please set SPARTAN_AUTH environment variable and restart, or set the auth key value in Settings.
+
+You will be unable to acquire new data until a new token is provided.''')
+            self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resize image on resize of window."""

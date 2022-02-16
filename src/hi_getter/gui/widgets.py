@@ -2,9 +2,9 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from ..constants import *
 
@@ -38,7 +38,7 @@ class LicenseViewer(QWidget):
         layout.addWidget(license_text)
 
         block_format = QTextBlockFormat()
-        block_format.setLineHeight(40, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+        block_format.setLineHeight(40, QTextBlockFormat.LineHeightTypes.ProportionalHeight)
         cursor = license_text.textCursor()
         cursor.clearSelection()
         cursor.select(QTextCursor.SelectionType.Document)

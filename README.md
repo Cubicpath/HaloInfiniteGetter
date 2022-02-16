@@ -21,7 +21,7 @@ may or may not be considered abuse by the aforementioned parties.**_
 
 About:
 ---------------
-HaloInfiniteGetter is a GUI application written using [PyQt6][pyqt] that allows you to easily view data
+HaloInfiniteGetter is a GUI application written using [PySide6][PySide] that allows you to easily view data
 hosted on [HaloWaypoint] API endpoints.
 
 You can view both Image and Text output, with these results being cached in the cwd under the `hi_data` folder,
@@ -96,8 +96,8 @@ It has two settings:
    - Keep (Default) --- Keep the aspect ratio without expanding past the output's dimensions
    - Expanding --- Expand the image's size to keep its aspect ratio
 2. Image Transform Mode --- Changes how the image is rendered to a different size
-   - Fast (Default) --- Faster
-   - Smooth --- May look better in some cases
+   - Fast (Default) --- Faster, looks more jagged
+   - Smooth --- Smooths edges, looks better in some cases
 
 #### Text Output:
 The text output displays any text data loaded by the given path, or an error response from the server.
@@ -123,13 +123,13 @@ and stylesheet in the same folder level.
     │       ├─── [icon1_name].svg
     │       ├─── [icon2_name].svg
     │       ├─── [icon3_name].svg
-    │       └─── [theme_id].qss
+    │       └─── stylesheet.qss
     │
 
 The current builtin themes are:
 - Breeze Dark
 - Breeze Light
-- Legacy (Default PyQt)
+- Legacy (Default PySide)
 
 While the current breeze themes are slightly modified versions, you can view the original themes at [BreezeStyleSheets].
 
@@ -137,6 +137,6 @@ While the current breeze themes are slightly modified versions, you can view the
 [HaloWaypoint]: https://www.halowaypoint.com "Halo Waypoint"
 [homepage]: https://pypi.org/project/hi-getter/ "HaloInfiniteGetter PyPI"
 [license]: https://choosealicense.com/licenses/mit "MIT License"
-[pyqt]: https://pypi.org/project/PyQt6/ "PyQt6"
+[PySide]: https://pypi.org/project/PySide6/ "PySide6"
 [python]: https://www.python.org "Python"
 [python310]: https://www.python.org/downloads/release/python-3100/ "Python 3.10"

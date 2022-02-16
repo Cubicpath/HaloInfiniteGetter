@@ -4,8 +4,8 @@
 """Module for the main application classes."""
 from pathlib import Path
 
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 from toml.decoder import CommentValue
 
 from ..tomlfile import *
@@ -32,7 +32,7 @@ class Theme:
 
 
 class GetterApp(QApplication):
-    """The main HaloInfiniteGetter PyQt application that runs in the background and manages the process."""
+    """The main HaloInfiniteGetter PySide application that runs in the background and manages the process."""
     _legacy_style: str = None
 
     def __init__(self, argv: list[str], settings: TomlFile) -> None:
@@ -56,7 +56,7 @@ class GetterApp(QApplication):
         """
         if self._legacy_style is None:
             self.__class__._legacy_style = self.styleSheet()
-        self.themes['legacy'] = Theme('legacy', self._legacy_style, 'Legacy (Default PyQt)')
+        self.themes['legacy'] = Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
 
         for id_, theme in self.settings['gui/themes'].items():
             if not isinstance(theme, dict):

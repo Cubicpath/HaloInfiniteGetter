@@ -8,7 +8,7 @@ from sys import platform
 from typing import Final
 
 import toml
-from PyQt6.QtCore import *
+from PySide6.QtCore import *
 from toml.decoder import CommentValue
 
 from ._version import __version__

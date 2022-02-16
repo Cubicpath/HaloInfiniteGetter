@@ -21,9 +21,12 @@
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredIdentifiers">
         <list>
-          <option value="PyQt6.QtWidgets.returnPressed.connect" />
-          <option value="PyQt6.QtGui.triggered.connect" />
-          <option value="PyQt6.QtWidgets.activated.connect" />
+          <option value="PySide6.QtGui.triggered.connect" />
+          <option value="PySide6.QtWidgets.activated.connect" />
+          <option value="PySide6.QtWidgets.returnPressed.connect" />
+          <option value="PySide6.QtWidgets.QTextBrowser.anchorClicked" />
+          <option value="PySide6.QtWidgets.QComboBox.currentIndexChanged" />
+          <option value="PySide6.QtWidgets.QComboBox.activated" />
         </list>
       </option>
     </inspection_tool>
