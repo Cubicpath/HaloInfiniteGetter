@@ -409,17 +409,7 @@ class AppWindow(QMainWindow):
         self.copy_text.setMinimumWidth(80)
         self.copy_text.setDisabled(True)
 
-    def _destroy_text_on_first_click(self, f: Callable) -> Callable:
-        """Destroys the sample text in the input field if clicked before it is used."""
-        def wrapper(*args, **kwargs):
-            if self._clicked_input_field:
-                f(*args, **kwargs)
-            else:
-                self._clicked_input_field = True
-                self.input_field.setText('')
-        return wrapper
-
-    def _setup_detached_window(self, frame: QFrame, handler: Callable, title: str = None) -> QMainWindow:
+    def _setup_detached_window(self, id_: str, frame: QFrame, handler: Callable, title: str = None) -> QMainWindow:
         """Set up a detached window, with the layout represented as a :py:class:`QFrame`.
 
         :param frame: Set the window's central widget as this QFrame.
@@ -429,7 +419,7 @@ class AppWindow(QMainWindow):
         window = QMainWindow(self)
         window.setWindowTitle(title if title is not None else self.windowTitle())
         window.setCentralWidget(frame)
-        window.closeEvent = lambda *_: handler() if self.detached['media'] is not None else None
+        window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
         window.setMinimumHeight(200)
         window.setMinimumWidth(300)
         return window
@@ -460,7 +450,7 @@ class AppWindow(QMainWindow):
     def toggle_media_detach(self) -> None:
         """Handler for detaching and reattaching the media output."""
         if self.detached['media'] is None:
-            self.detached['media'] = window = self._setup_detached_window(self.media_frame, self.toggle_media_detach, 'Detached Image Output')
+            self.detached['media'] = window = self._setup_detached_window('media', self.media_frame, self.toggle_media_detach, 'Detached Image Output')
             self.image_detach_button.setText('Reattach')
             window.resizeEvent = lambda *_: self.resize_image()
             window.show()
@@ -475,7 +465,7 @@ class AppWindow(QMainWindow):
     def toggle_text_detach(self) -> None:
         """Handler for detaching and reattaching the text output."""
         if self.detached['text'] is None:
-            self.detached['text'] = window = self._setup_detached_window(self.text_frame, self.toggle_text_detach, 'Detached Text Output')
+            self.detached['text'] = window = self._setup_detached_window('text', self.text_frame, self.toggle_text_detach, 'Detached Text Output')
             self.text_detach_button.setText('Reattach')
             window.show()
         else:
