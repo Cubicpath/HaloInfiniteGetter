@@ -18,6 +18,7 @@ from ..tomlfile import *
 from ..utils import HTTP_CODE_MAP
 from .app import *
 from .menus import *
+from .widgets import *
 
 __all__ = (
     'AppWindow',
@@ -249,6 +250,7 @@ class SettingsWindow(QWidget):
         self.key_field.setText(self.hidden_key())
 
 
+# TODO: Add exception logger
 # noinspection PyArgumentList
 class AppWindow(QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
@@ -271,7 +273,7 @@ class AppWindow(QMainWindow):
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
-        self.input_field:   QLineEdit
+        self.input_field:   InputField
         self.media_output:  QGraphicsView
         self.text_output:   QTextBrowser
         self.clear_picture: QPushButton
@@ -323,7 +325,7 @@ class AppWindow(QMainWindow):
         get_button = QPushButton('GET', clicked=self.get_resource)
         scan_button = QPushButton('SCAN', clicked=self.scan_resource)
 
-        self.input_field = QLineEdit('Progression/file/Calendars/Seasons/SeasonCalendar.json', returnPressed=get_button.click)
+        self.input_field = InputField()
 
         main_widget = QWidget()
         layout = QGridLayout()
@@ -378,7 +380,8 @@ class AppWindow(QMainWindow):
         subdomain_field.setDisabled(True)
         root_folder_field.setFixedWidth(28)
         root_folder_field.setDisabled(True)
-        self.input_field.mousePressEvent = self._destroy_text_on_first_click(self.input_field.mousePressEvent)
+        self.input_field.lineEdit().returnPressed.connect(self.get_resource)  # Connect pressing enter while in the line edit to get_resource
+        self.input_field.addItem(SAMPLE_RESOURCE)
         # subdomain_field.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomain_field.text()))
         get_button.setMaximumWidth(40)
         scan_button.setMaximumWidth(55)
@@ -444,7 +447,8 @@ class AppWindow(QMainWindow):
 
     def navigate_to(self, path: str) -> None:
         """Set input field text to path and get resource."""
-        self.input_field.setText(path)
+        self.input_field.addItem(path)
+        self.input_field.setCurrentIndex(self.input_field.count() - 1)
         self.get_resource()
 
     def toggle_media_detach(self) -> None:
@@ -518,7 +522,7 @@ class AppWindow(QMainWindow):
         :param op_code: What operation to do. Get: 10 | Scan: 20
         """
         self._clicked_input_field = True
-        user_input = self.input_field.text()
+        user_input = self.input_field.currentText()
         if '/file/' not in user_input:
             if user_input.endswith(('png', 'jpg', 'jpeg', 'webp', 'gif')):
                 user_input = f'images/file/{user_input}'
@@ -555,7 +559,6 @@ class AppWindow(QMainWindow):
                         if match not in replaced:
                             output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                             replaced.add(match)
-
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
                     self.text_size_label.setText(f'Text Output: '
                                                  f'{len(data.splitlines())} lines; '
