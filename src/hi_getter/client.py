@@ -87,7 +87,7 @@ class Client:
                 # response = self.get(path, **kwargs)
         return response
 
-    def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = Path.cwd()) -> dict[str, Any] | bytes | int | None:
+    def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = Path.cwd(), micro_sleep: bool = True) -> dict[str, Any] | bytes | int | None:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
@@ -106,7 +106,8 @@ class Client:
 
             print(f"DOWNLOADED {path} >>> {response.headers.get('content-type')}")
             dump_data(os_path, data)
-            time.sleep(random.randint(100, 200) / 750)
+            if micro_sleep:
+                time.sleep(random.randint(100, 200) / 750)
 
         elif not only_dump:
             print(path)
