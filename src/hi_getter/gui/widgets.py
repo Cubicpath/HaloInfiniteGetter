@@ -2,6 +2,8 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
+from collections.abc import Sequence
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -9,8 +11,41 @@ from PySide6.QtWidgets import *
 from ..constants import *
 
 __all__ = (
+    'InputField',
     'LicenseViewer',
 )
+
+
+class InputField(QComboBox):
+    """Editable QComboBox acting as a history wrapper over QLineEdit; has no duplicate values."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setEditable(True)
+        self.setDuplicatesEnabled(False)
+
+    # noinspection PyTypeChecker
+    def addItem(self, text: str, **kwargs) -> None:
+        """Filters already-present strings from being added using addItem.
+
+        addItem(self,
+        icon: Union[PySide6.QtGui.QIcon, PySide6.QtGui.QPixmap],
+        text: str,
+        userData: Any = Invalid(typing.Any)
+        ) -> None
+        addItem(self,
+        text: str,
+        userData: Any = Invalid(typing.Any)
+        ) -> None"""
+        if self.findText(text, Qt.MatchFlag.MatchFixedString) != -1:
+            return
+
+        super().addItem(text, **kwargs)
+
+    def addItems(self, texts: Sequence[str]) -> None:
+        """self.addItem for text in texts."""
+        for text in texts:
+            self.addItem(text)
 
 
 class LicenseViewer(QWidget):

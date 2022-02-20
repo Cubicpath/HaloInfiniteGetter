@@ -11,16 +11,20 @@ __all__ = (
     'CONFIG_PATH',
     'PATH_PATTERN',
     'RESOURCE_PATH',
+    'SAMPLE_RESOURCE',
 )
 
-PATH_PATTERN:  Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
+SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
+"""Resource that is pre-filled for the :py:class:`hi_getter.gui.windows.AppWindow` input field."""
+
+PATH_PATTERN:    Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
 
-CACHE_PATH:    Final[Path] = Path.cwd() / 'hi_data'
+CACHE_PATH:      Final[Path] = Path.cwd() / 'hi_data'
 """Directory containing cached API results."""
 
-CONFIG_PATH:   Final[Path] = Path.home() / '.config/hi_getter'
+CONFIG_PATH:     Final[Path] = Path.home() / '.config/hi_getter'
 """Directory containing user configuration data."""
 
-RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
+RESOURCE_PATH:   Final[Path] = Path(__file__).parent / 'resources'
 """Directory containing application resources."""
