@@ -10,6 +10,11 @@ from typing import Annotated
 
 from .constants import RESOURCE_PATH
 
+__all__ = (
+    'Language',
+    'Translator',
+)
+
 LANG_PATH: Path = RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
@@ -18,7 +23,8 @@ class Language:
     """Object containing language data. Retrieves stored data with associated RFC 5646 language tags."""
 
     def __init__(self, primary: Annotated[str, 2] | None = None, region: Annotated[str, 2] | None = None, **kwargs) -> None:
-        """Create a new Language object with data from the associated language tag built using the given arguments.
+        """Build a new Language object using given sub-tags.
+
         For more information on RFC 5646, visit https://datatracker.ietf.org/doc/html/rfc5646
 
         :param primary: The first part of the language code. i.e. [en]-US | Section 2.2.1
@@ -145,7 +151,9 @@ class Language:
 
         for lang_file in LANG_PATH.iterdir():
             if lang_file.suffix == '.json' and lang_file.with_suffix('').name.lower() == self.tag.replace('-', '_').lower():
-                self._data.update(json.loads(lang_file.read_text(encoding='utf8')))
+                # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
+                new_data = json.loads(lang_file.read_text(encoding='utf8'))
+                self._data.update(new_data)
                 break
 
     def __repr__(self) -> str:
@@ -154,12 +162,20 @@ class Language:
     def __getitem__(self, key) -> str:
         return self.get_raw(key)
 
-    def get(self, key: str, *args, default: str | None = None) -> str | None:
-        """Get a translation key and format with the given arguments.
+    @classmethod
+    def from_tag(cls, tag: str) -> 'Language':
+        """Build a :py:class:`Language` object using a plain string tag.
+
+        Breaks tag into sub-tags and verifies compliancy with RFC 5646.
+        """
+        # TODO: Add functionality
+
+    def get(self, key: str, *args: ..., default: str | None = None) -> str | None:
+        """Get a translation key and format with the given arguments if required.
 
         :param key: Key to get in JSON data.
         :param args: Formatting arguments; packed into tuple and used with str modulus.
-        :param default: Default string if __key doesn't exist. (Is not formatted)
+        :param default: Default string if key doesn't exist. (Is not formatted)
         """
         result = self._data.get(key, default)
         if result is not default:
@@ -173,3 +189,45 @@ class Language:
         :raises KeyError: If key is not in JSON data.
         """
         return self._data[key]
+
+
+class Translator:
+    """Simple class meant to abstract key translation into a function-like state.
+
+    Usage::
+        translate = Translator('en-US')
+        translate('a.translation.key') -> american value
+        translate.language = 'de-GER' -> england value
+    """
+
+    def __init__(self, language: Language | str):
+        self._language = self._lang_to_lang(language)
+
+    def __call__(self, key: str, *args: ..., default: str | None = None) -> str:
+        """Syntax sugar for get_translation."""
+        return self.get_translation(key)
+
+    @property
+    def language(self) -> Language:
+        """Current :py:class:`Language` for this translator."""
+        return self._language
+
+    @language.setter
+    def language(self, value: Language | str) -> None:
+        self._language = self._lang_to_lang(value)
+
+    def get_translation(self, key: str, *args: ..., default: str | None = None) -> str:
+        """Get a translation key's value for the current language."""
+        return self.language.get(key, *args, default=default)
+
+    @staticmethod
+    def _lang_to_lang(language: Language | str) -> Language:
+        """Assert that a given value is a :py:class:`Language`."""
+        if not isinstance(language, Language):
+            language = str(language)  # Stringify non-language object
+
+        if isinstance(language, str):
+            # TODO: Move this to Language.from_tag
+            language = language.replace(' ', '-').replace('_', '-').strip()
+            language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
+        return language
