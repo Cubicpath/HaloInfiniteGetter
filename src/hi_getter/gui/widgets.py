@@ -37,8 +37,9 @@ class InputField(QComboBox):
         text: str,
         userData: Any = Invalid(typing.Any)
         ) -> None"""
-        if self.findText(text, Qt.MatchFlag.MatchFixedString) != -1:
-            return
+        result = self.findText(text, Qt.MatchFlag.MatchFixedString)
+        if result != -1:
+            self.removeItem(result)
 
         super().addItem(text, **kwargs)
 
