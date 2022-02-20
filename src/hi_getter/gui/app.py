@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module for the main application classes."""
+from collections.abc import Sequence
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -31,11 +32,12 @@ class Theme:
         self.display_name: str = display_name if display_name is not None else self.id
 
 
+# TODO: Add logging functionality
 class GetterApp(QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process."""
     _legacy_style: str = None
 
-    def __init__(self, argv: list[str], settings: TomlFile) -> None:
+    def __init__(self, argv: Sequence[str], settings: TomlFile) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self.settings:        TomlFile = settings

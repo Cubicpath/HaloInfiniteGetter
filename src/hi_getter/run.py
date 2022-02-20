@@ -22,10 +22,14 @@ __all__ = (
     'run',
 )
 
+# TODO: Add ability to run using pyw
+
 
 def _make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:
     return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)
 
+
+SETTINGS_PATH = (CONFIG_PATH / 'settings.toml')
 
 DEFAULT_SETTINGS = {
     'language': 'en-US',
@@ -57,6 +61,15 @@ DEFAULT_SETTINGS = {
 """Default settings to use in config."""
 
 
+def _create_new_paths() -> None:
+    """Create files and paths if they do not exist."""
+    if not CONFIG_PATH.is_dir():
+        os.makedirs(CONFIG_PATH)
+    if not SETTINGS_PATH.is_file():
+        with SETTINGS_PATH.open(mode='w', encoding='utf8') as file:
+            toml.dump(DEFAULT_SETTINGS, file, encoder=BetterTomlEncoder())
+
+
 def _patch_windows_taskbar_icon() -> None:
     """Override Python's default Windows taskbar icon with the custom one set by the app window."""
     if platform == 'win32':
@@ -70,19 +83,10 @@ def run(*args, **kwargs) -> int:
     Args are passed to a QApplication instance.
     Kwargs are handled here.
     """
-
-    settings_path = (CONFIG_PATH / 'settings.toml')
-
+    _create_new_paths()
     _patch_windows_taskbar_icon()
 
-    # Create files and paths if they do not exist
-    if not CONFIG_PATH.is_dir():
-        os.makedirs(CONFIG_PATH)
-    if not settings_path.is_file():
-        with settings_path.open(mode='w', encoding='utf8') as file:
-            toml.dump(DEFAULT_SETTINGS, file, encoder=BetterTomlEncoder())
-
-    APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(settings_path, default=DEFAULT_SETTINGS))
+    APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()
 
     CLIENT:     Final[Client] = kwargs.pop('client', Client())
