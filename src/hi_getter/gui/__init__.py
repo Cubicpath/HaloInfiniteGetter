@@ -9,9 +9,9 @@ from .windows import *
 
 __all__ = (
     'AppWindow',
+    'FileContextMenu',
     'GetterApp',
     'HelpContextMenu',
-    'FileContextMenu',
     'LicenseViewer',
     'SettingsWindow',
 )

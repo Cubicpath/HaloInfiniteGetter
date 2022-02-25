@@ -574,12 +574,13 @@ class AppWindow(QMainWindow):
             new = self.current_image.copy()
             self.media_output.scene().clear()  # Clear buffer, otherwise causes memory leak
             if self.current_image.size() != self.media_output.viewport().size():
-                # Create a new image from the source image, scaled to fit the window.
+                # Create a new image from the copied source image, scaled to fit the window.
                 new = new.scaled(
                     self.media_output.viewport().size(),
                     Qt.AspectRatioMode(self.APP.settings['gui/media_output/aspect_ratio_mode']),
                     Qt.TransformationMode(self.APP.settings['gui/media_output/transformation_mode'])
                 )
+            # Add image to buffer
             self.media_output.scene().addPixmap(new)
 
     # # # # # Events
