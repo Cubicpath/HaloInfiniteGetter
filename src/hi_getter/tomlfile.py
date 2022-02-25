@@ -20,6 +20,7 @@ from toml.encoder import TomlEncoder
 __all__ = (
     'BetterTomlDecoder',
     'BetterTomlEncoder',
+    'CommentValue',
     'TOML_VALUE',
     'TomlFile',
 )

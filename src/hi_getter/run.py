@@ -4,19 +4,16 @@
 """Initialize values and runs the application."""
 import os
 import sys
-from sys import platform
 from typing import Final
 
 import toml
 from PySide6.QtCore import *
-from toml.decoder import CommentValue
 
-from ._version import __version__
 from .client import Client
 from .constants import *
-from .gui import AppWindow
-from .gui import GetterApp
+from .gui import *
 from .tomlfile import *
+from .utils import *
 
 __all__ = (
     'run',
@@ -24,19 +21,14 @@ __all__ = (
 
 # TODO: Add ability to run using pyw
 
-
-def _make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:
-    return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)
-
-
 SETTINGS_PATH = (CONFIG_PATH / 'settings.toml')
 
 DEFAULT_SETTINGS = {
     'language': 'en-US',
     'gui': {
         'window': {
-            'x_size': _make_comment_val(900, 'Minimum value of 100'),
-            'y_size': _make_comment_val(500, 'Minimum value of 100')
+            'x_size': make_comment_val(900, 'Minimum value of 100'),
+            'y_size': make_comment_val(500, 'Minimum value of 100')
         },
         'themes': {
             'selected': 'light',
@@ -50,18 +42,18 @@ DEFAULT_SETTINGS = {
             }
         },
         'media_output': {
-            'aspect_ratio_mode': _make_comment_val(1, '0: Ignore | 1: Keep | 2: Expanding'),
-            'transformation_mode': _make_comment_val(0, '0: Fast | 1: Smooth')
+            'aspect_ratio_mode': make_comment_val(1, '0: Ignore | 1: Keep | 2: Expanding'),
+            'transformation_mode': make_comment_val(0, '0: Fast | 1: Smooth')
         },
         'text_output': {
-            'line_wrap_mode': _make_comment_val(1, '0: No Wrap | 1: Widget | 2: Fixed Pixel | 4: Fixed Column')
+            'line_wrap_mode': make_comment_val(1, '0: No Wrap | 1: Widget | 2: Fixed Pixel | 4: Fixed Column')
         }
     }
 }
 """Default settings to use in config."""
 
 
-def _create_new_paths() -> None:
+def _create_paths() -> None:
     """Create files and paths if they do not exist."""
     if not CONFIG_PATH.is_dir():
         os.makedirs(CONFIG_PATH)
@@ -70,21 +62,14 @@ def _create_new_paths() -> None:
             toml.dump(DEFAULT_SETTINGS, file, encoder=BetterTomlEncoder())
 
 
-def _patch_windows_taskbar_icon() -> None:
-    """Override Python's default Windows taskbar icon with the custom one set by the app window."""
-    if platform == 'win32':
-        from ctypes import windll
-        windll.shell32.SetCurrentProcessExplicitAppUserModelID(f'cubicpath.hi_getter.app.{__version__}')
-
-
 def run(*args, **kwargs) -> int:
     """Run the program.
 
     Args are passed to a QApplication instance.
     Kwargs are handled here.
     """
-    _create_new_paths()
-    _patch_windows_taskbar_icon()
+    _create_paths()
+    patch_windows_taskbar_icon()
 
     APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()
