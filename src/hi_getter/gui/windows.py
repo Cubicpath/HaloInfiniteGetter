@@ -419,7 +419,7 @@ class AppWindow(QMainWindow):
         :param handler: Callable to execute when closed, to reattach the frame to the parent window.
         :param title: The window title.
         """
-        window = QMainWindow(self)
+        window = QMainWindow()
         window.setWindowTitle(title if title is not None else self.windowTitle())
         window.setCentralWidget(frame)
         window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
