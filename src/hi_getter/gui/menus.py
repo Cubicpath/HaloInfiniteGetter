@@ -164,7 +164,8 @@ class ToolsContextMenu(QMenu):
         """Create a new :py:class:`ToolsContextMenu`."""
         super().__init__(parent)
 
-        shortcut_tool: QAction = QAction('Create Desktop Shortcut', self, triggered=self.create_shortcut)
+        desktop_icon = self.style().standardIcon(QStyle.SP_DesktopIcon)
+        shortcut_tool: QAction = QAction(desktop_icon, 'Create Desktop Shortcut', self, triggered=self.create_shortcut)
         section_map = {
             'Tools': (shortcut_tool,)
         }
@@ -177,6 +178,7 @@ class ToolsContextMenu(QMenu):
     def create_shortcut():
         """Create shortcut for starting program."""
         from pyshortcuts import make_shortcut
+
         exec_path = Path(sys.executable)
         name = exec_path.with_suffix('').name
         if not name.endswith('w'):
