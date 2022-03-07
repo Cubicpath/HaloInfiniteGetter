@@ -4,7 +4,7 @@
 """Utils for hi_getter."""
 import json
 import os
-import platform
+import sys
 from collections.abc import Iterable
 from collections.abc import Mapping
 from http import HTTPStatus
@@ -45,7 +45,7 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
 
 def patch_windows_taskbar_icon(app_id: str = '') -> None:
     """Override Python's default Windows taskbar icon with the custom one set by the app window."""
-    if platform == 'win32':
+    if sys.platform == 'win32':
         from ctypes import windll
         windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 
