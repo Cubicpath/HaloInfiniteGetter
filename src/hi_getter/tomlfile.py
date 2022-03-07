@@ -21,6 +21,7 @@ __all__ = (
     'BetterTomlDecoder',
     'BetterTomlEncoder',
     'CommentValue',
+    'make_comment_val',
     'TOML_VALUE',
     'TomlFile',
 )
@@ -245,3 +246,8 @@ class TomlFile:
         subscribers = self._event_subscribers.get(key, [])
         subscribers.append((f, args, kwargs))
         self._event_subscribers[key] = subscribers
+
+
+def make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:
+    """Build and return :py:class:`CommentValue`."""
+    return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)

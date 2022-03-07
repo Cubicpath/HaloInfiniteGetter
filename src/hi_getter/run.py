@@ -9,6 +9,7 @@ from typing import Final
 import toml
 from PySide6.QtCore import *
 
+from ._version import __version__
 from .client import Client
 from .constants import *
 from .gui import *
@@ -69,7 +70,7 @@ def run(*args, **kwargs) -> int:
     Kwargs are handled here.
     """
     _create_paths()
-    patch_windows_taskbar_icon()
+    patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
 
     APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()

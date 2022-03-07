@@ -10,14 +10,10 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from pathlib import Path
 
-from ._version import __version__
-from .tomlfile import CommentValue
-from .tomlfile import TOML_VALUE
-
 __all__ = (
+    'current_requirement_versions',
     'dump_data',
     'HTTP_CODE_MAP',
-    'make_comment_val',
     'patch_windows_taskbar_icon',
     'unique_values',
 )
@@ -47,16 +43,29 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
             json.dump(data, file, indent=2)
 
 
-def make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:
-    """Build and return :py:class:`CommentValue`."""
-    return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)
-
-
-def patch_windows_taskbar_icon() -> None:
+def patch_windows_taskbar_icon(app_id: str = '') -> None:
     """Override Python's default Windows taskbar icon with the custom one set by the app window."""
     if platform == 'win32':
         from ctypes import windll
-        windll.shell32.SetCurrentProcessExplicitAppUserModelID(f'cubicpath.hi_getter.app.{__version__}')
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+
+
+def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
+    """Return the current versions of the requirements for the given package name."""
+    from importlib import metadata
+    req_names = []
+    for requirement in metadata.requires(package):
+        if not include_extras and '; extra' in requirement:
+            continue
+
+        split_char = 0
+        for char in requirement:
+            if not char.isalnum() and char not in ('-', '_'):
+                break
+            split_char += 1
+
+        req_names.append(requirement[:split_char])
+    return {name: metadata.version(name) for name in req_names}
 
 
 def unique_values(data: Iterable) -> set:

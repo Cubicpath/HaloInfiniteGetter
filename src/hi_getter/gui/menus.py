@@ -4,7 +4,6 @@
 """Module containing :py:class:`QMenu` Context Menus."""
 import sys
 import webbrowser
-from importlib import metadata
 from platform import platform
 from shutil import rmtree
 
@@ -14,11 +13,13 @@ from PySide6.QtWidgets import *
 
 from .._version import __version_info__ as ver
 from ..constants import *
+from ..utils import current_requirement_versions
 from .widgets import LicenseViewer
 
 __all__ = (
     'FileContextMenu',
     'HelpContextMenu',
+    'ToolsContextMenu',
 )
 
 
@@ -133,6 +134,9 @@ class HelpContextMenu(QMenu):
         :return: Tuple containing the title and the message
         """
         if self._about is None:
+            package_versions = '\n'.join(f'Using package {package}: {version}' for
+                                         package, version in current_requirement_versions(__package__.split('.', maxsplit=1)[0]).items())
+
             self.__class__._about = ('About', f'''
 HaloInfiniteGetter by Cubicpath. A simple way to get live Halo data straight from Halo Waypoint.
 
@@ -142,10 +146,31 @@ Running on:
 \t{platform()}
 \t{sys.implementation.name} {sys.version.split('[', maxsplit=1)[0]}
 
-Using requests: {metadata.version("requests")}
-Using PySide6: {metadata.version("PySide6")}
-Using python-dotenv: {metadata.version("python-dotenv")}
+{package_versions}
 
 MIT Licence (C) 2022 Cubicpath@Github
 ''')
         return self._about
+
+
+# noinspection PyArgumentList
+class ToolsContextMenu(QMenu):
+    """Context menu for tools."""
+
+    def __init__(self, parent) -> None:
+        """Create a new :py:class:`ToolsContextMenu`."""
+        super().__init__(parent)
+
+        shortcut_tool: QAction = QAction('Create Shortcut', self, triggered=self.create_shortcut)
+        section_map = {
+            'Tools': (shortcut_tool,)
+        }
+
+        for section, actions in section_map.items():
+            self.addSection(section)
+            self.addActions(actions)
+
+    @staticmethod
+    def create_shortcut():
+        """Create shortcut for starting program."""
+        ...
