@@ -56,8 +56,9 @@ DEFAULT_SETTINGS = {
 
 def _create_paths() -> None:
     """Create files and paths if they do not exist."""
-    if not CONFIG_PATH.is_dir():
-        os.makedirs(CONFIG_PATH)
+    for dir_path in (CACHE_PATH, CONFIG_PATH):
+        if not dir_path.is_dir():
+            os.makedirs(dir_path)
     if not SETTINGS_PATH.is_file():
         with SETTINGS_PATH.open(mode='w', encoding='utf8') as file:
             toml.dump(DEFAULT_SETTINGS, file, encoder=BetterTomlEncoder())
