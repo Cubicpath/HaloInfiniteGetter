@@ -25,6 +25,7 @@ __all__ = (
 # noinspection PyArgumentList
 class FileContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
+
     def __init__(self, parent) -> None:
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
@@ -33,12 +34,16 @@ class FileContextMenu(QMenu):
         flush_cache: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
         import_from: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
         export_to:   QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/export.ico')), 'Export Data to...', self, triggered=self.export_data)
-        self.addAction(open_in)
-        self.addAction(flush_cache)
-        self.addAction(import_from)
-        self.addAction(export_to)
+        section_map = {
+            'Files': (open_in, flush_cache, import_from, export_to)
+        }
 
-        flush_cache.setDisabled(tuple(CACHE_PATH.iterdir()) == ())  # Set disabled if CACHE_PATH directory is empty
+        for section, actions in section_map.items():
+            self.addSection(section)
+            self.addActions(actions)
+
+        flush_cache.setDisabled(not tuple(CACHE_PATH.iterdir()))  # Set disabled if CACHE_PATH directory is empty
+
         # TODO: Add functionality and enable
         import_from.setDisabled(True)
         export_to.setDisabled(True)
@@ -48,11 +53,17 @@ class FileContextMenu(QMenu):
         """Open the user's file explorer in the current application's export directory."""
         webbrowser.open(f'file:///{CACHE_PATH}')
 
-    @staticmethod
-    def flush_cache() -> None:
+    def flush_cache(self) -> None:
         """Remove all data from cache."""
-        rmtree(CACHE_PATH)
-        CACHE_PATH.mkdir()
+        response: int = QMessageBox.warning(
+            self, 'Confirm Cache Deletion',
+            'Are you sure you want to delete the contents of the cache? This action cannot be undone.',
+            QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel
+        )
+
+        if response == QMessageBox.StandardButton.Ok:
+            rmtree(CACHE_PATH)
+            CACHE_PATH.mkdir()
 
     def import_data(self) -> None:
         """Import data from..."""
@@ -79,19 +90,21 @@ class HelpContextMenu(QMenu):
         if self._github_icon is None:
             self.__class__._github_icon = requests.get('https://github.githubassets.com/favicons/favicon.png').content
 
-        ico_pixmap = QPixmap()
-        ico_pixmap.loadFromData(self._github_icon)
+        github_pixmap = QPixmap()
+        github_pixmap.loadFromData(self._github_icon)
 
-        github_view = QAction(QIcon(ico_pixmap), 'View on GitHub', self, triggered=self.open_github)
-        create_issue = QAction(QIcon(ico_pixmap), 'Create an issue', self, triggered=self.open_issues)
-        license_view = QAction(QIcon(str(RESOURCE_PATH / 'icons/copyright.ico')), 'License', self, triggered=self.open_license)
-        about_view = QAction(QIcon(str(RESOURCE_PATH / 'icons/about.ico')), 'About', self, triggered=self.open_about)
-        self.addSection('Github')
-        self.addAction(github_view)
-        self.addAction(create_issue)
-        self.addSection('Information')
-        self.addAction(license_view)
-        self.addAction(about_view)
+        github_view:  QAction = QAction(QIcon(github_pixmap), 'View on GitHub', self, triggered=self.open_github)
+        create_issue: QAction = QAction(QIcon(github_pixmap), 'Create an issue', self, triggered=self.open_issues)
+        license_view: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/copyright.ico')), 'License', self, triggered=self.open_license)
+        about_view:   QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/about.ico')), 'About', self, triggered=self.open_about)
+        section_map = {
+            'Github': (github_view, create_issue),
+            'Information': (license_view, about_view)
+        }
+
+        for section, actions in section_map.items():
+            self.addSection(section)
+            self.addActions(actions)
 
     @staticmethod
     def open_github() -> None:
