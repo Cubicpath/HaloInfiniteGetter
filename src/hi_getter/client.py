@@ -14,7 +14,7 @@ from requests import Response
 from requests import Session
 from requests.utils import guess_json_utf
 
-from .constants import CONFIG_PATH
+from .constants import *
 from .utils import *
 
 __all__ = (
@@ -62,9 +62,6 @@ class Client:
             'x-343-authorization-spartan': self._auth
         }
         self.session.cookies.set('343-spartan-token', self._auth)
-        data_path = Path.cwd() / 'hi_data'
-        if not data_path.is_dir():
-            os.mkdir(data_path)
 
     # def _refresh_auth(self) -> None:
     #     self._AUTH = ...
@@ -87,12 +84,12 @@ class Client:
                 # response = self.get(path, **kwargs)
         return response
 
-    def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = Path.cwd(), micro_sleep: bool = True) -> dict[str, Any] | bytes | int | None:
+    def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int | None:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
         """
-        os_path: Path = dump_path / Path(('hi_data/' + path.replace('/file/', '/')).lower())
+        os_path: Path = dump_path / Path(path.replace('/file/', '/').lower())
         data: dict[str, Any] | bytes | int | None = None
 
         if not os_path.is_file():

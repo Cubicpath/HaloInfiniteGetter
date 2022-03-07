@@ -4,6 +4,7 @@
 """Module containing :py:class:`QMenu` Context Menus."""
 import sys
 import webbrowser
+from pathlib import Path
 from platform import platform
 from shutil import rmtree
 
@@ -21,6 +22,8 @@ __all__ = (
     'HelpContextMenu',
     'ToolsContextMenu',
 )
+
+_PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
 
 # noinspection PyArgumentList
@@ -135,7 +138,7 @@ class HelpContextMenu(QMenu):
         """
         if self._about is None:
             package_versions = '\n'.join(f'Using package {package}: {version}' for
-                                         package, version in current_requirement_versions(__package__.split('.', maxsplit=1)[0]).items())
+                                         package, version in current_requirement_versions(_PARENT_PACKAGE).items())
 
             self.__class__._about = ('About', f'''
 HaloInfiniteGetter by Cubicpath. A simple way to get live Halo data straight from Halo Waypoint.
@@ -161,7 +164,7 @@ class ToolsContextMenu(QMenu):
         """Create a new :py:class:`ToolsContextMenu`."""
         super().__init__(parent)
 
-        shortcut_tool: QAction = QAction('Create Shortcut', self, triggered=self.create_shortcut)
+        shortcut_tool: QAction = QAction('Create Desktop Shortcut', self, triggered=self.create_shortcut)
         section_map = {
             'Tools': (shortcut_tool,)
         }
@@ -173,4 +176,13 @@ class ToolsContextMenu(QMenu):
     @staticmethod
     def create_shortcut():
         """Create shortcut for starting program."""
-        ...
+        from pyshortcuts import make_shortcut
+        exec_path = Path(sys.executable)
+        name = exec_path.with_suffix('').name
+        if not name.endswith('w'):
+            name += 'w'
+
+        execute_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
+        make_shortcut(script=execute_path, name='HaloInfiniteGetter',
+                      description='A simple way to get live Halo data straight from Halo Waypoint.',
+                      icon=RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)

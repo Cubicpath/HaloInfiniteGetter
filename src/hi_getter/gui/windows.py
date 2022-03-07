@@ -291,15 +291,17 @@ class AppWindow(QMainWindow):
         self.toolbar = QToolBar('Toolbar', self)
         file = QAction('File', self, triggered=self.file_context_handler)
         settings = QAction('Settings', self, triggered=self.open_settings_window)
+        tools = QAction('Tools', self, triggered=self.tools_context_handler)
         help_ = QAction('Help', self, triggered=self.help_context_handler)
 
         self.addToolBar(self.toolbar)
-        for action in (file, settings, help_):
+        for action in (file, settings, tools, help_):
             self.toolbar.addSeparator()
             self.toolbar.addAction(action)
 
         file.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         settings.setMenuRole(QAction.MenuRole.PreferencesRole)
+        tools.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         help_.setMenuRole(QAction.MenuRole.AboutRole)
 
     def _init_ui(self) -> None:
@@ -430,6 +432,12 @@ class AppWindow(QMainWindow):
     def file_context_handler(self) -> None:
         """Create a new :py:class:`FileContextMenu` and show it at the cursor's position."""
         menu = FileContextMenu(self)
+        menu.move(self.cursor().pos())
+        menu.show()
+
+    def tools_context_handler(self) -> None:
+        """Create a new :py:class:`ToolsContextMenu` and show it at the cursor's position."""
+        menu = ToolsContextMenu(self)
         menu.move(self.cursor().pos())
         menu.show()
 
