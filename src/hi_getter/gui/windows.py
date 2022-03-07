@@ -422,9 +422,9 @@ class AppWindow(QMainWindow):
         window = QMainWindow()
         window.setWindowTitle(title if title is not None else self.windowTitle())
         window.setCentralWidget(frame)
-        window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
         window.setMinimumHeight(200)
         window.setMinimumWidth(300)
+        window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
         return window
 
     def file_context_handler(self) -> None:
@@ -589,8 +589,7 @@ class AppWindow(QMainWindow):
         super().show()
         if not self.shown_key_warning and self.client.auth_key is None:
             QMessageBox.warning(
-                self,
-                'Empty API Token', '''
+                self, 'Empty API Token', '''
 The spartan authorization token is not set, please set SPARTAN_AUTH environment variable and restart, or set the auth key value in Settings.
 
 You will be unable to acquire new data until a new token is provided.''')
