@@ -229,7 +229,8 @@ class SettingsWindow(QWidget):
 
     def set_key(self) -> None:
         """Set the client's auth_key to the current text in the key field."""
-        self.client.auth_key = self.key_field.text().strip().removeprefix('x-343-authorization-spartan: ')
+        key_start_index = self.key_field.text().find('v4=')
+        self.client.auth_key = self.key_field.text()[key_start_index:].rstrip()
         self.show_key()
 
     def hidden_key(self) -> str:
