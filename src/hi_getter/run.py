@@ -20,8 +20,6 @@ __all__ = (
     'run',
 )
 
-# TODO: Add ability to run using pyw
-
 SETTINGS_PATH = (CONFIG_PATH / 'settings.toml')
 
 DEFAULT_SETTINGS = {
