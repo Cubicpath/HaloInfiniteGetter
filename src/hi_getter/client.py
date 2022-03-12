@@ -123,7 +123,7 @@ class Client:
         return data
 
     def recursive_search(self, search_path: str) -> None:
-        """Recursively get Halo Infinite files linked to the search_path through Mapping keys."""
+        """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
         if self.searched_paths.get(search_path, 0) >= 2:
             return
 
@@ -159,7 +159,7 @@ class Client:
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
         })
-        response: Response = self.session.get('https://www.halowaypoint.com/halo-infinite/progression', cookies=self.cookies, headers=web_headers)
+        response: Response = self.session.get('https://www.halowaypoint.com/', cookies=self.cookies, headers=web_headers)
         self.cookies.update(response.cookies)
 
         wpauth: str | None = decode_escapes(self.cookies.get('wpauth'))
