@@ -2,6 +2,12 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
+
+__all__ = (
+    'InputField',
+    'LicenseViewer',
+)
+
 from collections.abc import Sequence
 
 from PySide6.QtCore import *
@@ -9,11 +15,6 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..constants import *
-
-__all__ = (
-    'InputField',
-    'LicenseViewer',
-)
 
 
 class InputField(QComboBox):

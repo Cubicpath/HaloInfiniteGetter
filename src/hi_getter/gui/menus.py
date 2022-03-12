@@ -2,6 +2,13 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing :py:class:`QMenu` Context Menus."""
+
+__all__ = (
+    'FileContextMenu',
+    'HelpContextMenu',
+    'ToolsContextMenu',
+)
+
 import sys
 import webbrowser
 from pathlib import Path
@@ -16,12 +23,6 @@ from .._version import __version_info__ as ver
 from ..constants import *
 from ..utils import current_requirement_versions
 from .widgets import LicenseViewer
-
-__all__ = (
-    'FileContextMenu',
-    'HelpContextMenu',
-    'ToolsContextMenu',
-)
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 

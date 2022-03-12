@@ -2,6 +2,11 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Loads data and defines the HTTP Client."""
+
+__all__ = (
+    'Client',
+)
+
 import json
 import os
 import random
@@ -18,10 +23,6 @@ from requests.utils import guess_json_utf
 
 from .constants import *
 from .utils import *
-
-__all__ = (
-    'Client',
-)
 
 load_dotenv(verbose=True)
 

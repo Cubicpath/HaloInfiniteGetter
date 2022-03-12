@@ -2,6 +2,12 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing GUI elements meant to be used as windows."""
+
+__all__ = (
+    'AppWindow',
+    'SettingsWindow',
+)
+
 import json
 import webbrowser
 from collections.abc import Callable
@@ -19,11 +25,6 @@ from ..utils import HTTP_CODE_MAP
 from .app import *
 from .menus import *
 from .widgets import *
-
-__all__ = (
-    'AppWindow',
-    'SettingsWindow',
-)
 
 
 # noinspection PyArgumentList

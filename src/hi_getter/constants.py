@@ -2,9 +2,6 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Neutral namespace for constants."""
-import re
-from pathlib import Path
-from typing import Final
 
 __all__ = (
     'CACHE_PATH',
@@ -13,6 +10,10 @@ __all__ = (
     'RESOURCE_PATH',
     'SAMPLE_RESOURCE',
 )
+
+import re
+from pathlib import Path
+from typing import Final
 
 SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
 """Example resource. Is pre-filled in the search bar."""

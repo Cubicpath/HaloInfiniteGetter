@@ -2,6 +2,11 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Initialize values and runs the application."""
+
+__all__ = (
+    'run',
+)
+
 import os
 import sys
 from typing import Final
@@ -15,10 +20,6 @@ from .constants import *
 from .gui import *
 from .tomlfile import *
 from .utils import *
-
-__all__ = (
-    'run',
-)
 
 SETTINGS_PATH = (CONFIG_PATH / 'settings.toml')
 

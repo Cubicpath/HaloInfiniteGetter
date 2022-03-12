@@ -2,6 +2,12 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module for the main application classes."""
+
+__all__ = (
+    'GetterApp',
+    'Theme',
+)
+
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -10,11 +16,6 @@ from PySide6.QtWidgets import *
 
 from ..tomlfile import *
 from ..types import CommentValue
-
-__all__ = (
-    'GetterApp',
-    'Theme',
-)
 
 
 class Theme:

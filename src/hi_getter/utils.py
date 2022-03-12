@@ -2,13 +2,6 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Utils for hi_getter."""
-import json
-import os
-import sys
-from collections.abc import Iterable
-from collections.abc import Mapping
-from http import HTTPStatus
-from pathlib import Path
 
 __all__ = (
     'current_requirement_versions',
@@ -18,8 +11,15 @@ __all__ = (
     'unique_values',
 )
 
-# pylint: disable=not-an-iterable
+import json
+import os
+import sys
+from collections.abc import Iterable
+from collections.abc import Mapping
+from http import HTTPStatus
+from pathlib import Path
 
+# pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 
 

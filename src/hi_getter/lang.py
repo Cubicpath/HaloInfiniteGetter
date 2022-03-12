@@ -2,6 +2,12 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing code related to translation and language files."""
+
+__all__ = (
+    'Language',
+    'Translator',
+)
+
 import json
 from pathlib import Path
 from string import ascii_letters
@@ -9,11 +15,6 @@ from string import digits
 from typing import Annotated
 
 from .constants import RESOURCE_PATH
-
-__all__ = (
-    'Language',
-    'Translator',
-)
 
 LANG_PATH: Path = RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""

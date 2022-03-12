@@ -2,6 +2,14 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module used for TOML configurations."""
+
+__all__ = (
+    'BetterTomlDecoder',
+    'BetterTomlEncoder',
+    'make_comment_val',
+    'TomlFile',
+)
+
 import warnings
 from collections.abc import Callable
 from pathlib import Path
@@ -13,14 +21,6 @@ import toml.encoder
 
 from .types import CommentValue
 from .types import TOML_VALUE
-
-__all__ = (
-    'BetterTomlDecoder',
-    'BetterTomlEncoder',
-    'make_comment_val',
-    'TomlFile',
-)
-
 
 SPECIAL_PATH_PREFIX = '$PATH$|'
 
