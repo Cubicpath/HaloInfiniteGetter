@@ -340,12 +340,13 @@ class AppWindow(QMainWindow):
         text_top = QHBoxLayout()
         text_bottom = QHBoxLayout()
         bottom = QGridLayout()
+        statuses = QHBoxLayout()
 
         self.setCentralWidget(main_widget)
         main_widget.setLayout(layout)
-        layout.addLayout(top, 0, 0, Qt.AlignTop)
-        layout.addLayout(self.outputs, 10, 0, Qt.AlignHCenter)
-        layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
+        layout.addLayout(top, 10, 0, Qt.AlignTop)
+        layout.addLayout(self.outputs, 20, 0, Qt.AlignHCenter)
+        layout.addLayout(bottom, 30, 0, Qt.AlignBottom)
 
         top.addWidget(subdomain_field)
         top.addWidget(root_folder_field)
@@ -377,6 +378,8 @@ class AppWindow(QMainWindow):
         text_bottom.addWidget(self.clear_text, Qt.AlignLeft)
         text_bottom.addWidget(self.copy_text, Qt.AlignLeft)
         text_bottom.setSpacing(5)
+
+        bottom.addLayout(statuses, 10, 0)
 
         subdomain_field.setFixedWidth(125)
         subdomain_field.setDisabled(True)
