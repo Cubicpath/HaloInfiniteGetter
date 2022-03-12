@@ -37,27 +37,22 @@ How to use:
 - And you are done! To launch the program simply type `py -m hi_getter`
 
 ### Authentication:
-As this app is unofficial, you must use your own API key, which you can get by logging in to [HaloWaypoint] and getting
-data from the authentication headers.
+As this app is unofficial, you must use your own API key, which you can get by logging in to [HaloWaypoint] and either getting
+data from the authentication headers, or from the website's cookies.
 
-**Note: Auto-renewal of authentication keys is not currently implemented,
-so you will only be authenticated for a short amount of time.**
+**Note: Auto-renewal of authentication keys is only supported in versions 0.7+.**
 
 Guide:
 - Sign in to www.halowaypoint.com using your xbox account
-- Go to a page that requires authentication, like https://www.halowaypoint.com/halo-infinite/progression
-- Record network traffic using developer tools
-  - On Firefox -- F12 > Then navigate to the "Network" tab.
-- Click on a GET request that is getting data from a restricted domain (economy / gamecms-hacs-origin)
+- Navigate to the Cookie jar for www.halowaypoint.com
+  - On Firefox -- F12 > Move to the "Storage" tab > Under "Cookies" select https://www.halowaypoint.com
+- Double-click the "wpauth" cookie value and copy with CTRL + C
+- Open the Settings window, unlock the input by pressing the "Edit Auth Key" button, then paste the copied value.
 
-![Example Request](https://i.imgur.com/yf6Cs4D.png)
-- Under the "Request Headers" right-click the "x-343-authorization-spartan" header and select Copy.
-Open the Settings window, Unlock the input by pressing the "Edit Auth Key" button, then paste the copied value.
-
-![Headers](https://i.imgur.com/4QWxO8h.png)
 ![Settings](https://i.imgur.com/nB1nKCP.png)
 
 - Press the Set button, and you should now be authenticated!
+
 
 ### Searching:
 
