@@ -31,14 +31,17 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
         os.makedirs(path.parent)
 
     if isinstance(data, str):
+        # Write strings at text files
         path.write_text(data, encoding=encoding or default_encoding)
     elif isinstance(data, bytes):
+        # Decode bytes if provided with encoding, else write as data
         if encoding is not None:
             data = data.decode(encoding=encoding)
             path.write_text(data, encoding=encoding)
         else:
             path.write_bytes(data)
     elif isinstance(data, dict):
+        # Write dictionaries as json files
         with path.open('w', encoding=encoding or default_encoding) as file:
             json.dump(data, file, indent=2)
 

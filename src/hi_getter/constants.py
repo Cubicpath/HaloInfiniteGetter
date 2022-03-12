@@ -15,7 +15,7 @@ __all__ = (
 )
 
 SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
-"""Resource that is pre-filled for the :py:class:`hi_getter.gui.windows.AppWindow` input field."""
+"""Example resource. Is pre-filled in the search bar."""
 
 PATH_PATTERN:    Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""

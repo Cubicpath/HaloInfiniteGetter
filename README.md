@@ -21,7 +21,7 @@ may or may not be considered abuse by the aforementioned parties.**_
 
 About:
 ---------------
-HaloInfiniteGetter is a GUI application written using [PySide6][PySide] that allows you to easily view data
+HaloInfiniteGetter is a GUI application written using [Qt for Python][PySide] that allows you to easily view data
 hosted on [HaloWaypoint] API endpoints.
 
 You can view both Image and Text output, with these results being cached in the user's `.cache/hi_data` directory,
@@ -32,7 +32,7 @@ How to use:
 
 ### Installation:
 - First, install Python 3.10 using [this link][python310]
-- Then, open command prompt (Win + R -- type in "cmd.exe") and type `pip install hi_getter`
+- Then, open command prompt (Win + R -- type in "cmd") and type `pip install hi_getter`
   - Optionally, to install the latest unstable version, type `pip install git+https://github.com/Cubicpath/HaloInfiniteGetter.git`
 - And you are done! To launch the program simply type `py -m hi_getter`
 
@@ -44,7 +44,7 @@ data from the authentication headers, or from the website's cookies.
 
 Guide:
 - Sign in to www.halowaypoint.com using your xbox account
-- Navigate to the Cookie jar for www.halowaypoint.com
+- Navigate to the Cookies for www.halowaypoint.com
   - On Firefox -- F12 > Move to the "Storage" tab > Under "Cookies" select https://www.halowaypoint.com
 - Double-click the "wpauth" cookie value and copy with CTRL + C
 - Open the Settings window, unlock the input by pressing the "Edit Auth Key" button, then paste the copied value.
