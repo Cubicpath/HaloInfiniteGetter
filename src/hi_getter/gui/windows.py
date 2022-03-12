@@ -288,16 +288,16 @@ class AppWindow(QMainWindow):
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
-        self.toolbar = QToolBar('Toolbar', self)
+        toolbar = QToolBar('Toolbar', self)
         file = QAction('File', self, triggered=self.file_context_handler)
         settings = QAction('Settings', self, triggered=self.open_settings_window)
         tools = QAction('Tools', self, triggered=self.tools_context_handler)
         help_ = QAction('Help', self, triggered=self.help_context_handler)
 
-        self.addToolBar(self.toolbar)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         for action in (file, settings, tools, help_):
-            self.toolbar.addSeparator()
-            self.toolbar.addAction(action)
+            toolbar.addSeparator()
+            toolbar.addAction(action)
 
         file.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         settings.setMenuRole(QAction.MenuRole.PreferencesRole)
