@@ -200,7 +200,7 @@ class Translator:
         translate.language = 'de-GER' -> german value
     """
 
-    def __init__(self, language: Language | str):
+    def __init__(self, language: Language | str) -> None:
         self._language = self._lang_to_lang(language)
 
     def __call__(self, key: str, *args: ..., default: str | None = None) -> str:

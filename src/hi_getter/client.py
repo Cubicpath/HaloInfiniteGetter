@@ -170,7 +170,7 @@ class Client:
         if token is not None:
             self.token = token
 
-    def set_cookie(self, name: str, value: str):
+    def set_cookie(self, name: str, value: str) -> None:
         """Set cookie value in Cookie jar. Defaults cookie domain as the WEB_HOST."""
         self.cookies.set(name=name, value=value, domain=self.WEB_HOST)
 

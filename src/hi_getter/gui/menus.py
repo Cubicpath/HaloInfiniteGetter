@@ -171,7 +171,7 @@ class ToolsContextMenu(QMenu):
             self.addActions(actions)
 
     @staticmethod
-    def create_shortcut():
+    def create_shortcut() -> None:
         """Create shortcut for starting program."""
         from pyshortcuts import make_shortcut
 

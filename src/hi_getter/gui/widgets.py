@@ -19,7 +19,7 @@ __all__ = (
 class InputField(QComboBox):
     """Editable QComboBox acting as a history wrapper over QLineEdit; has no duplicate values."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setEditable(True)
         self.setDuplicatesEnabled(False)

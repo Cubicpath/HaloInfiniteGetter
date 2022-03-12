@@ -39,7 +39,7 @@ class BetterTomlDecoder(TomlPreserveCommentDecoder):
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
-    def load_value(self, v: str, strictly_valid=True):
+    def load_value(self, v: str, strictly_valid=True) -> None:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(SPECIAL_PATH_PREFIX):
             v = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
@@ -52,17 +52,17 @@ class BetterTomlEncoder(TomlEncoder):
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
     """
-    def __init__(self, _dict=dict, preserve=False):
+    def __init__(self, _dict=dict, preserve=False) -> None:
         super().__init__(_dict, preserve)
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[PurePath] = self._dump_pathlib_path
 
     @staticmethod
-    def _dump_pathlib_path(v: PurePath):
+    def _dump_pathlib_path(v: PurePath) -> str:
         """Translate :py:class:`PurePath` to string and dump."""
         return _dump_str(str(v))
 
-    def dump_value(self, v: TOML_VALUE):
+    def dump_value(self, v: TOML_VALUE) -> str:
         """Support :py:class:`Path` decoding by prefixing a :py:class:`PurePath` string with a special marker."""
         if isinstance(v, PurePath):
             if isinstance(v, Path):
