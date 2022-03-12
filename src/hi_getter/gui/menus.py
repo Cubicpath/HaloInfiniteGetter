@@ -81,18 +81,14 @@ class FileContextMenu(QMenu):
 # noinspection PyArgumentList
 class HelpContextMenu(QMenu):
     """Context menu that shows actions to help the user."""
-
     _about: tuple[str, str] | None = None
-    _github_icon: bytes | None = None
+    _github_icon: bytes = requests.get('https://github.githubassets.com/favicons/favicon.png').content
 
     def __init__(self, parent) -> None:
         """Create a new :py:class:`HelpContextMenu`."""
         super().__init__(parent)
 
         self.license_window = LicenseViewer()
-
-        if self._github_icon is None:
-            self.__class__._github_icon = requests.get('https://github.githubassets.com/favicons/favicon.png').content
 
         github_pixmap = QPixmap()
         github_pixmap.loadFromData(self._github_icon)
