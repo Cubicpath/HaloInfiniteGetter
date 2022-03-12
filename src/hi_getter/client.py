@@ -78,21 +78,18 @@ class Client:
         self.cookies.set('343-spartan-token', self.token, domain=self.WEB_HOST)
         self.cookies.set('wpauth', self.wpauth, domain=self.WEB_HOST)
 
-    def get(self, path: str, **kwargs) -> Response:
+    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
         """Get a :py:class:`Response` from HaloWaypoint and update cookies.
 
         :param path: path to append to the API root
+        :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
         response: Response = self.session.get(self.api_root + path.strip(), **kwargs)
         if not response.ok:
-            if response.status_code == 401:
-                ...
-                # TODO: Automatically refresh api key
-                # print('test')
-                # self._refresh_auth()
-                # time.sleep(1)
-                # response = self.get(path, **kwargs)
+            if response.status_code == 401 and update_auth_on_401 and self.wpauth is not None:
+                self.refresh_auth()
+                response = self.get(path, False, **kwargs)
         return response
 
     def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int | None:
