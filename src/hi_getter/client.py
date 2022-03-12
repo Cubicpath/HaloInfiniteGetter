@@ -97,7 +97,7 @@ class Client:
 
         :return: dict for JSON objects, bytes for media, int for error codes.
         """
-        os_path: Path = dump_path / Path(path.replace('/file/', '/').lower())
+        os_path: Path = dump_path / self.sub_host.replace('-', '_') / self.PARENT_PATH.strip('/') / path.replace('/file/', '/').lower()
         data: dict[str, Any] | bytes | int | None = None
 
         if not os_path.is_file():
