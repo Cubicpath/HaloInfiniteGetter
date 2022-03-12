@@ -48,7 +48,6 @@ class SettingsWindow(QWidget):
             f'the parent folder exist, and that the file contains valid TOML.'
         ))
 
-        self.save_button:             QPushButton
         self.theme_dropdown:          QComboBox
         self.aspect_ratio_dropdown:   QComboBox
         self.transformation_dropdown: QComboBox
@@ -58,10 +57,87 @@ class SettingsWindow(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.save_button:             QPushButton = QPushButton('Save', clicked=self.save_settings)
-        reload_button:                QPushButton = QPushButton('Reload', clicked=self.reload_settings)
-        import_button:                QPushButton = QPushButton('Import Settings', clicked=self.import_settings)
-        export_button:                QPushButton = QPushButton('Export Settings', clicked=self.export_settings)
+
+        def save_settings() -> None:
+            """Save current settings to the user's settings file."""
+            save_button.setDisabled(True)
+            self.settings.save()
+
+        def reload_settings() -> None:
+            """Reload current settings from the user's settings file."""
+            save_button.setDisabled(True)
+            if self.settings.reload():
+                self.refresh_dropdowns()
+
+        def import_settings() -> None:
+            """Import settings from a chosen TOML file."""
+            save_button.setDisabled(True)
+            file_path = Path(QFileDialog.getOpenFileName(self, 'Import Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            if file_path.is_file():
+                if self.settings.import_from(file_path):
+                    self.refresh_dropdowns()
+
+        def export_settings() -> None:
+            """Export current settings to a chosen file location."""
+            file_path = Path(QFileDialog.getSaveFileName(self, 'Export Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            if str(file_path) != '.':
+                self.settings.export_to(file_path)
+
+        def set_aspect_ratio_method() -> None:
+            """Set the media output's aspect ratio method to the chosen method."""
+            save_button.setDisabled(False)
+            self.settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
+            self.getter_window.resize_image()
+
+        def set_transformation_method() -> None:
+            """Set the media output's image transformation method to the chosen method."""
+            save_button.setDisabled(False)
+            self.settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
+            self.getter_window.resize_image()
+
+        def set_line_wrap_method() -> None:
+            """Set the text output's line wrap method to the chosen method."""
+            save_button.setDisabled(False)
+            self.settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
+            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(self.settings['gui/text_output/line_wrap_mode']))
+
+        def set_theme() -> None:
+            """Set selected theme to the chosen theme."""
+            save_button.setDisabled(False)
+            self.settings['gui/themes/selected'] = self.getter_window.APP.sorted_themes[self.theme_dropdown.currentIndex()].id
+
+        def hide_key() -> None:
+            """Hide API key."""
+            self.key_set_button.setDisabled(True)
+            self.key_field.setDisabled(True)
+            self.key_field.setText(self.client.hidden_key())
+            self.key_field.setAlignment(Qt.AlignCenter)
+
+        def show_key() -> None:
+            """Toggle hiding and showing the API key."""
+            if not self.key_field.isEnabled():
+                self.key_field.setAlignment(Qt.AlignLeft)
+                self.key_field.setText(self.client.wpauth)
+                self.key_field.setDisabled(False)
+                self.key_field.setFocus()
+                self.key_set_button.setDisabled(False)
+            else:
+                hide_key()
+
+        def copy_key() -> None:
+            """Copy the current key value to the system clipboard."""
+            if self.clipboard is not None:
+                self.clipboard.setText(self.client.wpauth)
+
+        def set_key() -> None:
+            """Set the client's auth_key to the current text in the key field."""
+            self.client.wpauth = self.key_field.text()
+            show_key()
+
+        save_button:                  QPushButton = QPushButton('Save', clicked=save_settings)
+        reload_button:                QPushButton = QPushButton('Reload', clicked=reload_settings)
+        import_button:                QPushButton = QPushButton('Import Settings', clicked=import_settings)
+        export_button:                QPushButton = QPushButton('Export Settings', clicked=export_settings)
         theme_label:                  QLabel = QLabel('Current Theme: ')
         aspect_ratio_label:           QLabel = QLabel('Aspect Ratio: ')
         transformation_label:         QLabel = QLabel('Image Transform: ')
@@ -71,15 +147,15 @@ class SettingsWindow(QWidget):
         self.transformation_dropdown: QComboBox = QComboBox(self)
         self.line_wrap_dropdown:      QComboBox = QComboBox(self)
         open_editor_button:           QPushButton = QPushButton('Open Settings in Editor', clicked=self.open_editor)
-        key_show_button:              QPushButton = QPushButton('Edit Auth Key', clicked=self.show_key)
-        key_copy_button:              QPushButton = QPushButton('Copy to Clipboard', clicked=self.copy_key)
-        self.key_set_button:          QPushButton = QPushButton('Set', clicked=self.set_key)
+        key_show_button:              QPushButton = QPushButton('Edit Auth Key', clicked=show_key)
+        key_copy_button:              QPushButton = QPushButton('Copy to Clipboard', clicked=copy_key)
+        self.key_set_button:          QPushButton = QPushButton('Set', clicked=set_key)
         self.key_field:               QLineEdit = QLineEdit(returnPressed=self.key_set_button.click)
 
-        self.theme_dropdown.activated.connect(self.set_theme)
-        self.transformation_dropdown.activated.connect(self.set_transformation_method)
-        self.line_wrap_dropdown.activated.connect(self.set_line_wrap_method)
-        self.aspect_ratio_dropdown.activated.connect(self.set_aspect_ratio_method)
+        self.theme_dropdown.activated.connect(set_theme)
+        self.transformation_dropdown.activated.connect(set_transformation_method)
+        self.line_wrap_dropdown.activated.connect(set_line_wrap_method)
+        self.aspect_ratio_dropdown.activated.connect(set_aspect_ratio_method)
 
         # Define layouts
         layout = QGridLayout()  # Main layout
@@ -97,7 +173,7 @@ class SettingsWindow(QWidget):
         layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
 
         # Add top widgets
-        top.addWidget(self.save_button)
+        top.addWidget(save_button)
         top.addWidget(reload_button)
         top.addWidget(import_button)
         top.addWidget(export_button)
@@ -137,8 +213,8 @@ class SettingsWindow(QWidget):
         self.line_wrap_dropdown.addItems(('No Wrap', 'Widget', 'Fixed Pixel', 'Fixed Column'))
         self.line_wrap_dropdown.setCurrentIndex(self.settings['gui/text_output/line_wrap_mode'])
 
-        self.save_button.setMaximumWidth(50)
-        self.save_button.setDisabled(True)
+        save_button.setMaximumWidth(50)
+        save_button.setDisabled(True)
         reload_button.setMaximumWidth(60)
 
         self.key_field.setAlignment(Qt.AlignCenter)
@@ -153,92 +229,9 @@ class SettingsWindow(QWidget):
         self.line_wrap_dropdown.setCurrentIndex(self.settings['gui/text_output/line_wrap_mode'])
         self.theme_dropdown.setCurrentIndex(self.getter_window.APP.theme_index_map[self.settings['gui/themes/selected']])
 
-    def save_settings(self) -> None:
-        """Save current settings to the user's settings file."""
-        self.save_button.setDisabled(True)
-        self.settings.save()
-
-    def reload_settings(self) -> None:
-        """Reload current settings from the user's settings file."""
-        self.save_button.setDisabled(True)
-        if self.settings.reload():
-            self.refresh_dropdowns()
-
-    def import_settings(self) -> None:
-        """Import settings from a chosen TOML file."""
-        self.save_button.setDisabled(True)
-        file_path = Path(QFileDialog.getOpenFileName(self, 'Import Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
-        if file_path.is_file():
-            if self.settings.import_from(file_path):
-                self.refresh_dropdowns()
-
-    def export_settings(self) -> None:
-        """Export current settings to a chosen file location."""
-        file_path = Path(QFileDialog.getSaveFileName(self, 'Export Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
-        if str(file_path) != '.':
-            self.settings.export_to(file_path)
-
     def open_editor(self) -> None:
         """Open current settings file in the user's default text editor."""
         webbrowser.open(str(self.settings.path))
-
-    def set_aspect_ratio_method(self) -> None:
-        """Set the media output's aspect ratio method to the chosen method."""
-        self.save_button.setDisabled(False)
-        self.settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
-        self.getter_window.resize_image()
-
-    def set_transformation_method(self) -> None:
-        """Set the media output's image transformation method to the chosen method."""
-        self.save_button.setDisabled(False)
-        self.settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
-        self.getter_window.resize_image()
-
-    def set_line_wrap_method(self) -> None:
-        """Set the text output's line wrap method to the chosen method."""
-        self.save_button.setDisabled(False)
-        self.settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
-        self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(self.settings['gui/text_output/line_wrap_mode']))
-
-    def set_theme(self) -> None:
-        """Set selected theme to the chosen theme."""
-        self.save_button.setDisabled(False)
-        self.settings['gui/themes/selected'] = self.getter_window.APP.sorted_themes[self.theme_dropdown.currentIndex()].id
-
-    def hide_key(self) -> None:
-        """Hide API key."""
-        self.key_set_button.setDisabled(True)
-        self.key_field.setDisabled(True)
-        self.key_field.setText(self.hidden_key())
-        self.key_field.setAlignment(Qt.AlignCenter)
-
-    def show_key(self) -> None:
-        """Toggle hiding and showing the API key."""
-        if not self.key_field.isEnabled():
-            self.key_field.setAlignment(Qt.AlignLeft)
-            self.key_field.setText(self.client.wpauth)
-            self.key_field.setDisabled(False)
-            self.key_field.setFocus()
-            self.key_set_button.setDisabled(False)
-        else:
-            self.hide_key()
-
-    def copy_key(self) -> None:
-        """Copy the current key value to the system clipboard."""
-        if self.clipboard is not None:
-            self.clipboard.setText(self.client.wpauth)
-
-    def set_key(self) -> None:
-        """Set the client's auth_key to the current text in the key field."""
-        self.client.wpauth = self.key_field.text()
-        self.show_key()
-
-    def hidden_key(self) -> str:
-        """:return: The first and last 3 characters of the API key, seperated by periods."""
-        key = self.client.wpauth
-        if key is not None and len(key) > 10:
-            return f'{key[:3]}{"." * 50}{key[-3:]}'
-        return 'None'
 
     # # # # # Events
 
@@ -248,7 +241,7 @@ class SettingsWindow(QWidget):
         self.key_set_button.setDisabled(True)
         self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setDisabled(True)
-        self.key_field.setText(self.hidden_key())
+        self.key_field.setText(self.client.hidden_key())
 
 
 # TODO: Add exception logger
@@ -289,11 +282,21 @@ class AppWindow(QMainWindow):
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
+
+        def context_menu_handler(menu_class: type) -> None:
+            """Create a new :py:class:`QMenu` and show it at the cursor's position."""
+            if not issubclass(menu_class, QMenu):
+                raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
+
+            menu = menu_class(self)
+            menu.move(self.cursor().pos())
+            menu.show()
+
         toolbar = QToolBar('Toolbar', self)
-        file = QAction('File', self, triggered=lambda: self.context_menu_handler(FileContextMenu))
+        file = QAction('File', self, triggered=lambda: context_menu_handler(FileContextMenu))
         settings = QAction('Settings', self, triggered=self.open_settings_window)
-        tools = QAction('Tools', self, triggered=lambda: self.context_menu_handler(ToolsContextMenu))
-        help_ = QAction('Help', self, triggered=lambda: self.context_menu_handler(HelpContextMenu))
+        tools = QAction('Tools', self, triggered=lambda: context_menu_handler(ToolsContextMenu))
+        help_ = QAction('Help', self, triggered=lambda: context_menu_handler(HelpContextMenu))
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         for action in (file, settings, tools, help_):
@@ -307,26 +310,98 @@ class AppWindow(QMainWindow):
 
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""
+
+        def setup_detached_window(id_: str, frame: QFrame, handler: Callable, title: str = None) -> QMainWindow:
+            """Set up a detached window, with the layout represented as a :py:class:`QFrame`.
+
+            :param id_: unique name for the window
+            :param frame: Set the window's central widget as this QFrame.
+            :param handler: Callable to execute when closed, to reattach the frame to the parent window.
+            :param title: The window title.
+            """
+            window = QMainWindow()
+            window.setWindowTitle(title if title is not None else self.windowTitle())
+            window.setCentralWidget(frame)
+            window.setMinimumHeight(200)
+            window.setMinimumWidth(300)
+            window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
+            return window
+
+        def toggle_media_detach() -> None:
+            """Handler for detaching and reattaching the media output."""
+            if self.detached['media'] is None:
+                self.detached['media'] = window = setup_detached_window('media', self.media_frame, toggle_media_detach, 'Detached Image Output')
+                self.image_detach_button.setText('Reattach')
+                window.resizeEvent = lambda *_: self.resize_image()
+                window.show()
+            else:
+                window = self.detached['media']
+                self.detached['media'] = None
+                window.close()
+
+                self.outputs.insertWidget(0, self.media_frame)
+                self.image_detach_button.setText('Detach')
+
+        def toggle_text_detach() -> None:
+            """Handler for detaching and reattaching the text output."""
+            if self.detached['text'] is None:
+                self.detached['text'] = window = setup_detached_window('text', self.text_frame, toggle_text_detach, 'Detached Text Output')
+                self.text_detach_button.setText('Reattach')
+                window.show()
+            else:
+                window = self.detached['text']
+                self.detached['text'] = None
+                window.close()
+
+                self.outputs.insertWidget(-1, self.text_frame)
+                self.text_detach_button.setText('Detach')
+
+        def clear_current_pixmap() -> None:
+            """Clear the current image from the media output."""
+            self.image_size_label.setText('Image Output: ')
+            self.clear_picture.setDisabled(True)
+            self.copy_picture.setDisabled(True)
+            self.media_output.scene().clear()
+            self.current_image = None
+
+        def copy_current_pixmap() -> None:
+            """Copy the current image to the system clipboard."""
+            if self.clipboard is not None:
+                self.clipboard.setPixmap(self.current_image)
+
+        def clear_current_text() -> None:
+            """Clear the current text from the text output."""
+            self.text_size_label.setText('Text Output: ')
+            self.clear_text.setDisabled(True)
+            self.copy_text.setDisabled(True)
+            self.text_output.setDisabled(True)
+            self.text_output.clear()
+
+        def copy_current_text() -> None:
+            """Copy the current output text to the system clipboard."""
+            if self.clipboard is not None:
+                self.clipboard.setText(self.text_output.toPlainText())
+
         self.media_frame = QFrame()
         self.image_size_label = QLabel('Image Output:')
-        self.image_detach_button = QPushButton('Detach', clicked=self.toggle_media_detach)
+        self.image_detach_button = QPushButton('Detach', clicked=toggle_media_detach)
         self.media_output = QGraphicsView()
 
         self.text_frame = QFrame()
         self.text_size_label = QLabel('Text Output:')
-        self.text_detach_button = QPushButton('Detach', clicked=self.toggle_text_detach)
+        self.text_detach_button = QPushButton('Detach', clicked=toggle_text_detach)
         self.text_output = QTextBrowser()
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
 
-        self.clear_picture = QPushButton('Clear', clicked=self.clear_current_pixmap)
-        self.copy_picture = QPushButton('Copy Picture', clicked=self.copy_current_pixmap)
-        self.clear_text = QPushButton('Clear', clicked=self.clear_current_text)
-        self.copy_text = QPushButton('Copy Text', clicked=self.copy_current_text)
+        self.clear_picture = QPushButton('Clear', clicked=clear_current_pixmap)
+        self.copy_picture = QPushButton('Copy Picture', clicked=copy_current_pixmap)
+        self.clear_text = QPushButton('Clear', clicked=clear_current_text)
+        self.copy_text = QPushButton('Copy Text', clicked=copy_current_text)
 
         subdomain_field = QLineEdit(self.client.sub_host)
         root_folder_field = QLineEdit(self.client.PARENT_PATH)
-        get_button = QPushButton('GET', clicked=self.get_resource)
-        scan_button = QPushButton('SCAN', clicked=self.scan_resource)
+        get_button = QPushButton('GET', clicked=self.use_input)
+        scan_button = QPushButton('SCAN', clicked=lambda: self.use_input(scan=True))
 
         self.input_field = InputField()
 
@@ -386,7 +461,7 @@ class AppWindow(QMainWindow):
         subdomain_field.setDisabled(True)
         root_folder_field.setFixedWidth(28)
         root_folder_field.setDisabled(True)
-        self.input_field.lineEdit().returnPressed.connect(self.get_resource)  # Connect pressing enter while in the line edit to get_resource
+        self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.input_field.addItem(SAMPLE_RESOURCE)
         # subdomain_field.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomain_field.text()))
         get_button.setMaximumWidth(40)
@@ -418,30 +493,6 @@ class AppWindow(QMainWindow):
         self.copy_text.setMinimumWidth(80)
         self.copy_text.setDisabled(True)
 
-    def _setup_detached_window(self, id_: str, frame: QFrame, handler: Callable, title: str = None) -> QMainWindow:
-        """Set up a detached window, with the layout represented as a :py:class:`QFrame`.
-
-        :param frame: Set the window's central widget as this QFrame.
-        :param handler: Callable to execute when closed, to reattach the frame to the parent window.
-        :param title: The window title.
-        """
-        window = QMainWindow()
-        window.setWindowTitle(title if title is not None else self.windowTitle())
-        window.setCentralWidget(frame)
-        window.setMinimumHeight(200)
-        window.setMinimumWidth(300)
-        window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
-        return window
-
-    def context_menu_handler(self, menu_class: type) -> None:
-        """Create a new :py:class:`QMenu` and show it at the cursor's position."""
-        if not issubclass(menu_class, QMenu):
-            raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
-
-        menu = menu_class(self)
-        menu.move(self.cursor().pos())
-        menu.show()
-
     def open_settings_window(self) -> None:
         """Show the :py:class:`SettingsWindow` and bring it the front."""
         self.settings_window.show()
@@ -452,77 +503,14 @@ class AppWindow(QMainWindow):
         """Set input field text to path and get resource."""
         self.input_field.addItem(path)
         self.input_field.setCurrentIndex(self.input_field.count() - 1)
-        self.get_resource()
+        self.use_input()
 
-    def toggle_media_detach(self) -> None:
-        """Handler for detaching and reattaching the media output."""
-        if self.detached['media'] is None:
-            self.detached['media'] = window = self._setup_detached_window('media', self.media_frame, self.toggle_media_detach, 'Detached Image Output')
-            self.image_detach_button.setText('Reattach')
-            window.resizeEvent = lambda *_: self.resize_image()
-            window.show()
-        else:
-            window = self.detached['media']
-            self.detached['media'] = None
-            window.close()
-
-            self.outputs.insertWidget(0, self.media_frame)
-            self.image_detach_button.setText('Detach')
-
-    def toggle_text_detach(self) -> None:
-        """Handler for detaching and reattaching the text output."""
-        if self.detached['text'] is None:
-            self.detached['text'] = window = self._setup_detached_window('text', self.text_frame, self.toggle_text_detach, 'Detached Text Output')
-            self.text_detach_button.setText('Reattach')
-            window.show()
-        else:
-            window = self.detached['text']
-            self.detached['text'] = None
-            window.close()
-
-            self.outputs.insertWidget(-1, self.text_frame)
-            self.text_detach_button.setText('Detach')
-
-    def clear_current_pixmap(self) -> None:
-        """Clear the current image from the media output."""
-        self.image_size_label.setText('Image Output: ')
-        self.clear_picture.setDisabled(True)
-        self.copy_picture.setDisabled(True)
-        self.media_output.scene().clear()
-        self.current_image = None
-
-    def copy_current_pixmap(self) -> None:
-        """Copy the current image to the system clipboard."""
-        if self.clipboard is not None:
-            self.clipboard.setPixmap(self.current_image)
-
-    def clear_current_text(self) -> None:
-        """Clear the current text from the text output."""
-        self.text_size_label.setText('Text Output: ')
-        self.clear_text.setDisabled(True)
-        self.copy_text.setDisabled(True)
-        self.text_output.setDisabled(True)
-        self.text_output.clear()
-
-    def copy_current_text(self) -> None:
-        """Copy the current output text to the system clipboard."""
-        if self.clipboard is not None:
-            self.clipboard.setText(self.text_output.toPlainText())
-
-    def get_resource(self) -> None:
-        """Get a single resource from the resource path."""
-        self.use_input(op_code=10)
-
-    def scan_resource(self) -> None:
-        """Recursively search through the resource path's JSON data for more links to scan, if any."""
-        self.use_input(op_code=20)
-
-    def use_input(self, op_code: int = 0) -> None:
+    def use_input(self, scan: bool = False) -> None:
         """Use the current input field's text to search through the Client for data.
 
         Automatically handles media and text data.
 
-        :param op_code: What operation to do. Get: 10 | Scan: 20
+        :param scan: Whether to recursively scan a resource.
         """
         self._clicked_input_field = True
         user_input = self.input_field.currentText()
@@ -533,7 +521,10 @@ class AppWindow(QMainWindow):
                 user_input = f'progression/file/{user_input}'
 
         if user_input:
-            if op_code == 10:
+            if scan:
+                self.client.recursive_search(user_input)
+                self.use_input()
+            else:
                 data = self.client.get_hi_data(user_input)
                 if isinstance(data, bytes):
                     self.clear_picture.setDisabled(False)
@@ -569,9 +560,6 @@ class AppWindow(QMainWindow):
                                                  f'{len(data.splitlines())} lines; '
                                                  f'{len(data)} characters '
                                                  f'({round(len(data.encode("utf8")) / 1024, 4)} KiB)')
-            elif op_code == 20:
-                self.client.recursive_search(user_input)
-                self.use_input(op_code=10)
 
     def resize_image(self) -> None:
         """Refresh the media output with a resized version of the current image."""

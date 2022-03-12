@@ -123,6 +123,13 @@ class Client:
 
         return data
 
+    def hidden_key(self) -> str:
+        """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
+        key = self.wpauth
+        if key is not None and len(key) > 6:
+            return f'{key[:3]}{"." * 50}{key[-3:]}'
+        return 'None'
+
     def recursive_search(self, search_path: str) -> None:
         """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
         if self.searched_paths.get(search_path, 0) >= 2:
