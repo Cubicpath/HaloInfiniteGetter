@@ -6,35 +6,28 @@ import warnings
 from collections.abc import Callable
 from pathlib import Path
 from pathlib import PurePath
-from types import UnionType
 from typing import Any
 
-import toml
-from toml.decoder import CommentValue
-from toml.decoder import TomlDecodeError
-from toml.decoder import TomlPreserveCommentDecoder
-from toml.encoder import _dump_str
-from toml.encoder import TomlEncoder
-# noinspection PyProtectedMember
+import toml.decoder
+import toml.encoder
+
+from .types import CommentValue
+from .types import TOML_VALUE
 
 __all__ = (
     'BetterTomlDecoder',
     'BetterTomlEncoder',
-    'CommentValue',
     'make_comment_val',
-    'TOML_VALUE',
     'TomlFile',
 )
 
-TOML_VALUE: UnionType = dict | list | float | int | str | bool | PurePath
-"""Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 SPECIAL_PATH_PREFIX = '$PATH$|'
 
 # TODO: Move event_subscribers to an EventBus class
 
 
-class BetterTomlDecoder(TomlPreserveCommentDecoder):
+class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
     """Inherits the effects of :py:class:`toml.TomlPreserveCommentEncoder`.
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
@@ -47,7 +40,7 @@ class BetterTomlDecoder(TomlPreserveCommentDecoder):
         return super().load_value(v=v, strictly_valid=strictly_valid)
 
 
-class BetterTomlEncoder(TomlEncoder):
+class BetterTomlEncoder(toml.TomlEncoder):
     """Combines both the effects of :py:class:`toml.TomlPreserveCommentEncoder` and of :py:class:`toml.TomlPathlibEncoder`.
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
@@ -60,7 +53,8 @@ class BetterTomlEncoder(TomlEncoder):
     @staticmethod
     def _dump_pathlib_path(v: PurePath) -> str:
         """Translate :py:class:`PurePath` to string and dump."""
-        return _dump_str(str(v))
+        # noinspection PyProtectedMember
+        return toml.encoder._dump_str(str(v))
 
     def dump_value(self, v: TOML_VALUE) -> str:
         """Support :py:class:`Path` decoding by prefixing a :py:class:`PurePath` string with a special marker."""
@@ -224,7 +218,7 @@ class TomlFile:
                     else:
                         self._data = toml_data
 
-            except (LookupError, OSError, TomlDecodeError):
+            except (LookupError, OSError, toml.TomlDecodeError):
                 pass  # Pass to end of function, to fail.
 
             else:
