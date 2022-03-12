@@ -289,10 +289,10 @@ class AppWindow(QMainWindow):
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
         toolbar = QToolBar('Toolbar', self)
-        file = QAction('File', self, triggered=self.file_context_handler)
+        file = QAction('File', self, triggered=lambda: self.context_menu_handler(FileContextMenu))
         settings = QAction('Settings', self, triggered=self.open_settings_window)
-        tools = QAction('Tools', self, triggered=self.tools_context_handler)
-        help_ = QAction('Help', self, triggered=self.help_context_handler)
+        tools = QAction('Tools', self, triggered=lambda: self.context_menu_handler(ToolsContextMenu))
+        help_ = QAction('Help', self, triggered=lambda: self.context_menu_handler(HelpContextMenu))
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         for action in (file, settings, tools, help_):
@@ -432,21 +432,12 @@ class AppWindow(QMainWindow):
         window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
         return window
 
-    def file_context_handler(self) -> None:
-        """Create a new :py:class:`FileContextMenu` and show it at the cursor's position."""
-        menu = FileContextMenu(self)
-        menu.move(self.cursor().pos())
-        menu.show()
+    def context_menu_handler(self, menu_class: type) -> None:
+        """Create a new :py:class:`QMenu` and show it at the cursor's position."""
+        if not issubclass(menu_class, QMenu):
+            raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
 
-    def tools_context_handler(self) -> None:
-        """Create a new :py:class:`ToolsContextMenu` and show it at the cursor's position."""
-        menu = ToolsContextMenu(self)
-        menu.move(self.cursor().pos())
-        menu.show()
-
-    def help_context_handler(self) -> None:
-        """Create a new :py:class:`HelpContextMenu` and show it at the cursor's position."""
-        menu = HelpContextMenu(self)
+        menu = menu_class(self)
         menu.move(self.cursor().pos())
         menu.show()
 
