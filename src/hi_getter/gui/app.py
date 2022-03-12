@@ -7,9 +7,9 @@ from pathlib import Path
 
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
-from toml.decoder import CommentValue
 
 from ..tomlfile import *
+from ..types import CommentValue
 
 __all__ = (
     'GetterApp',
