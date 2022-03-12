@@ -8,10 +8,12 @@ import random
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote as decode_escapes
 
 from dotenv import load_dotenv
 from requests import Response
 from requests import Session
+from requests.cookies import RequestsCookieJar
 from requests.utils import guess_json_utf
 
 from .constants import *
@@ -23,22 +25,32 @@ __all__ = (
 
 load_dotenv(verbose=True)
 
+TOKEN_PATH = CONFIG_PATH / 'token'
+WPAUTH_PATH = CONFIG_PATH / 'wpauth'
+
 
 class Client:
-    """HTTP REST Client that interfaces with HaloWaypoint to get data."""
+    """HTTP REST Client that interfaces with Halo Waypoint to get data."""
     HOST: str = 'svc.halowaypoint.com'
     PARENT_PATH: str = '/hi/'
+    WEB_HOST: str = 'www.halowaypoint.com'
 
     def __init__(self, **kwargs) -> None:
-        """Initializes HaloWaypoint Client
+        """Initializes Halo Waypoint Client
 
-        API Key is first taken from auth kwarg, then SPARTAN_AUTH environment variable, then from the user's config directory.
+        token is first taken from token kwarg, then SPARTAN_AUTH environment variable, then from user's token file.
+        wpauth is first taken from wpauth kwarg, then WAYPOINT_AUTH environment variable, then from the user's wpauth file.
 
-        :keyword auth: Token to authenticate self to 343 API.
+        :keyword token: Token to authenticate self to 343 API.
+        :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
-        user_key_path = CONFIG_PATH / 'api_key'
-        self._auth: str = kwargs.pop('auth', os.getenv('SPARTAN_AUTH', user_key_path.read_text(encoding='utf8').strip() if user_key_path.is_file() else None))
         self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
+        self._token: str = kwargs.pop('token', os.getenv('SPARTAN_AUTH', None))
+        self._wpauth: str = kwargs.pop('wpauth', os.getenv('WAYPOINT_AUTH', None))
+        if self._token is None and TOKEN_PATH.is_file():
+            self._token = TOKEN_PATH.read_text(encoding='utf8').strip()
+        if self._wpauth is None and WPAUTH_PATH.is_file():
+            self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
 
         self.searched_paths = {}
         self.session: Session = Session()
@@ -59,12 +71,12 @@ class Client:
             'Sec-GPC': '1',
             'TE': 'trailers',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
-            'x-343-authorization-spartan': self._auth
+            'x-343-authorization-spartan': self.token
         }
-        self.session.cookies.set('343-spartan-token', self._auth)
 
-    # def _refresh_auth(self) -> None:
-    #     self._AUTH = ...
+        self.cookies = RequestsCookieJar()
+        self.cookies.set('343-spartan-token', self.token, domain=self.WEB_HOST)
+        self.cookies.set('wpauth', self.wpauth, domain=self.WEB_HOST)
 
     def get(self, path: str, **kwargs) -> Response:
         """Get a :py:class:`Response` from HaloWaypoint and update cookies.
@@ -73,7 +85,6 @@ class Client:
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
         response: Response = self.session.get(self.api_root + path.strip(), **kwargs)
-        self.session.cookies.update(response.cookies)
         if not response.ok:
             if response.status_code == 401:
                 ...
@@ -136,16 +147,64 @@ class Client:
                 elif end in ('png', 'jpg', 'jpeg', 'webp', 'gif'):
                     self.get_hi_data('images/file/' + value, True)
 
-    @property
-    def auth_key(self) -> str:
-        """343 auth token to authenticate self to HaloWaypoint."""
-        return self._auth
+    def refresh_auth(self) -> None:
+        """Refreshes authentication to Halo Waypoint servers.
 
-    @auth_key.setter
-    def auth_key(self, value: str) -> None:
-        self._auth = value
-        self.session.headers.update({'x-343-authorization-spartan': self._auth})
-        self.session.cookies.set('343-spartan-token', self._auth)
+        wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
+        """
+        web_headers = self.session.headers.copy()
+        web_headers.pop('x-343-authorization-spartan')
+        web_headers.update({
+            'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
+            'Host': self.WEB_HOST,
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+        })
+        response: Response = self.session.get('https://www.halowaypoint.com/halo-infinite/progression', cookies=self.cookies, headers=web_headers)
+        self.cookies.update(response.cookies)
+
+        wpauth: str | None = decode_escapes(self.cookies.get('wpauth'))
+        if wpauth is not None and self.wpauth != wpauth:
+            self.wpauth = wpauth
+
+        token: str | None = decode_escapes(self.cookies.get('343-spartan-token'))
+        if token is not None:
+            self.token = token
+
+    def set_cookie(self, name: str, value: str):
+        """Set cookie value in Cookie jar. Defaults cookie domain as the WEB_HOST."""
+        self.cookies.set(name=name, value=value, domain=self.WEB_HOST)
+
+    @property
+    def token(self) -> str:
+        """343 auth token to authenticate self to API endpoints."""
+        return self._token
+
+    @token.setter
+    def token(self, value: str) -> None:
+        value = decode_escapes(value)
+        key_start_index = value.find('v4=')
+        if key_start_index == -1:
+            raise ValueError('token value is missing version identifier ("v4=") to signify start.')
+
+        self._token = value[key_start_index:].rstrip()
+        self.session.headers.update({'x-343-authorization-spartan': self._token})
+        self.set_cookie('343-spartan-token', self._token)
+        TOKEN_PATH.write_text(self._token)
+
+    @property
+    def wpauth(self) -> str:
+        """Halo Waypoint auth key to create 343 spartan tokens."""
+        return self._wpauth
+
+    @wpauth.setter
+    def wpauth(self, value: str) -> None:
+        value = decode_escapes(value)
+        self._wpauth = value.split(':')[-1].strip()
+        self.set_cookie('wpauth', self._wpauth)
+        WPAUTH_PATH.write_text(self._wpauth)
 
     @property
     def api_root(self) -> str:
