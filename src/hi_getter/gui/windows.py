@@ -215,7 +215,7 @@ class SettingsWindow(QWidget):
         """Toggle hiding and showing the API key."""
         if not self.key_field.isEnabled():
             self.key_field.setAlignment(Qt.AlignLeft)
-            self.key_field.setText(self.client.auth_key)
+            self.key_field.setText(self.client.wpauth)
             self.key_field.setDisabled(False)
             self.key_field.setFocus()
             self.key_set_button.setDisabled(False)
@@ -225,19 +225,18 @@ class SettingsWindow(QWidget):
     def copy_key(self) -> None:
         """Copy the current key value to the system clipboard."""
         if self.clipboard is not None:
-            self.clipboard.setText(self.client.auth_key)
+            self.clipboard.setText(self.client.wpauth)
 
     def set_key(self) -> None:
         """Set the client's auth_key to the current text in the key field."""
-        key_start_index = self.key_field.text().find('v4=')
-        self.client.auth_key = self.key_field.text()[key_start_index:].rstrip()
+        self.client.wpauth = self.key_field.text()
         self.show_key()
 
     def hidden_key(self) -> str:
-        """:return: The first 5 and last 4 characters of the API key, seperated by periods."""
-        key = self.client.auth_key
+        """:return: The first and last 3 characters of the API key, seperated by periods."""
+        key = self.client.wpauth
         if key is not None and len(key) > 10:
-            return f'{key[:5]}{"." * 50}{key[-4:]}'
+            return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
     # # # # # Events
@@ -548,7 +547,9 @@ class AppWindow(QMainWindow):
                     self.current_image.loadFromData(data)
                     size = self.current_image.size()
 
-                    self.image_size_label.setText(f'Image Output: {size.width()}x{size.height()} ({round(len(data) / 1024, 4)} KiB)')
+                    self.image_size_label.setText(f'Image Output: '
+                                                  f'{size.width()}x{size.height()} '
+                                                  f'({round(len(data) / 1024, 4)} KiB)')
                     self.resize_image()
                 else:
                     self.clear_text.setDisabled(False)
@@ -596,7 +597,7 @@ class AppWindow(QMainWindow):
     def show(self) -> None:
         """After window is displayed, show warnings if not already warned."""
         super().show()
-        if not self.shown_key_warning and self.client.auth_key is None:
+        if not self.shown_key_warning and self.client.token is None:
             QMessageBox.warning(
                 self, 'Empty API Token', '''
 The spartan authorization token is not set, please set SPARTAN_AUTH environment variable and restart, or set the auth key value in Settings.
