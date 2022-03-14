@@ -80,7 +80,7 @@ class Client:
         self.cookies.set('wpauth', self.wpauth, domain=self.WEB_HOST)
 
     def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
-        """Get a :py:class:`Response` from HaloWaypoint and update cookies.
+        """Get a :py:class:`Response` from HaloWaypoint.
 
         :param path: path to append to the API root
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
