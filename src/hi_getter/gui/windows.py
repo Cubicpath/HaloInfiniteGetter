@@ -392,30 +392,26 @@ class AppWindow(QMainWindow):
             if self.clipboard is not None:
                 self.clipboard.setText(self.text_output.toPlainText())
 
-        # TODO: Add type hints to widgets
+        self.input_field:         HistoryComboBox = HistoryComboBox()
+        self.media_frame:         QFrame = QFrame()
+        self.image_size_label:    QLabel = QLabel('Image Output:')
+        self.image_detach_button: QPushButton = QPushButton('Detach', clicked=toggle_media_detach)
+        self.media_output:        QGraphicsView = QGraphicsView()
+        self.text_frame:          QFrame = QFrame()
+        self.text_size_label:     QLabel = QLabel('Text Output:')
+        self.text_detach_button:  QPushButton = QPushButton('Detach', clicked=toggle_text_detach)
+        self.text_output:         QTextBrowser = QTextBrowser()
+        self.clear_picture:       QPushButton = QPushButton('Clear', clicked=clear_current_pixmap)
+        self.copy_picture:        QPushButton = QPushButton('Copy Picture', clicked=copy_current_pixmap)
+        self.clear_text:          QPushButton = QPushButton('Clear', clicked=clear_current_text)
+        self.copy_text:           QPushButton = QPushButton('Copy Text', clicked=copy_current_text)
+        subdomain_field:          QLineEdit = QLineEdit(self.client.sub_host)
+        root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
+        get_button:               QPushButton = QPushButton('GET', clicked=self.use_input)
+        scan_button:              QPushButton = QPushButton('SCAN', clicked=lambda: self.use_input(scan=True))
 
-        self.media_frame = QFrame()
-        self.image_size_label = QLabel('Image Output:')
-        self.image_detach_button = QPushButton('Detach', clicked=toggle_media_detach)
-        self.media_output = QGraphicsView()
-
-        self.text_frame = QFrame()
-        self.text_size_label = QLabel('Text Output:')
-        self.text_detach_button = QPushButton('Detach', clicked=toggle_text_detach)
-        self.text_output = QTextBrowser()
+        self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
-
-        self.clear_picture = QPushButton('Clear', clicked=clear_current_pixmap)
-        self.copy_picture = QPushButton('Copy Picture', clicked=copy_current_pixmap)
-        self.clear_text = QPushButton('Clear', clicked=clear_current_text)
-        self.copy_text = QPushButton('Copy Text', clicked=copy_current_text)
-
-        subdomain_field = QLineEdit(self.client.sub_host)
-        root_folder_field = QLineEdit(self.client.parent_path)
-        get_button = QPushButton('GET', clicked=self.use_input)
-        scan_button = QPushButton('SCAN', clicked=lambda: self.use_input(scan=True))
-
-        self.input_field = HistoryComboBox()
 
         main_widget = QWidget()
         layout = QGridLayout()
@@ -473,9 +469,7 @@ class AppWindow(QMainWindow):
         subdomain_field.setDisabled(True)
         root_folder_field.setFixedWidth(28)
         root_folder_field.setDisabled(True)
-        self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.input_field.addItem(HI_SAMPLE_RESOURCE)
-        # subdomain_field.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomain_field.text()))
         get_button.setMaximumWidth(40)
         scan_button.setMaximumWidth(55)
         self.image_size_label.setMinimumWidth(50)
