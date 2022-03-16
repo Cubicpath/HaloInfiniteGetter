@@ -15,6 +15,7 @@ from collections.abc import Callable
 from pathlib import Path
 from pathlib import PurePath
 from typing import Any
+from typing import Final
 
 import toml.decoder
 import toml.encoder
@@ -22,7 +23,7 @@ import toml.encoder
 from .types import CommentValue
 from .types import TOML_VALUE
 
-SPECIAL_PATH_PREFIX = '$PATH$|'
+SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
 # TODO: Move event_subscribers to an EventBus class
 

@@ -9,6 +9,7 @@ __all__ = (
 
 import os
 import sys
+from pathlib import Path
 from typing import Final
 
 import toml
@@ -21,9 +22,9 @@ from .gui import *
 from .tomlfile import *
 from .utils import *
 
-SETTINGS_PATH = (CONFIG_PATH / 'settings.toml')
+SETTINGS_PATH: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
-DEFAULT_SETTINGS = {
+DEFAULT_SETTINGS: Final[dict] = {
     'language': 'en-US',
     'gui': {
         'window': {
@@ -34,11 +35,11 @@ DEFAULT_SETTINGS = {
             'selected': 'light',
             'dark': {
                 'display_name': 'Breeze Dark',
-                'path': RESOURCE_PATH / 'themes/dark'
+                'path': HI_RESOURCE_PATH / 'themes/dark'
             },
             'light': {
                 'display_name': 'Breeze Light',
-                'path': RESOURCE_PATH / 'themes/light'
+                'path': HI_RESOURCE_PATH / 'themes/light'
             }
         },
         'media_output': {
@@ -55,7 +56,7 @@ DEFAULT_SETTINGS = {
 
 def _create_paths() -> None:
     """Create files and paths if they do not exist."""
-    for dir_path in (CACHE_PATH, CONFIG_PATH):
+    for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
         if not dir_path.is_dir():
             os.makedirs(dir_path)
     if not SETTINGS_PATH.is_file():

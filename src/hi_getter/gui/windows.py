@@ -19,9 +19,9 @@ from PySide6.QtWidgets import *
 
 from .._version import __version__
 from ..client import Client
+from ..client import HTTP_CODE_MAP
 from ..constants import *
-from ..tomlfile import *
-from ..utils import HTTP_CODE_MAP
+from ..tomlfile import TomlFile
 from .app import *
 from .menus import *
 from .widgets import *
@@ -39,7 +39,7 @@ class SettingsWindow(QWidget):
         self.getter_window = parent
         self.settings: TomlFile = parent.APP.settings
         self.setWindowTitle('Settings')
-        self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/settings.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
         self.resize(size)
         self.setFixedWidth(self.width())
         self.settings.hook_event('$fail:import', lambda: QMessageBox.warning(
@@ -72,14 +72,14 @@ class SettingsWindow(QWidget):
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
             save_button.setDisabled(True)
-            file_path = Path(QFileDialog.getOpenFileName(self, 'Import Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            file_path = Path(QFileDialog.getOpenFileName(self, 'Import Settings', str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
                 if self.settings.import_from(file_path):
                     self.refresh_dropdowns()
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""
-            file_path = Path(QFileDialog.getSaveFileName(self, 'Export Settings', str(CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            file_path = Path(QFileDialog.getSaveFileName(self, 'Export Settings', str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if str(file_path) != '.':
                 self.settings.export_to(file_path)
 
@@ -262,7 +262,7 @@ class AppWindow(QMainWindow):
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
         # self.themes: dict[str, str] = themes
         self.setWindowTitle(f'HaloInfiniteGetter v{__version__}')
-        self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/hi.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -462,7 +462,7 @@ class AppWindow(QMainWindow):
         root_folder_field.setFixedWidth(28)
         root_folder_field.setDisabled(True)
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
-        self.input_field.addItem(SAMPLE_RESOURCE)
+        self.input_field.addItem(HI_SAMPLE_RESOURCE)
         # subdomain_field.returnPressed.connect(lambda *_: self.client.__class__.host.fset(self.client, subdomain_field.text()))
         get_button.setMaximumWidth(40)
         scan_button.setMaximumWidth(55)
@@ -550,7 +550,7 @@ class AppWindow(QMainWindow):
                     output = data
                     replaced = set()
 
-                    for match in PATH_PATTERN.finditer(data):
+                    for match in HI_PATH_PATTERN.finditer(data):
                         match = match[0].replace('"', '')
                         if match not in replaced:
                             output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')

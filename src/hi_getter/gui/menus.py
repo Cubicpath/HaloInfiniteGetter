@@ -35,10 +35,10 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
-        open_in:     QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
-        flush_cache: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
-        import_from: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
-        export_to:   QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/export.ico')), 'Export Data to...', self, triggered=self.export_data)
+        open_in:     QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
+        flush_cache: QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
+        import_from: QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)
+        export_to:   QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')), 'Export Data to...', self, triggered=self.export_data)
         section_map = {
             'Files': (open_in, flush_cache, import_from, export_to)
         }
@@ -47,7 +47,7 @@ class FileContextMenu(QMenu):
             self.addSection(section)
             self.addActions(actions)
 
-        flush_cache.setDisabled(not tuple(CACHE_PATH.iterdir()))  # Set disabled if CACHE_PATH directory is empty
+        flush_cache.setDisabled(not tuple(HI_CACHE_PATH.iterdir()))  # Set disabled if HI_CACHE_PATH directory is empty
 
         # TODO: Add functionality and enable
         import_from.setDisabled(True)
@@ -56,7 +56,7 @@ class FileContextMenu(QMenu):
     @staticmethod
     def open_explorer() -> None:
         """Open the user's file explorer in the current application's export directory."""
-        webbrowser.open(f'file:///{CACHE_PATH}')
+        webbrowser.open(f'file:///{HI_CACHE_PATH}')
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
@@ -67,8 +67,8 @@ class FileContextMenu(QMenu):
         )
 
         if response == QMessageBox.StandardButton.Ok:
-            rmtree(CACHE_PATH)
-            CACHE_PATH.mkdir()
+            rmtree(HI_CACHE_PATH)
+            HI_CACHE_PATH.mkdir()
 
     def import_data(self) -> None:
         """Import data from..."""
@@ -96,8 +96,8 @@ class HelpContextMenu(QMenu):
 
         github_view:  QAction = QAction(QIcon(github_pixmap), 'View on GitHub', self, triggered=self.open_github)
         create_issue: QAction = QAction(QIcon(github_pixmap), 'Create an issue', self, triggered=self.open_issues)
-        license_view: QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/copyright.ico')), 'License', self, triggered=self.open_license)
-        about_view:   QAction = QAction(QIcon(str(RESOURCE_PATH / 'icons/about.ico')), 'About', self, triggered=self.open_about)
+        license_view: QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')), 'License', self, triggered=self.open_license)
+        about_view:   QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')), 'About', self, triggered=self.open_about)
         section_map = {
             'Github': (github_view, create_issue),
             'Information': (license_view, about_view)
@@ -124,7 +124,7 @@ class HelpContextMenu(QMenu):
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         """Open the application's about section."""
-        self.setWindowIcon(QIcon(str(RESOURCE_PATH / 'icons/about.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())
 
     def about_message(self) -> tuple[str, str]:
@@ -184,4 +184,4 @@ class ToolsContextMenu(QMenu):
         execute_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
         make_shortcut(script=execute_path, name='HaloInfiniteGetter',
                       description='A simple way to get live Halo data straight from Halo Waypoint.',
-                      icon=RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
+                      icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)

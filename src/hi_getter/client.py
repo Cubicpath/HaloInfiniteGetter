@@ -5,14 +5,17 @@
 
 __all__ = (
     'Client',
+    'HTTP_CODE_MAP',
 )
 
 import json
 import os
 import random
 import time
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any
+from typing import Final
 from urllib.parse import unquote as decode_escapes
 
 from dotenv import load_dotenv
@@ -22,12 +25,21 @@ from requests.cookies import RequestsCookieJar
 from requests.utils import guess_json_utf
 
 from .constants import *
-from .utils import *
+from .utils import dump_data
+from .utils import unique_values
 
 load_dotenv(verbose=True)
 
-TOKEN_PATH = CONFIG_PATH / 'token'
-WPAUTH_PATH = CONFIG_PATH / 'wpauth'
+TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / 'token'
+WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / 'wpauth'
+
+# pylint: disable=not-an-iterable
+HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
+for _description in (
+        (401, 'No permission -- Please supply a valid wpauth key.'),
+):
+    HTTP_CODE_MAP[_description[0]] = (_description[0], _description[1])
+del _description
 
 
 class Client:

@@ -14,9 +14,9 @@ from string import ascii_letters
 from string import digits
 from typing import Annotated
 
-from .constants import RESOURCE_PATH
+from .constants import HI_RESOURCE_PATH
 
-LANG_PATH: Path = RESOURCE_PATH / 'lang'
+LANG_PATH: Path = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 

@@ -6,7 +6,6 @@
 __all__ = (
     'current_requirement_versions',
     'dump_data',
-    'HTTP_CODE_MAP',
     'patch_windows_taskbar_icon',
     'unique_values',
 )
@@ -16,11 +15,7 @@ import os
 import sys
 from collections.abc import Iterable
 from collections.abc import Mapping
-from http import HTTPStatus
 from pathlib import Path
-
-# pylint: disable=not-an-iterable
-HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 
 
 def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
