@@ -43,10 +43,9 @@ class HistoryComboBox(QComboBox):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        # self.
         self.setEditable(True)
         self.setDuplicatesEnabled(False)
-        self.setLineEdit(self.line_edit_class())
+        self.setLineEdit(self.line_edit_class(parent=self))
 
     # noinspection PyTypeChecker
     def addItem(self, text: str, **kwargs) -> None:
@@ -76,12 +75,12 @@ class HistoryComboBox(QComboBox):
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's license file."""
 
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
 
         Has a fixed size of 750x380.
         """
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.setWindowTitle('License Viewer')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
         self.resize(QSize(750, 380))
