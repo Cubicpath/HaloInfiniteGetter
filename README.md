@@ -124,7 +124,7 @@ and stylesheet in the same folder level.
 The current builtin themes are:
 - Breeze Dark
 - Breeze Light
-- Legacy (Default PySide)
+- Legacy (Default Qt)
 
 While the current breeze themes are slightly modified versions, you can view the original themes at [BreezeStyleSheets].
 

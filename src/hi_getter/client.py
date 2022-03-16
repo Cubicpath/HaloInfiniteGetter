@@ -36,7 +36,7 @@ WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / 'wpauth'
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 for _description in (
-        (401, 'No permission -- Please supply a valid wpauth key.'),
+        (401, 'No permission -- Your API token is most likely invalid.'),
 ):
     code = _description[0]
     HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], _description[1])
@@ -55,11 +55,11 @@ class Client:
         :keyword token: Token to authenticate self to 343 API.
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
-        self.HOST: str = 'svc.halowaypoint.com'
-        self.WEB_HOST: str = 'www.halowaypoint.com'
-        self.parent_path: str = '/hi/'
-        self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
-        self.searched_paths = {}
+        self.SVC_HOST:       str = 'svc.halowaypoint.com'
+        self.WEB_HOST:       str = 'www.halowaypoint.com'
+        self.parent_path:    str = '/hi/'
+        self.sub_host:       str = 'gamecms-hacs-origin'  # Must be defined before session headers
+        self.searched_paths: dict = {}
 
         self._token: str | None = kwargs.pop('token', os.getenv('SPARTAN_AUTH', None))
         if self._token is None and TOKEN_PATH.is_file():
@@ -167,8 +167,6 @@ class Client:
                 elif end in ('png', 'jpg', 'jpeg', 'webp', 'gif'):
                     self.get_hi_data('images/file/' + value, True)
 
-    # FIXME: Not properly re-authenticating after using clear API token button
-
     def refresh_auth(self) -> None:
         """Refreshes authentication to Halo Waypoint servers.
 
@@ -256,7 +254,7 @@ class Client:
     @property
     def host(self) -> str:
         """Host to send to."""
-        return f'{self.sub_host}.{self.HOST}'
+        return f'{self.sub_host}.{self.SVC_HOST}'
 
     @host.setter
     def host(self, value: str) -> None:

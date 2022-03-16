@@ -33,7 +33,7 @@ class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
-    def load_value(self, v: str, strictly_valid=True) -> None:
+    def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str | bool]:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(SPECIAL_PATH_PREFIX):
             v = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
@@ -142,7 +142,7 @@ class TomlFile:
 
         :param key: Key to get value from.
         """
-        scope, path = self._search_scope(key, 'get')
+        scope, path = self._search_scope(key, mode='get')
 
         for sub in self._event_subscribers.get(f'$get:{key}', []):
             sub[0](*sub[1], **sub[2])
