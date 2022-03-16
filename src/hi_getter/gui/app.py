@@ -14,12 +14,14 @@ from pathlib import Path
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
+from ..lang import Translator
 from ..tomlfile import *
 from ..types import CommentValue
 
 
 class Theme:
     """Object containing data about a Theme."""
+    __slots__ = ('id', 'style', 'display_name')
 
     def __init__(self, id: str, style: str = '', display_name: str | None = None) -> None:
         """Create a new Theme using a unique ID, the style data (.qss file content), and an optional display name.
@@ -41,6 +43,7 @@ class GetterApp(QApplication):
     def __init__(self, argv: Sequence[str], settings: TomlFile) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
+        self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}  # PyCharm detects this as a dict[str, str], despite explicit type hints.
         self.theme_index_map: dict[str, int] = {}
@@ -80,10 +83,9 @@ class GetterApp(QApplication):
                 file.close()
 
         # noinspection PyUnresolvedReferences
-        self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes)}
+        self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes())}
         self.update_stylesheet()
 
-    @property
     def sorted_themes(self) -> list[Theme]:
         """List of themes sorted by their display name."""
         # noinspection PyTypeChecker

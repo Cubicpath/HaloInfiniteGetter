@@ -184,6 +184,8 @@ class Client:
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
         })
+
+        # FIXME: Not properly re-authenticating after using clear API token button
         response: Response = self.session.get('https://www.halowaypoint.com/', cookies=self.cookies, headers=web_headers)
         self.cookies.update(response.cookies)
 

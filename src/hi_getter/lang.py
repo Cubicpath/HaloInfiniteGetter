@@ -14,7 +14,7 @@ from string import ascii_letters
 from string import digits
 from typing import Annotated
 
-from .constants import HI_RESOURCE_PATH
+from .constants import *
 
 LANG_PATH: Path = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
@@ -178,9 +178,17 @@ class Language:
         :param args: Formatting arguments; packed into tuple and used with str modulus.
         :param default: Default string if key doesn't exist. (Is not formatted)
         """
+        # Default value is key if not overridden
+        default = default if default is not None else key
         result = self._data.get(key, default)
+
+        # Dont format default value
         if result is not default:
             result = result % args
+        else:
+            quote = '"'
+            for arg1 in (f'%{str(arg0) if not isinstance(arg0, str) else quote + arg0 + quote}%' for arg0 in args):
+                result += arg1
 
         return result
 
@@ -206,7 +214,7 @@ class Translator:
 
     def __call__(self, key: str, *args: ..., default: str | None = None) -> str:
         """Syntax sugar for get_translation."""
-        return self.get_translation(key)
+        return self.get_translation(key, *args, default=default if default is not None else key)
 
     @property
     def language(self) -> Language:
@@ -219,7 +227,7 @@ class Translator:
 
     def get_translation(self, key: str, *args: ..., default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
-        return self.language.get(key, *args, default=default)
+        return self.language.get(key, *args, default=default if default is not None else key)
 
     @staticmethod
     def _lang_to_lang(language: Language | str) -> Language:
