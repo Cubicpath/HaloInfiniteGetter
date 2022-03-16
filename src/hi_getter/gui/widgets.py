@@ -4,10 +4,12 @@
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
 
 __all__ = (
-    'InputField',
+    'BetterLineEdit',
+    'HistoryComboBox',
     'LicenseViewer',
 )
 
+from collections.abc import Callable
 from collections.abc import Sequence
 
 from PySide6.QtCore import *
@@ -17,13 +19,34 @@ from PySide6.QtWidgets import *
 from ..constants import *
 
 
-class InputField(QComboBox):
-    """Editable QComboBox acting as a history wrapper over QLineEdit; has no duplicate values."""
+class BetterLineEdit(QLineEdit):
+    """A :py:class:`QLineEdit` with an added paste listener."""
+
+    def __init__(self, *args, pasted: Callable | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if pasted is not None:
+            vars(self)['pasted'] = pasted
+
+    def pasted(self):
+        """Function called when a paste key combo is detected."""
+
+    def keyPressEvent(self, event):
+        """Call self.pasted on paste."""
+        super().keyPressEvent(event)
+        if event.matches(QKeySequence.Paste):
+            self.pasted()
+
+
+class HistoryComboBox(QComboBox):
+    """Editable :py:class:`QComboBox` acting as a history wrapper over :py:class:`BetterLineEdit`; has no duplicate values."""
+    line_edit_class = BetterLineEdit
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        # self.
         self.setEditable(True)
         self.setDuplicatesEnabled(False)
+        self.setLineEdit(self.line_edit_class())
 
     # noinspection PyTypeChecker
     def addItem(self, text: str, **kwargs) -> None:

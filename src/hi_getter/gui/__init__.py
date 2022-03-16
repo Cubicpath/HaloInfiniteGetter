@@ -5,11 +5,15 @@
 
 __all__ = (
     'AppWindow',
+    'BetterLineEdit',
     'FileContextMenu',
     'GetterApp',
     'HelpContextMenu',
+    'HistoryComboBox',
     'LicenseViewer',
     'SettingsWindow',
+    'Theme',
+    'ToolsContextMenu',
 )
 
 from .app import *

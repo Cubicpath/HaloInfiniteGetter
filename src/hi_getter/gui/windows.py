@@ -131,8 +131,12 @@ class SettingsWindow(QWidget):
 
         def set_key() -> None:
             """Set the client's auth_key to the current text in the key field."""
-            self.client.wpauth = self.key_field.text()
+            self.client.wpauth = self.key_field.text().strip() or None
             show_key()
+
+        def clear_token() -> None:
+            self.client.token = None
+            self.token_clear_button.setDisabled(True)
 
         save_button:                  QPushButton = QPushButton('Save', clicked=save_settings)
         reload_button:                QPushButton = QPushButton('Reload', clicked=reload_settings)
@@ -147,10 +151,11 @@ class SettingsWindow(QWidget):
         self.transformation_dropdown: QComboBox = QComboBox(self)
         self.line_wrap_dropdown:      QComboBox = QComboBox(self)
         open_editor_button:           QPushButton = QPushButton('Open Settings in Editor', clicked=self.open_editor)
-        key_show_button:              QPushButton = QPushButton('Edit Auth Key', clicked=show_key)
+        key_show_button:              QPushButton = QPushButton('Edit Auth Key (API Token Generation)', clicked=show_key)
         key_copy_button:              QPushButton = QPushButton('Copy to Clipboard', clicked=copy_key)
         self.key_set_button:          QPushButton = QPushButton('Set', clicked=set_key)
-        self.key_field:               QLineEdit = QLineEdit(returnPressed=self.key_set_button.click)
+        self.key_field:               BetterLineEdit = BetterLineEdit(returnPressed=self.key_set_button.click, pasted=set_key)
+        self.token_clear_button:      QPushButton = QPushButton('Clear API Token', clicked=clear_token)
 
         self.theme_dropdown.activated.connect(set_theme)
         self.transformation_dropdown.activated.connect(set_transformation_method)
@@ -165,6 +170,7 @@ class SettingsWindow(QWidget):
         output_layout = QGridLayout()
         bottom = QVBoxLayout()
         key_layout = QHBoxLayout()
+        token_layout = QHBoxLayout()
 
         # Assign positions of layouts
         self.setLayout(layout)
@@ -194,9 +200,11 @@ class SettingsWindow(QWidget):
         # Add bottom widgets
         bottom.addWidget(key_show_button)
         bottom.addLayout(key_layout)
+        bottom.addLayout(token_layout)
         key_layout.addWidget(key_copy_button)
         key_layout.addWidget(self.key_field)
         key_layout.addWidget(self.key_set_button)
+        token_layout.addWidget(self.token_clear_button)
 
         # Modify properties of widgets
         theme_label.setMaximumWidth(85)
@@ -221,6 +229,7 @@ class SettingsWindow(QWidget):
         self.key_field.setMinimumWidth(220)
         self.key_field.setFont(QFont('segoe ui', 8))
         self.key_set_button.setMinimumWidth(40)
+        self.token_clear_button.setDisabled(not self.client.token)
 
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
@@ -242,6 +251,7 @@ class SettingsWindow(QWidget):
         self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setDisabled(True)
         self.key_field.setText(self.client.hidden_key())
+        self.token_clear_button.setDisabled(not self.client.token)
 
 
 # TODO: Add exception logger
@@ -267,7 +277,7 @@ class AppWindow(QMainWindow):
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
-        self.input_field:   InputField
+        self.input_field:   HistoryComboBox
         self.media_output:  QGraphicsView
         self.text_output:   QTextBrowser
         self.clear_picture: QPushButton
@@ -382,6 +392,8 @@ class AppWindow(QMainWindow):
             if self.clipboard is not None:
                 self.clipboard.setText(self.text_output.toPlainText())
 
+        # TODO: Add type hints to widgets
+
         self.media_frame = QFrame()
         self.image_size_label = QLabel('Image Output:')
         self.image_detach_button = QPushButton('Detach', clicked=toggle_media_detach)
@@ -399,11 +411,11 @@ class AppWindow(QMainWindow):
         self.copy_text = QPushButton('Copy Text', clicked=copy_current_text)
 
         subdomain_field = QLineEdit(self.client.sub_host)
-        root_folder_field = QLineEdit(self.client.PARENT_PATH)
+        root_folder_field = QLineEdit(self.client.parent_path)
         get_button = QPushButton('GET', clicked=self.use_input)
         scan_button = QPushButton('SCAN', clicked=lambda: self.use_input(scan=True))
 
-        self.input_field = InputField()
+        self.input_field = HistoryComboBox()
 
         main_widget = QWidget()
         layout = QGridLayout()
