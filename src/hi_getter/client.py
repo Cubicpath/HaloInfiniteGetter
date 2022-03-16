@@ -38,7 +38,8 @@ HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in
 for _description in (
         (401, 'No permission -- Please supply a valid wpauth key.'),
 ):
-    HTTP_CODE_MAP[_description[0]] = (_description[0], _description[1])
+    code = _description[0]
+    HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], _description[1])
 del _description
 
 
