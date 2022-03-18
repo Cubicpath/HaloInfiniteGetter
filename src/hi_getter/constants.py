@@ -9,6 +9,7 @@ __all__ = (
     'HI_PATH_PATTERN',
     'HI_RESOURCE_PATH',
     'HI_SAMPLE_RESOURCE',
+    'HI_URL_PATTERN',
 )
 
 import re
@@ -24,6 +25,15 @@ HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalen
 
 HI_PATH_PATTERN:    Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
+
+HI_URL_PATTERN:     Final[re.Pattern] = re.compile(
+    r'(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|'
+    r'[a-z0-9.\-]+[.][a-z]{2,}/)(?:[^\s()<>{}\[\]]+|'
+    r'\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|'
+    r'\([^\s]+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|'
+    r'\([^\s]+?\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’])|'
+    r'(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.][a-z]{2,}\b/?(?!@))')
+"""Regex pattern for finding URLs. Derived from https://gist.github.com/gruber/8891611."""
 
 # Paths
 
