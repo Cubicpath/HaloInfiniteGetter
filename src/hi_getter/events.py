@@ -24,9 +24,13 @@ class DeferredCallable:
     This allows the value of the stored arguments to dynamically change depending on
     when the :py:class:`DeferredCallable` is executed.
     """
-    __slots__ = ('__no_event_arg__', 'callable', 'args', 'kwargs')
+    __slots__ = ('__no_event_arg__', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
 
-    def __init__(self, __callable: Callable, /, *args: Any | Callable, _event: bool = False, **kwargs: Any | Callable) -> None:
+    def __init__(self, __callable: Callable, /, *args: Any | Callable,
+                 _event: bool = False,
+                 _call_funcs: bool = True,
+                 _call_types: bool = False,
+                 **kwargs: Any | Callable) -> None:
         """Creates a new :py:class:`DeferredCallable`.
 
         :param __callable: Callable to store for later execution.
@@ -35,21 +39,26 @@ class DeferredCallable:
         :param kwargs: keyword arguments to store
         """
         self.__no_event_arg__ = not _event
-        self.callable: Callable = __callable
-        self.args:     tuple[Any | Callable, ...] = args
-        self.kwargs:   dict[str, Any | Callable] = kwargs
+        self.call_funcs: bool = _call_funcs
+        self.call_types: bool = _call_types
+        self.callable:   Callable = __callable
+        self.args:       tuple[Any | Callable, ...] = args
+        self.kwargs:     dict[str, Any | Callable] = kwargs
 
     def __call__(self, *args, **kwargs) -> Any:
         """Syntax sugar for self.run()"""
         return self.run(*args, **kwargs)
 
-    def run(self, *args, call_args: bool = True, **kwargs) -> Any:
+    def __repr__(self) -> str:
+        args, kwargs = self.args, self.kwargs
+        return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
+
+    def run(self, *args, **kwargs) -> Any:
         """Run the stored :py:class:`Callable`.
 
         Takes any additional arguments and temporarily adds to the stored arguments before execution.
 
         :param args: positional arguments to pass to callable.
-        :param call_args: Whether to call callable arguments.
         :param kwargs: keyword arguments to pass callable.
         """
         # Add additional arguments from local args
@@ -57,9 +66,15 @@ class DeferredCallable:
         kwargs |= self.kwargs  # PEP 0584
 
         # Evaluate all callable arguments
-        if call_args:
-            args:   Generator[Any] = (arg() if callable(arg) else arg for arg in args)
-            kwargs: dict[Any] = {key: val() if callable(val) else val for key, val in kwargs.items()}
+        args:   Generator[Any] = (arg() if callable(arg) and (
+                (isinstance(arg, type) and self.call_types) or
+                (not isinstance(arg, type) and self.call_funcs)
+        ) else arg for arg in args)
+
+        kwargs: dict[Any] = {key: val() if callable(val) and (
+                (isinstance(val, type) and self.call_types) or
+                (not isinstance(val, type) and self.call_funcs)
+        ) else val for key, val in kwargs.items()}
 
         return self.callable(*args, **kwargs)
 
