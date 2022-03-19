@@ -411,6 +411,21 @@ class AppWindow(QMainWindow):
             if self.clipboard is not None:
                 self.clipboard.setText(self.text_output.toPlainText())
 
+        def next_in_history() -> None:
+            """View the next license."""
+            # Qt automatically rolls over to -1, so we handle it like prev_in_history
+            self.input_field.setCurrentIndex(self.input_field.currentIndex() + 1)
+            if self.input_field.currentIndex() < 0:
+                self.input_field.setCurrentIndex(0)
+            self.use_input()
+
+        def prev_in_history() -> None:
+            """View the previous license."""
+            self.input_field.setCurrentIndex(self.input_field.currentIndex() - 1)
+            if self.input_field.currentIndex() < 0:
+                self.input_field.setCurrentIndex(self.input_field.count() - 1)
+            self.use_input()
+
         self.input_field:         HistoryComboBox = HistoryComboBox()
         self.media_frame:         QFrame = QFrame()
         self.image_size_label:    QLabel = QLabel(self.APP.translator('gui.outputs.image.label_empty'))
@@ -419,7 +434,7 @@ class AppWindow(QMainWindow):
         self.text_frame:          QFrame = QFrame()
         self.text_size_label:     QLabel = QLabel(self.APP.translator('gui.outputs.text.label_empty'))
         self.text_detach_button:  QPushButton = QPushButton(self.APP.translator('gui.outputs.detach'), clicked=toggle_text_detach)
-        self.text_output:         QTextBrowser = QTextBrowser()
+        self.text_output:         BetterTextBrowser = BetterTextBrowser()
         self.clear_picture:       QPushButton = QPushButton(self.APP.translator('gui.outputs.clear'), clicked=clear_current_pixmap)
         self.copy_picture:        QPushButton = QPushButton(self.APP.translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
         self.clear_text:          QPushButton = QPushButton(self.APP.translator('gui.outputs.clear'), clicked=clear_current_text)
@@ -431,6 +446,8 @@ class AppWindow(QMainWindow):
 
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
+        self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
+        self.text_output.connect_key_to(Qt.Key_Right, next_in_history)
 
         main_widget = QWidget()
         layout = QGridLayout()
