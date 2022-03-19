@@ -50,6 +50,7 @@ class DeferredCallable:
         return self.run(*args, **kwargs)
 
     def __repr__(self) -> str:
+        """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
 

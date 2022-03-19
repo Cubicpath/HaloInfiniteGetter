@@ -8,10 +8,10 @@ __all__ = (
     'BetterTomlEncoder',
     'make_comment_val',
     'TomlFile',
+    'TomlEvents',
 )
 
 import warnings
-from collections.abc import Callable
 from pathlib import Path
 from pathlib import PurePath
 from typing import Any
@@ -20,12 +20,80 @@ from typing import Final
 import toml.decoder
 import toml.encoder
 
+from .events import *
 from .types import CommentValue
 from .types import TOML_VALUE
 
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
-# TODO: Move event_subscribers to an EventBus class
+
+class TomlEvents:
+    """Namespace for all events relating to :py:class:`TomlFile` objects."""
+
+    class File(Event):
+        """Accessing a File on disk."""
+        __slots__ = ('path',)
+
+        def __init__(self, path: Path):
+            self.path = path
+
+    class Import(File):
+        """Loading a TomlFile."""
+
+    class Reload(Import):
+        """Reloading a TomlFile."""
+
+    class Export(File):
+        """Exporting a TomlFile to disk"""
+
+    class Save(Export):
+        """Saving a TomlFile to disk."""
+
+    class Get(Event):
+        """Value is accessed."""
+        __slots__ = ('key', 'value')
+
+        def __init__(self, key: str, value: TOML_VALUE | None):
+            self.key = key
+            self.value = value
+
+    class Set(Event):
+        """Value is set."""
+        __slots__ = ('key', 'old', 'new')
+
+        class _SetKey(str):
+            """Proxy for a key :py:class:`str`.
+
+            If key was none, act as a wildcard for :py:class:`str` comparisons
+            """
+            __slots__ = ('key', 'wildcard')
+
+            def __new__(cls, key: str | None):
+                o = super().__new__(cls, key if key is not None else '%WILDCARD%')
+                return o
+
+            def __init__(self, key: str | None):
+                super().__init__()
+                self.key:      str = key
+                self.wildcard: bool = key is None
+
+            def __bool__(self):
+                return self.wildcard or self.key
+
+            def __eq__(self, other: Any):
+                return self.wildcard or self.key == other
+
+        def __init__(self, key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None):
+            self.key: str = self._SetKey(key)
+            self.old: TOML_VALUE | None = old
+            self.new: TOML_VALUE | None = new
+
+    class Fail(Event):
+        """General Failure."""
+        __slots__ = ('failure',)
+
+        def __init__(self, failure: str):
+            self.failure = failure
 
 
 class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
@@ -69,18 +137,13 @@ class BetterTomlEncoder(toml.TomlEncoder):
 class TomlFile:
     """Object that manages the getting and setting of TOML configurations.
 
-    Houses an EventBus that allows you to subscribe Callables to changes in configuration.
+    Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
 
     def __init__(self, path: Path | str, default: dict[str, TOML_VALUE] | None = None) -> None:
         self.path = path
         # FIXME: Default not working as expected during import
         self._data: dict[str, TOML_VALUE | CommentValue] = default if default is not None else {}
-        self._event_subscribers: dict[str, list[tuple[
-            Callable[[...], None],  # Callable to call
-            tuple[...],  # positional arguments
-            dict[str, Any]  # keyword arguments
-        ]]] = {}
         if self.reload() is False:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
@@ -138,26 +201,21 @@ class TomlFile:
     def get_key(self, key: str) -> TOML_VALUE | None:
         """Get a key from path. Searches with each '/' defining a new table to check.
 
-        Calls event $get:{key}.
-
         :param key: Key to get value from.
         """
         scope, path = self._search_scope(key, mode='get')
-
-        for sub in self._event_subscribers.get(f'$get:{key}', []):
-            sub[0](*sub[1], **sub[2])
 
         # Get value from CommentValue
         val = scope.get(path)
         if isinstance(val, CommentValue):
             val = val.val
 
+        EventBus['main'].fire(TomlEvents.Get(key, val))
+
         return val
 
     def set_key(self, key: str, value: TOML_VALUE, comment: str | None = None) -> None:
         """Set a key at path. Searches with each '/' defining a new table to check.
-
-        Calls event $set:{key}.
 
         :param key: Key to set.
         :param value: Value to set key as.
@@ -177,17 +235,16 @@ class TomlFile:
 
         scope[path] = value
 
-        for sub in self._event_subscribers.get(f'$set:{key}', []):
-            sub[0](*sub[1], **sub[2])
+        EventBus['main'].fire(TomlEvents.Set(key, prev_val, value))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
+        EventBus['main'].fire(TomlEvents.Save(self.path))
         return self.export_to(self.path)
 
     def reload(self) -> bool:
         """Reset settings to settings stored in self.path."""
-        for sub in self._event_subscribers.get('$reload', []):
-            sub[0](*sub[1], **sub[2])
+        EventBus['main'].fire(TomlEvents.Reload(self.path))
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
@@ -201,7 +258,10 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
+            EventBus['main'].fire(TomlEvents.Export(path))
             return True
+
+        EventBus['main'].fire(TomlEvents.Fail('export'))
         return False
 
     def import_from(self, path: Path | str, update: bool = False) -> bool:
@@ -223,24 +283,13 @@ class TomlFile:
                 pass  # Pass to end of function, to fail.
 
             else:
-                # Execute all events subscribed to $set
-                for name, event in self._event_subscribers.items():
-                    if name.startswith('$set'):
-                        for sub in event:
-                            sub[0](*sub[1], **sub[2])
-
+                EventBus['main'].fire(TomlEvents.Import(path))
+                EventBus['main'].fire(TomlEvents.Set)
                 return True
 
         # If failed:
-        for sub in self._event_subscribers.get('$fail:import', []):
-            sub[0](*sub[1], **sub[2])
+        EventBus['main'].fire(TomlEvents.Fail('import'))
         return False
-
-    def hook_event(self, key: str, f: Callable, *args, **kwargs) -> None:
-        """Hook a Callable to an event. The callable will be called with args and kwargs when the event is activated."""
-        subscribers = self._event_subscribers.get(key, [])
-        subscribers.append((f, args, kwargs))
-        self._event_subscribers[key] = subscribers
 
 
 def make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:

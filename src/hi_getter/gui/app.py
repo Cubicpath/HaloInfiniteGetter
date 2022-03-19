@@ -14,6 +14,7 @@ from pathlib import Path
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
+from ..events import *
 from ..lang import Translator
 from ..tomlfile import *
 from ..types import CommentValue
@@ -48,8 +49,9 @@ class GetterApp(QApplication):
         self.themes:          dict[str, Theme] = {}  # PyCharm detects this as a dict[str, str], despite explicit type hints.
         self.theme_index_map: dict[str, int] = {}
 
-        self.settings.hook_event('$reload', self.load_themes)
-        self.settings.hook_event('$set:gui/themes/selected', self.update_stylesheet)
+        EventBus['main'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Reload)
+        EventBus['main'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set,
+                                   event_predicate=lambda event: event.key == 'gui/themes/selected')
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""

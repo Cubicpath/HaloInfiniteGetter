@@ -35,6 +35,7 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
+        # TODO: Map texts to translation keys
         open_in:     QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')), 'Open In Explorer', self, triggered=self.open_explorer)
         flush_cache: QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')), 'Flush Cache', self, triggered=self.flush_cache)
         import_from: QAction = QAction(QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')), 'Import Data from...', self, triggered=self.import_data)

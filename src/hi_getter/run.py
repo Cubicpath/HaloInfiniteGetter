@@ -18,6 +18,7 @@ from PySide6.QtCore import *
 from ._version import __version__
 from .client import Client
 from .constants import *
+from .events import EventBus
 from .gui import *
 from .tomlfile import *
 from .utils import *
@@ -72,6 +73,7 @@ def run(*args, **kwargs) -> int:
     """
     _create_paths()
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
+    EventBus('main')
 
     APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()

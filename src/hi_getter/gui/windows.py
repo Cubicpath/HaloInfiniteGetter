@@ -21,7 +21,8 @@ from .._version import __version__
 from ..client import Client
 from ..client import HTTP_CODE_MAP
 from ..constants import *
-from ..tomlfile import TomlFile
+from ..events import *
+from ..tomlfile import TomlFile, TomlEvents
 from .app import *
 from .menus import *
 from .utils import scroll_to_top
@@ -45,10 +46,12 @@ class SettingsWindow(QWidget):
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
         self.resize(size)
         self.setFixedWidth(self.width())
-        self.settings.hook_event('$fail:import', lambda: QMessageBox.warning(
-            self, *(self.translator(*key) for key in (
+
+        # Create a self.translator DeferredCallable with every tuple acting as arguments.
+        EventBus['main'].subscribe(DeferredCallable(
+            QMessageBox.warning, self, *(DeferredCallable(self.translator, *key) for key in (
                 ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', self.settings.path)))
-        ))
+        ), TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
 
         self.theme_dropdown:          QComboBox
         self.aspect_ratio_dropdown:   QComboBox
@@ -318,10 +321,10 @@ class AppWindow(QMainWindow):
             menu.show()
 
         toolbar = QToolBar('Toolbar', self)
-        file = QAction('File', self, triggered=lambda: context_menu_handler(FileContextMenu))
+        file = QAction('File', self, triggered=DeferredCallable(context_menu_handler, FileContextMenu))
         settings = QAction('Settings', self, triggered=self.open_settings_window)
-        tools = QAction('Tools', self, triggered=lambda: context_menu_handler(ToolsContextMenu))
-        help_ = QAction('Help', self, triggered=lambda: context_menu_handler(HelpContextMenu))
+        tools = QAction('Tools', self, triggered=DeferredCallable(context_menu_handler, ToolsContextMenu))
+        help_ = QAction('Help', self, triggered=DeferredCallable(context_menu_handler, HelpContextMenu))
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         for action in (file, settings, tools, help_):
@@ -442,7 +445,7 @@ class AppWindow(QMainWindow):
         subdomain_field:          QLineEdit = QLineEdit(self.client.sub_host)
         root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
         get_button:               QPushButton = QPushButton(self.APP.translator('gui.input_field.get'), clicked=self.use_input)
-        scan_button:              QPushButton = QPushButton(self.APP.translator('gui.input_field.scan'), clicked=lambda: self.use_input(scan=True))
+        scan_button:              QPushButton = QPushButton(self.APP.translator('gui.input_field.scan'), clicked=DeferredCallable(self.use_input, scan=True))
 
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
