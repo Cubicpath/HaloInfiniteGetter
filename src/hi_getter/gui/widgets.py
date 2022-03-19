@@ -20,6 +20,7 @@ from PySide6.QtWidgets import *
 
 from ..constants import *
 from ..utils import current_requirement_licenses
+from .utils import scroll_to_top
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
@@ -162,12 +163,6 @@ class LicenseViewer(QWidget):
             self.current_license_index = len(self.LICENSE_DATA) - 1
         self.view_current_index()
 
-    def scroll_to_top(self) -> None:
-        """Move text cursor to top of text document."""
-        cursor = self.license_text_edit.textCursor()
-        cursor.setPosition(0)
-        self.license_text_edit.setTextCursor(cursor)
-
     def view_current_index(self) -> None:
         """Views the license data at the current index."""
         self.view_package(tuple(self.LICENSE_DATA.keys())[self.current_license_index])
@@ -193,4 +188,4 @@ class LicenseViewer(QWidget):
         stripped_output = stripped_output.strip()
         self.license_text_edit.setHtml(f'<body style="white-space: pre-wrap"><center>{stripped_output}</center></body>')
 
-        self.scroll_to_top()
+        scroll_to_top(self.license_text_edit)

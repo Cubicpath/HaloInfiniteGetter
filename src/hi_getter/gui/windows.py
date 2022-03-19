@@ -24,6 +24,7 @@ from ..constants import *
 from ..tomlfile import TomlFile
 from .app import *
 from .menus import *
+from .utils import scroll_to_top
 from .widgets import *
 
 
@@ -278,7 +279,6 @@ class AppWindow(QMainWindow):
         self.client:                Client = client
         self.clipboard:             QClipboard = app.clipboard()
         self.current_image:         QPixmap | None = None
-        self._clicked_input_field:  bool = False
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
         self.setWindowTitle(self.APP.translator('app.title', __version__))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
@@ -286,13 +286,19 @@ class AppWindow(QMainWindow):
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
-        self.input_field:   HistoryComboBox
-        self.media_output:  QGraphicsView
-        self.text_output:   QTextBrowser
-        self.clear_picture: QPushButton
-        self.copy_picture:  QPushButton
-        self.clear_text:    QPushButton
-        self.copy_text:     QPushButton
+        self.input_field:         HistoryComboBox
+        self.media_frame:         QFrame
+        self.image_size_label:    QLabel
+        self.image_detach_button: QPushButton
+        self.media_output:        QGraphicsView
+        self.text_frame:          QFrame
+        self.text_size_label:     QLabel
+        self.text_detach_button:  QPushButton
+        self.text_output:         BetterTextBrowser
+        self.clear_picture:       QPushButton
+        self.copy_picture:        QPushButton
+        self.clear_text:          QPushButton
+        self.copy_text:           QPushButton
 
         self._init_toolbar()
         self._init_ui()
@@ -531,8 +537,11 @@ class AppWindow(QMainWindow):
 
         :param scan: Whether to recursively scan a resource.
         """
-        self._clicked_input_field = True
         user_input = self.input_field.currentText()
+        scroll_to_top(self.text_output)
+        if not user_input:
+            return
+
         if '/file/' not in user_input:
             if user_input.endswith(('png', 'jpg', 'jpeg', 'webp', 'gif')):
                 user_input = f'images/file/{user_input}'
@@ -567,12 +576,12 @@ class AppWindow(QMainWindow):
 
                     output = data
                     replaced = set()
-
                     for match in HI_PATH_PATTERN.finditer(data):
                         match = match[0].replace('"', '')
                         if match not in replaced:
                             output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                             replaced.add(match)
+
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
                     self.text_size_label.setText(self.APP.translator('gui.outputs.text.label',
                                                                      len(data.splitlines()), len(data),

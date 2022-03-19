@@ -9,7 +9,7 @@ __all__ = (
 
 from ._version import __version__
 from ._version import __version_info__
-from .client import *
+from .client import Client
 
 __author__ = 'Cubicpath@Github <cubicpath@pm.me>'
 """Author's information."""
