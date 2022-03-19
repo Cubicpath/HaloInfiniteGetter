@@ -6,6 +6,7 @@
 __all__ = (
     'AppWindow',
     'BetterLineEdit',
+    'BetterTextBrowser',
     'FileContextMenu',
     'GetterApp',
     'HelpContextMenu',

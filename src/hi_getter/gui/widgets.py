@@ -5,6 +5,7 @@
 
 __all__ = (
     'BetterLineEdit',
+    'BetterTextBrowser',
     'HistoryComboBox',
     'LicenseViewer',
 )
