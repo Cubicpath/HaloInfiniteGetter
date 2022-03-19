@@ -27,6 +27,7 @@
           <option value="PySide6.QtWidgets.QTextBrowser.anchorClicked" />
           <option value="PySide6.QtWidgets.QComboBox.currentIndexChanged" />
           <option value="PySide6.QtWidgets.QComboBox.activated" />
+          <option value="type.__getitem__" />
         </list>
       </option>
     </inspection_tool>
