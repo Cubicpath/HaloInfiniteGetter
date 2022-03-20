@@ -73,7 +73,7 @@ def run(*args, **kwargs) -> int:
     """
     _create_paths()
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
-    EventBus('main')
+    EventBus('settings')
 
     APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()

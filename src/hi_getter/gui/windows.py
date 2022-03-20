@@ -48,7 +48,7 @@ class SettingsWindow(QWidget):
         self.setFixedWidth(self.width())
 
         # Create a self.translator DeferredCallable with every tuple acting as arguments.
-        EventBus['main'].subscribe(DeferredCallable(
+        EventBus['settings'].subscribe(DeferredCallable(
             QMessageBox.warning, self, *(DeferredCallable(self.translator, *key) for key in (
                 ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', self.settings.path)))
         ), TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')

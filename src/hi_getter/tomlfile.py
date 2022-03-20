@@ -210,7 +210,7 @@ class TomlFile:
         if isinstance(val, CommentValue):
             val = val.val
 
-        EventBus['main'].fire(TomlEvents.Get(key, val))
+        EventBus['settings'].fire(TomlEvents.Get(key, val))
 
         return val
 
@@ -235,16 +235,16 @@ class TomlFile:
 
         scope[path] = value
 
-        EventBus['main'].fire(TomlEvents.Set(key, prev_val, value))
+        EventBus['settings'].fire(TomlEvents.Set(key, prev_val, value))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
-        EventBus['main'].fire(TomlEvents.Save(self.path))
+        EventBus['settings'].fire(TomlEvents.Save(self.path))
         return self.export_to(self.path)
 
     def reload(self) -> bool:
         """Reset settings to settings stored in self.path."""
-        EventBus['main'].fire(TomlEvents.Reload(self.path))
+        EventBus['settings'].fire(TomlEvents.Reload(self.path))
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
@@ -258,10 +258,10 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
-            EventBus['main'].fire(TomlEvents.Export(path))
+            EventBus['settings'].fire(TomlEvents.Export(path))
             return True
 
-        EventBus['main'].fire(TomlEvents.Fail('export'))
+        EventBus['settings'].fire(TomlEvents.Fail('export'))
         return False
 
     def import_from(self, path: Path | str, update: bool = False) -> bool:
@@ -283,12 +283,12 @@ class TomlFile:
                 pass  # Pass to end of function, to fail.
 
             else:
-                EventBus['main'].fire(TomlEvents.Import(path))
-                EventBus['main'].fire(TomlEvents.Set)
+                EventBus['settings'].fire(TomlEvents.Import(path))
+                EventBus['settings'].fire(TomlEvents.Set)
                 return True
 
         # If failed:
-        EventBus['main'].fire(TomlEvents.Fail('import'))
+        EventBus['settings'].fire(TomlEvents.Fail('import'))
         return False
 
 
