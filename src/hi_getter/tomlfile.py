@@ -38,7 +38,7 @@ class TomlEvents:
         """Generic event for TomlFiles"""
         __slots__ = ('toml_file',)
 
-        def __init__(self, toml_file: 'TomlFile'):
+        def __init__(self, toml_file: 'TomlFile') -> None:
             self.toml_file = toml_file
 
     class File(TomlEvent):
@@ -61,44 +61,50 @@ class TomlEvents:
         """Saving a TomlFile to disk."""
         __slots__ = ('toml_file',)
 
-    class Get(TomlEvent):
-        """Value is accessed."""
-        __slots__ = ('toml_file', 'key', 'value')
+    class KeyAccess(TomlEvent):
+        """A key's value is accessed."""
+        __slots__ = ('toml_file', 'key')
 
-        def __init__(self, toml_file: 'TomlFile', key: str, value: TOML_VALUE | None):
+        def __init__(self, toml_file: 'TomlFile', key: str) -> None:
             super().__init__(toml_file=toml_file)
-            self.key = key
-            self.value = value
+            self.key: str = self._Key(key)
 
-    class Set(TomlEvent):
-        """Value is set."""
-        __slots__ = ('toml_file', 'key', 'old', 'new')
-
-        class _SetKey(str):
+        class _Key(str):
             """Proxy for a key :py:class:`str`.
 
             If key was none, act as a wildcard for :py:class:`str` comparisons
             """
             __slots__ = ('toml_file', 'key', 'wildcard')
 
-            def __new__(cls, key: str | None):
+            def __new__(cls, key: str | None) -> 'TomlEvents.KeyAccess._Key':
                 o = super().__new__(cls, key if key is not None else '%WILDCARD%')
                 return o
 
-            def __init__(self, key: str | None):
+            def __init__(self, key: str | None) -> None:
                 super().__init__()
                 self.key:      str = key
                 self.wildcard: bool = key is None
 
-            def __bool__(self):
+            def __bool__(self) -> bool:
                 return self.wildcard or self.key
 
-            def __eq__(self, other: Any):
+            def __eq__(self, other: Any) -> bool:
                 return self.wildcard or self.key == other
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None):
-            super().__init__(toml_file=toml_file)
-            self.key: str = self._SetKey(key)
+    class Get(KeyAccess):
+        """Value is given."""
+        __slots__ = ('toml_file', 'key', 'value')
+
+        def __init__(self, toml_file: 'TomlFile', key: str | None = None, value: TOML_VALUE | None = None) -> None:
+            super().__init__(toml_file=toml_file, key=key)
+            self.value = value
+
+    class Set(KeyAccess):
+        """Value is set."""
+        __slots__ = ('toml_file', 'key', 'old', 'new')
+
+        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None) -> None:
+            super().__init__(toml_file=toml_file, key=key)
             self.old: TOML_VALUE | None = old
             self.new: TOML_VALUE | None = new
 
@@ -106,7 +112,7 @@ class TomlEvents:
         """General Failure."""
         __slots__ = ('failure',)
 
-        def __init__(self, toml_file: 'TomlFile', failure: str):
+        def __init__(self, toml_file: 'TomlFile', failure: str) -> None:
             super().__init__(toml_file=toml_file)
             self.failure = failure
 
@@ -251,7 +257,7 @@ class TomlFile:
 
         scope[path] = value
 
-        EventBus['settings'].fire(TomlEvents.Set(self, key, prev_val, value))
+        EventBus['settings'].fire(TomlEvents.Set(self, key, prev_val, value.val if isinstance(value, CommentValue) else value))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
@@ -268,13 +274,13 @@ class TomlFile:
 
         :return: True if successful, otherwise False.
         """
-        # TODO: upgrade similarly to import_from
         path = Path(path)  # Make sure path is of type Path
         if path.parent.is_dir():
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
             EventBus['settings'].fire(TomlEvents.Export(self))
+            EventBus['settings'].fire(TomlEvents.Get(self))
             return True
 
         EventBus['settings'].fire(TomlEvents.Fail(self, 'export'))
