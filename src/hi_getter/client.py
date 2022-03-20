@@ -195,7 +195,7 @@ class Client:
         if token is not None:
             self.token = token
 
-    def delete_cookie(self, name: str):
+    def delete_cookie(self, name: str) -> None:
         """Delete given cookie if cookie exists, else pass."""
         if name in self.cookies:
             self.cookies.clear(domain=self.WEB_HOST, path='/', name=name)

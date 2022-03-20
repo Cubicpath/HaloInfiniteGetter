@@ -13,6 +13,7 @@ __all__ = (
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Sequence
+from typing import Optional
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -28,19 +29,37 @@ _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 class BetterLineEdit(QLineEdit):
     """A :py:class:`QLineEdit` with an added paste listener."""
 
-    def __init__(self, *args, pasted: Callable | None = None, **kwargs):
+    def __init__(self, *args, pasted: Optional[Callable] = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if pasted is not None:
             vars(self)['pasted'] = pasted
 
-    def pasted(self):
+    def pasted(self) -> None:
         """Function called when a paste key combo is detected."""
 
-    def keyPressEvent(self, event: QKeyEvent):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         """Call self.pasted on paste."""
         super().keyPressEvent(event)
         if event.matches(QKeySequence.Paste):
             self.pasted()
+
+
+class BetterTextBrowser(QTextBrowser):
+    """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.key_callable_map: defaultdict[int, Callable] = defaultdict(lambda: lambda: None)
+
+    # noinspection PyTypeChecker
+    def connect_key_to(self, key: Qt.Key, func: Callable) -> None:
+        """Connect a :py:class:`Callable` to a key press."""
+        self.key_callable_map[int(key)] = func
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Execute :py:class:`Callable` mapped to the key press."""
+        super().keyPressEvent(event)
+        self.key_callable_map[event.key()]()
 
 
 class HistoryComboBox(QComboBox):
@@ -72,28 +91,10 @@ class HistoryComboBox(QComboBox):
 
         super().addItem(text, **kwargs)
 
-    def addItems(self, texts: Sequence[str]) -> None:
+    def addItems(self, texts: Sequence[str], **_) -> None:
         """self.addItem for text in texts."""
         for text in texts:
             self.addItem(text)
-
-
-class BetterTextBrowser(QTextBrowser):
-    """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key_callable_map: defaultdict[int, Callable] = defaultdict(lambda: lambda: None)
-
-    # noinspection PyTypeChecker
-    def connect_key_to(self, key: Qt.Key, func: Callable):
-        """Connect a :py:class:`Callable` to a key press."""
-        self.key_callable_map[int(key)] = func
-
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        """Execute :py:class:`Callable` mapped to the key press."""
-        super().keyPressEvent(event)
-        self.key_callable_map[event.key()]()
 
 
 class LicenseViewer(QWidget):
