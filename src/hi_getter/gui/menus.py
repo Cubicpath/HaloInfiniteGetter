@@ -22,6 +22,7 @@ from PySide6.QtWidgets import *
 from .._version import __version_info__ as ver
 from ..constants import *
 from ..utils import current_requirement_versions
+from ..utils import has_package
 from .widgets import LicenseViewer
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
@@ -136,7 +137,7 @@ class HelpContextMenu(QMenu):
         """
         if self._about is None:
             package_versions = '\n'.join(f'Using package {package}: {version}' for
-                                         package, version in current_requirement_versions(_PARENT_PACKAGE).items())
+                                         package, version in current_requirement_versions(_PARENT_PACKAGE, include_extras=True).items() if has_package(package))
 
             self.__class__._about = ('About', f'''
 HaloInfiniteGetter by Cubicpath. A simple way to get live Halo data straight from Halo Waypoint.
@@ -172,17 +173,23 @@ class ToolsContextMenu(QMenu):
             self.addSection(section)
             self.addActions(actions)
 
-    @staticmethod
-    def create_shortcut() -> None:
+    def create_shortcut(self) -> None:
         """Create shortcut for starting program."""
-        from pyshortcuts import make_shortcut
-
         exec_path = Path(sys.executable)
-        name = exec_path.with_suffix('').name
-        if not name.endswith('w'):
-            name += 'w'
 
-        execute_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
-        make_shortcut(script=execute_path, name='HaloInfiniteGetter',
-                      description='A simple way to get live Halo data straight from Halo Waypoint.',
-                      icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
+        if not has_package('pyshortcuts'):
+            QMessageBox.critical(self,
+                                 'Shortcut Error',
+                                 f'This action requires the "pyshortcuts" package, which is not currently installed.\n'
+                                 f'You can install it using the "{exec_path} -m pip install pyshortcuts" command.')
+        else:
+            from pyshortcuts import make_shortcut
+
+            name = exec_path.with_suffix('').name
+            if not name.endswith('w'):
+                name += 'w'
+            shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
+
+            make_shortcut(script=shortcut_path, name='HaloInfiniteGetter',
+                          description='A simple way to get live Halo data straight from Halo Waypoint.',
+                          icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)

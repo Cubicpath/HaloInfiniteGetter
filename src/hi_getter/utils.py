@@ -9,6 +9,7 @@ __all__ = (
     'current_requirement_versions',
     'dump_data',
     'get_parent_doc',
+    'has_package',
     'patch_windows_taskbar_icon',
     'unique_values',
 )
@@ -59,6 +60,19 @@ def patch_windows_taskbar_icon(app_id: str = '') -> None:
     if sys.platform == 'win32':
         from ctypes import windll
         windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+
+
+def has_package(package: str) -> bool:
+    """Returns whether the given package name is installed in the current environment.
+
+    :param package: Package name to search; hyphen-insensitive
+    """
+    from pkg_resources import WorkingSet
+
+    for pkg in WorkingSet():
+        if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
+            return True
+    return False
 
 
 def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
@@ -123,9 +137,8 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
 
         for file in info_path.iterdir():
             f_name = file.name.lower()
-            if 'license' in f_name or 'notice' in f_name:
+            if 'license' in f_name:
                 license_text = file.read_text(encoding='utf8')
-                break
 
         result[name] = (metadata(name).get('License', 'UNKNOWN'), license_text)
 
