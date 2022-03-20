@@ -34,7 +34,9 @@ How to use:
 - First, install Python 3.10 using [this link][python310]
 - Then, open command prompt (Win + R -- type in "cmd") and type `pip install hi_getter`
   - Optionally, to install the latest unstable version, type `pip install git+https://github.com/Cubicpath/HaloInfiniteGetter.git`
-- And you are done! To launch the program simply type `py -m hi_getter`
+- And you are done! To launch the program simply type `hi_getter`
+  - Once launched, you can create a desktop shortcut by using the "Create Desktop Shortcut" tool
+under the "Tools" context menu.
 
 ### Authentication:
 As this app is unofficial, you must use your own API key, which you can get by logging in to [HaloWaypoint] and either getting
