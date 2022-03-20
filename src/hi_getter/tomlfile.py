@@ -29,44 +29,52 @@ SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
 class TomlEvents:
     """Namespace for all events relating to :py:class:`TomlFile` objects."""
+    class TomlEvent(Event):
+        """Generic event for TomlFiles"""
+        __slots__ = ('toml_file',)
 
-    class File(Event):
+        def __init__(self, toml_file: 'TomlFile'):
+            self.toml_file = toml_file
+
+    class File(TomlEvent):
         """Accessing a File on disk."""
-        __slots__ = ('path',)
-
-        def __init__(self, path: Path):
-            self.path = path
+        __slots__ = ('toml_file',)
 
     class Import(File):
         """Loading a TomlFile."""
+        __slots__ = ('toml_file',)
 
     class Reload(Import):
         """Reloading a TomlFile."""
+        __slots__ = ('toml_file',)
 
     class Export(File):
         """Exporting a TomlFile to disk"""
+        __slots__ = ('toml_file',)
 
     class Save(Export):
         """Saving a TomlFile to disk."""
+        __slots__ = ('toml_file',)
 
-    class Get(Event):
+    class Get(TomlEvent):
         """Value is accessed."""
-        __slots__ = ('key', 'value')
+        __slots__ = ('toml_file', 'key', 'value')
 
-        def __init__(self, key: str, value: TOML_VALUE | None):
+        def __init__(self, toml_file: 'TomlFile', key: str, value: TOML_VALUE | None):
+            super().__init__(toml_file=toml_file)
             self.key = key
             self.value = value
 
-    class Set(Event):
+    class Set(TomlEvent):
         """Value is set."""
-        __slots__ = ('key', 'old', 'new')
+        __slots__ = ('toml_file', 'key', 'old', 'new')
 
         class _SetKey(str):
             """Proxy for a key :py:class:`str`.
 
             If key was none, act as a wildcard for :py:class:`str` comparisons
             """
-            __slots__ = ('key', 'wildcard')
+            __slots__ = ('toml_file', 'key', 'wildcard')
 
             def __new__(cls, key: str | None):
                 o = super().__new__(cls, key if key is not None else '%WILDCARD%')
@@ -83,16 +91,18 @@ class TomlEvents:
             def __eq__(self, other: Any):
                 return self.wildcard or self.key == other
 
-        def __init__(self, key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None):
+        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None):
+            super().__init__(toml_file=toml_file)
             self.key: str = self._SetKey(key)
             self.old: TOML_VALUE | None = old
             self.new: TOML_VALUE | None = new
 
-    class Fail(Event):
+    class Fail(TomlEvent):
         """General Failure."""
         __slots__ = ('failure',)
 
-        def __init__(self, failure: str):
+        def __init__(self, toml_file: 'TomlFile', failure: str):
+            super().__init__(toml_file=toml_file)
             self.failure = failure
 
 
@@ -139,6 +149,7 @@ class TomlFile:
 
     Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
+    EventBus('settings')
 
     def __init__(self, path: Path | str, default: dict[str, TOML_VALUE] | None = None) -> None:
         self.path = path
@@ -210,7 +221,7 @@ class TomlFile:
         if isinstance(val, CommentValue):
             val = val.val
 
-        EventBus['settings'].fire(TomlEvents.Get(key, val))
+        EventBus['settings'].fire(TomlEvents.Get(self, key, val))
 
         return val
 
@@ -235,16 +246,16 @@ class TomlFile:
 
         scope[path] = value
 
-        EventBus['settings'].fire(TomlEvents.Set(key, prev_val, value))
+        EventBus['settings'].fire(TomlEvents.Set(self, key, prev_val, value))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
-        EventBus['settings'].fire(TomlEvents.Save(self.path))
+        EventBus['settings'].fire(TomlEvents.Save(self))
         return self.export_to(self.path)
 
     def reload(self) -> bool:
         """Reset settings to settings stored in self.path."""
-        EventBus['settings'].fire(TomlEvents.Reload(self.path))
+        EventBus['settings'].fire(TomlEvents.Reload(self))
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
@@ -258,10 +269,10 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
-            EventBus['settings'].fire(TomlEvents.Export(path))
+            EventBus['settings'].fire(TomlEvents.Export(self))
             return True
 
-        EventBus['settings'].fire(TomlEvents.Fail('export'))
+        EventBus['settings'].fire(TomlEvents.Fail(self, 'export'))
         return False
 
     def import_from(self, path: Path | str, update: bool = False) -> bool:
@@ -283,12 +294,12 @@ class TomlFile:
                 pass  # Pass to end of function, to fail.
 
             else:
-                EventBus['settings'].fire(TomlEvents.Import(path))
-                EventBus['settings'].fire(TomlEvents.Set)
+                EventBus['settings'].fire(TomlEvents.Import(self))
+                EventBus['settings'].fire(TomlEvents.Set(self))
                 return True
 
         # If failed:
-        EventBus['settings'].fire(TomlEvents.Fail('import'))
+        EventBus['settings'].fire(TomlEvents.Fail(self, 'import'))
         return False
 
 
