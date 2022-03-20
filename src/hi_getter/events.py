@@ -18,6 +18,10 @@ class Event:
     """Normal event with no special abilities."""
     __slots__ = ()
 
+    def __repr__(self) -> str:
+        values = {attr: val for attr, val in ((attr, getattr(self, attr)) for attr in self.__slots__)}
+        return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
+
     @property
     def name(self) -> str:
         """Name of event.
