@@ -105,16 +105,12 @@ class Event:
 
 
 class _EventBusMeta(type):
-    """Metaclass for :py:class:`EventBus`.
+    """Metaclass for :py:class:`EventBus` type.
 
-    Maps :py:class:`EventBus` objects to :py:class:`str` ids.
+    Maps :py:class:`EventBus` objects to :py:class:`str` ids
+    and allows accessing those ids using subscripts on :py:class:`EventBus`.
     """
     _id_bus_map: dict[str, 'EventBus'] = {}
-
-    @classmethod
-    def __new__(mcs, *args, **kwargs) -> type['EventBus']:
-        clazz: type['EventBus'] = super().__new__(*args, **kwargs)
-        return clazz
 
     @classmethod
     def __getitem__(mcs, id: str) -> Optional['EventBus']:
@@ -150,6 +146,13 @@ class EventBus(metaclass=_EventBusMeta):
     """
 
     def __init__(self, __id: str, /) -> None:
+        """Create a new :py:class:`EventBus` object with a unique id.
+
+        All ids are transformed to lowercase in the :py:class:`_EventBusMeta` id map.
+
+        :param __id: id to register this instance as.
+        :raises KeyError: When a bus with the given id already exists.
+        """
         if type(self)[__id] is None:
             self._event_subscribers: dict[type[Event], list[tuple[
                 Callable[[Event], None] | Callable,  # Callable to run
