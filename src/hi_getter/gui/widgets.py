@@ -166,12 +166,12 @@ class LicenseViewer(QWidget):
 
     def view_current_index(self) -> None:
         """Views the license data at the current index."""
-        self.view_package(tuple(self.LICENSE_DATA.keys())[self.current_license_index])
+        self.view_package(tuple(self.LICENSE_DATA)[self.current_license_index])
 
     def view_package(self, package: str) -> None:
         """Views the license data of the given package name."""
         license_text = self.LICENSE_DATA[package][1] or 'LICENSE TEXT NOT FOUND -- COULD BE DUE TO EDITABLE INSTALLATION'
-        self.current_license_index = tuple(self.LICENSE_DATA.keys()).index(package)
+        self.current_license_index = tuple(self.LICENSE_DATA).index(package)
         self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" License')
         self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')
 

@@ -189,7 +189,7 @@ class EventBus(metaclass=_EventBusMeta):
             event = event()
 
         # Run all current and parent event callables
-        for event_type in self._event_subscribers.keys():
+        for event_type in self._event_subscribers:
             if isinstance(event, event_type):
                 for e_callable_pair in self._event_subscribers[event_type]:
                     # Check predicate if one is given
