@@ -6,25 +6,30 @@
 __all__ = (
     'BetterTomlDecoder',
     'BetterTomlEncoder',
+    'CommentValue',
     'make_comment_val',
     'TomlFile',
     'TomlEvents',
+    'TOML_VALUE',
 )
 
 import warnings
 from pathlib import Path
 from pathlib import PurePath
+from types import UnionType
 from typing import Any
 from typing import Final
 
 import toml.decoder
 import toml.encoder
+from toml.decoder import CommentValue
 
 from .events import *
-from .types import CommentValue
-from .types import TOML_VALUE
 
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
+
+TOML_VALUE: UnionType = dict | list | float | int | str | bool | PurePath
+"""Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 
 class TomlEvents:

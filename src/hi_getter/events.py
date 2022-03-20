@@ -4,80 +4,14 @@
 """Module used for Event subscription."""
 
 __all__ = (
-    'DeferredCallable',
     'Event',
     'EventBus',
 )
 
 from collections.abc import Callable
-from collections.abc import Generator
-from typing import Any
 from typing import Optional
 
 from .utils import get_parent_doc
-
-
-class DeferredCallable:
-    """A :py:class:`Callable` with args and kwargs stored for further execution.
-
-    Supports deferred argument evaluation when using :py:class:`Callable`'s as arguments.
-    This allows the value of the stored arguments to dynamically change depending on
-    when the :py:class:`DeferredCallable` is executed.
-    """
-    __slots__ = ('__no_event_arg__', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
-
-    def __init__(self, __callable: Callable, /, *args: Any | Callable,
-                 _event: bool = False,
-                 _call_funcs: bool = True,
-                 _call_types: bool = False,
-                 **kwargs: Any | Callable) -> None:
-        """Creates a new :py:class:`DeferredCallable`.
-
-        :param __callable: Callable to store for later execution.
-        :param args: positional arguments to store
-        :param _event: Whether to accept an additional positional argument
-        :param kwargs: keyword arguments to store
-        """
-        self.__no_event_arg__ = not _event
-        self.call_funcs: bool = _call_funcs
-        self.call_types: bool = _call_types
-        self.callable:   Callable = __callable
-        self.args:       tuple[Any | Callable, ...] = args
-        self.kwargs:     dict[str, Any | Callable] = kwargs
-
-    def __call__(self, *args, **kwargs) -> Any:
-        """Syntax sugar for self.run()"""
-        return self.run(*args, **kwargs)
-
-    def __repr__(self) -> str:
-        """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
-        args, kwargs = self.args, self.kwargs
-        return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
-
-    def run(self, *args, **kwargs) -> Any:
-        """Run the stored :py:class:`Callable`.
-
-        Takes any additional arguments and temporarily adds to the stored arguments before execution.
-
-        :param args: positional arguments to pass to callable.
-        :param kwargs: keyword arguments to pass callable.
-        """
-        # Add additional arguments from local args
-        args: tuple[Any | Callable, ...] = self.args + args
-        kwargs |= self.kwargs  # PEP 0584
-
-        # Evaluate all callable arguments
-        args:   Generator[Any] = (arg() if callable(arg) and (
-                (isinstance(arg, type) and self.call_types) or
-                (not isinstance(arg, type) and self.call_funcs)
-        ) else arg for arg in args)
-
-        kwargs: dict[Any] = {key: val() if callable(val) and (
-                (isinstance(val, type) and self.call_types) or
-                (not isinstance(val, type) and self.call_funcs)
-        ) else val for key, val in kwargs.items()}
-
-        return self.callable(*args, **kwargs)
 
 
 class Event:

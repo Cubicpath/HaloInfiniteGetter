@@ -23,6 +23,7 @@ from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
 from ..tomlfile import TomlFile, TomlEvents
+from ..utils import DeferredCallable
 from .app import *
 from .menus import *
 from .utils import scroll_to_top
@@ -50,8 +51,8 @@ class SettingsWindow(QWidget):
         # Create a self.translator DeferredCallable with every tuple acting as arguments.
         EventBus['settings'].subscribe(DeferredCallable(
             QMessageBox.warning, self, *(DeferredCallable(self.translator, *key) for key in (
-                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', self.settings.path)))
-        ), TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
+                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', self.settings.path)))),
+            TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
 
         self.theme_dropdown:          QComboBox
         self.aspect_ratio_dropdown:   QComboBox
@@ -362,7 +363,7 @@ class AppWindow(QMainWindow):
                                                                         self.media_frame, toggle_media_detach,
                                                                         self.APP.translator('gui.outputs.image.detached'))
                 self.image_detach_button.setText(self.APP.translator('gui.outputs.reattach'))
-                window.resizeEvent = lambda *_: self.resize_image()
+                window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
                 window = self.detached['media']

@@ -21,6 +21,8 @@ disable = [
     "fixme",                    # W0511
     "unused-wildcard-import",   # W0614
     "redefined-builtin",        # W0622
+    # Does not work with (positional arguments with a default value) before a backslash and *args
+    "keyword-arg-before-vararg",# W1113
     # These do not work with starred parameter names
     "missing-param-doc",        # W9015
     "differing-param-doc",      # W9017

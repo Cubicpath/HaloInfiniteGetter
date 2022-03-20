@@ -17,7 +17,7 @@ from PySide6.QtWidgets import *
 from ..events import *
 from ..lang import Translator
 from ..tomlfile import *
-from ..types import CommentValue
+from ..utils import DeferredCallable
 
 
 class Theme:

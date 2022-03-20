@@ -7,6 +7,7 @@ __all__ = (
     'current_requirement_licenses',
     'current_requirement_names',
     'current_requirement_versions',
+    'DeferredCallable',
     'dump_data',
     'get_parent_doc',
     'has_package',
@@ -17,9 +18,88 @@ __all__ = (
 import json
 import os
 import sys
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
+
+
+class DeferredCallable:
+    """A :py:class:`Callable` with args and kwargs stored for further execution.
+
+    Supports deferred argument evaluation when using :py:class:`Callable`'s as arguments.
+    This allows the value of the stored arguments to dynamically change depending on
+    when the :py:class:`DeferredCallable` is executed.
+    """
+    __slots__ = ('__no_event_arg__', '_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
+
+    def __init__(self, __callable: Callable = lambda: None, /, *args: Any | Callable,
+                 _extra_pos_args: int = -1,
+                 _call_funcs: bool = True,
+                 _call_types: bool = False,
+                 **kwargs: Any | Callable) -> None:
+        """Creates a new :py:class:`DeferredCallable`.
+
+        :param __callable: Callable to store for later execution.
+        :param args: positional arguments to store
+        :param _extra_pos_args: Extra positional arguments to expect with self.run; -1 is wildcard.
+        :param _call_funcs: Whether to call non-type callables
+        :param _call_types: Whether to call class constructors
+        :param kwargs: keyword arguments to store
+        """
+        self.__no_event_arg__:  bool = _extra_pos_args < 1
+        self._extra_pos_args:   int = _extra_pos_args
+        self.call_funcs:        bool = _call_funcs
+        self.call_types:        bool = _call_types
+        self.callable:          Callable = __callable
+        self.args:              tuple[Any | Callable, ...] = args
+        self.kwargs:            dict[str, Any | Callable] = kwargs
+
+    def __call__(self, *args, **kwargs) -> Any:
+        """Syntax sugar for self.run()"""
+        return self.run(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
+        args, kwargs = self.args, self.kwargs
+        return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
+
+    def run(self, *args, **kwargs) -> Any:
+        """Run the stored :py:class:`Callable`.
+
+        Takes any additional arguments and temporarily adds to the stored arguments before execution.
+
+        :param args: positional arguments to pass to callable.
+        :param kwargs: keyword arguments to pass callable.
+        :raises RuntimeError: Internal callable was not expecting the amount of positional arguments given.
+        :raises ValueError: Amount of positional arguments given is not equal to the expected amount defined during object initialization.
+        """
+        if 0 <= self._extra_pos_args != len(args):
+            raise ValueError(f'Amount of args given ({len(args)}) is not equal to the expected amount ({self._extra_pos_args})')
+
+        # Add additional arguments from local args
+        args: tuple[Any | Callable, ...] = self.args + args
+        kwargs |= self.kwargs  # PEP 0584
+
+        # Evaluate all callable arguments
+        args:   Generator[Any] = (arg() if callable(arg) and (
+                (isinstance(arg, type) and self.call_types) or
+                (not isinstance(arg, type) and self.call_funcs)
+        ) else arg for arg in args)
+
+        kwargs: dict[Any] = {key: val() if callable(val) and (
+                (isinstance(val, type) and self.call_types) or
+                (not isinstance(val, type) and self.call_funcs)
+        ) else val for key, val in kwargs.items()}
+
+        try:
+            return self.callable(*args, **kwargs)
+        except TypeError as e:
+            if ' positional argument but ' in str(e):
+                raise RuntimeError(f'{str(e).split(" ", maxsplit=1)[0]} was not expecting additional args, '
+                                   f'{type(self).__name__}._extra_call_args may not be set correctly.') from e
 
 
 def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
