@@ -21,7 +21,7 @@ from urllib.parse import unquote as decode_escapes
 from dotenv import load_dotenv
 from requests import Response
 from requests import Session
-from requests.cookies import RequestsCookieJar
+from requests.models import CaseInsensitiveDict
 from requests.utils import guess_json_utf
 
 from .constants import *
@@ -70,7 +70,7 @@ class Client:
             self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
 
         self.session: Session = Session()
-        self.session.headers = {
+        self.session.headers = CaseInsensitiveDict({
             'Accept': ', '.join(('application/json', 'text/plain', '*/*')),
             'Accept-Encoding': ', '.join(('gzip', 'deflate', 'br')),
             'Accept-Language': 'en-US',
@@ -87,12 +87,26 @@ class Client:
             'Sec-GPC': '1',
             'TE': 'trailers',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
-            'x-343-authorization-spartan': self.token
-        }
+        })
+        self.web_session: Session = Session()
+        self.web_session.headers = self.session.headers.copy()
+        self.web_session.headers.update({
+            'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
+            'Host': self.WEB_HOST,
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+        })
 
-        self.cookies = RequestsCookieJar()
-        self.set_cookie('343-spartan-token', self.token)
-        self.set_cookie('wpauth', self.wpauth)
+        if self.wpauth:
+            self.set_cookie('wpauth', self.wpauth)
+            if not self.token:
+                self.refresh_auth()
+
+        if self.token:
+            self.session.headers['x-343-authorization-spartan'] = self.token
+            self.set_cookie('343-spartan-token', self.token)
 
     def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
         """Get a :py:class:`Response` from HaloWaypoint.
@@ -114,13 +128,13 @@ class Client:
         :return: dict for JSON objects, bytes for media, int for error codes.
         """
         os_path: Path = dump_path / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
-        data: dict[str, Any] | bytes | int | None = None
+        data: dict[str, Any] | bytes | None = None
 
         if not os_path.is_file():
             response: Response = self.get(path)
             if not response.ok:
                 return response.status_code
-            if 'json' in response.headers.get('content-type'):
+            if 'json' in response.headers.get('content-type', ()):
                 data = response.json()
             else:
                 data = response.content
@@ -172,37 +186,25 @@ class Client:
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
-        web_headers = self.session.headers.copy()
-        web_headers.pop('x-343-authorization-spartan')
-        web_headers.update({
-            'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
-            'Host': self.WEB_HOST,
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-        })
+        response: Response = self.web_session.get('https://www.halowaypoint.com/')
+        self.web_session.cookies.update(response.cookies)
 
-        # FIXME: Not properly re-authenticating after using clear API token button
-        response: Response = self.session.get('https://www.halowaypoint.com/', cookies=self.cookies, headers=web_headers)
-        self.cookies.update(response.cookies)
+        wpauth: str = decode_escapes(self.web_session.cookies.get('wpauth') or '')
+        token: str = decode_escapes(self.web_session.cookies.get('343-spartan-token') or '')
 
-        wpauth: str | None = decode_escapes(self.cookies.get('wpauth') or '') or None
-        if wpauth is not None and self.wpauth != wpauth:
+        if wpauth and self.wpauth != wpauth:
             self.wpauth = wpauth
-
-        token: str | None = decode_escapes(self.cookies.get('343-spartan-token') or '') or None
-        if token is not None:
+        if token:
             self.token = token
 
     def delete_cookie(self, name: str) -> None:
         """Delete given cookie if cookie exists, else pass."""
-        if name in self.cookies:
-            self.cookies.clear(domain=self.WEB_HOST, path='/', name=name)
+        if name in self.web_session.cookies:
+            self.web_session.cookies.clear(domain=self.WEB_HOST, path='/', name=name)
 
     def set_cookie(self, name: str, value: str) -> None:
         """Set cookie value in Cookie jar. Defaults cookie domain as the WEB_HOST."""
-        self.cookies.set(name=name, value=value, domain=self.WEB_HOST)
+        self.web_session.cookies.set(name=name, value=value, domain=self.WEB_HOST)
 
     @property
     def token(self) -> str | None:
@@ -214,6 +216,8 @@ class Client:
         if value is None:
             self._token = None
             self.delete_cookie('343-spartan-token')
+            if 'x-343-authorization-spartan' in self.session.headers:
+                self.session.headers.pop('x-343-authorization-spartan')
             if TOKEN_PATH.is_file():
                 TOKEN_PATH.unlink()
         else:
@@ -224,9 +228,8 @@ class Client:
 
             self._token = value[key_start_index:].rstrip()
             self.set_cookie('343-spartan-token', self._token)
+            self.session.headers['x-343-authorization-spartan'] = self._token
             TOKEN_PATH.write_text(self._token)
-
-        self.session.headers['x-343-authorization-spartan'] = self._token
 
     @property
     def wpauth(self) -> str | None:
