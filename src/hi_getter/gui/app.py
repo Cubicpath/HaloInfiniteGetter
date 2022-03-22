@@ -49,6 +49,7 @@ class GetterApp(QApplication):
         self.themes:          dict[str, Theme] = {}  # PyCharm detects this as a dict[str, str], despite explicit type hints.
         self.theme_index_map: dict[str, int] = {}
 
+        EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Reload)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set,
                                        event_predicate=lambda event: event.key == 'gui/themes/selected')
