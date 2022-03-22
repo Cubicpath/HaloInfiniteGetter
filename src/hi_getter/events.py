@@ -53,7 +53,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
         super().__init__(lambda: [])
 
     def __repr__(self) -> str:
-        """Amount of subscribers for every event, encased in parenthesis."""
+        """Amount of subscribers for every event, encased in parentheses."""
         repr_: str = ''
         for event in self:
             repr_ += f'{event.__name__}[{len(self[event])}], '
@@ -67,7 +67,8 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             raise TypeError(f'event is not subclass to {Event}.')
         if callable_pair[1] is not None and not callable(callable_pair[1]):
             raise TypeError('subscriber predicate is defined but not callable.')
-        self.get(event).append(callable_pair)
+
+        self[event].append(callable_pair)
 
 
 class _EventBusMeta(type):
