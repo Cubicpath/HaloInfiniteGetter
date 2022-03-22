@@ -563,18 +563,20 @@ class AppWindow(QMainWindow):
         if not user_input:
             return
 
-        if '/file/' not in user_input:
-            if user_input.endswith(('png', 'jpg', 'jpeg', 'webp', 'gif')):
-                user_input = f'images/file/{user_input}'
-            else:
-                user_input = f'progression/file/{user_input}'
+        search_path = user_input.strip()
 
-        if user_input:
+        if '/file/' not in user_input:
+            if search_path.endswith(('png', 'jpg', 'jpeg', 'webp', 'gif')):
+                search_path = f'images/file/{search_path}'
+            else:
+                search_path = f'progression/file/{search_path}'
+
+        if search_path:
             if scan:
-                self.client.recursive_search(user_input)
+                self.client.recursive_search(search_path)
                 self.use_input()
             else:
-                data = self.client.get_hi_data(user_input)
+                data = self.client.get_hi_data(search_path)
                 if isinstance(data, bytes):
                     self.clear_picture.setDisabled(False)
                     self.copy_picture.setDisabled(False)
@@ -593,7 +595,12 @@ class AppWindow(QMainWindow):
                     if isinstance(data, dict):
                         data = json.dumps(data, indent=2)
                     elif isinstance(data, int):
-                        data = f'{data}: {HTTP_CODE_MAP[data][0]}\n{HTTP_CODE_MAP[data][1]}'
+                        data = (
+                            f'Could not get resource at:\n'
+                            f'{self.client.api_root}{search_path}\n\n'
+                            f'{data}: {HTTP_CODE_MAP[data][0]}\n'
+                            f'{HTTP_CODE_MAP[data][1]}'
+                        )
 
                     output = data
                     replaced = set()
