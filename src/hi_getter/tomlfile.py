@@ -160,12 +160,12 @@ class TomlFile:
 
     Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
-    EventBus('settings')  # Create global event bus
 
     def __init__(self, path: Path | str, default: dict[str, TOML_VALUE | CommentValue] | None = None) -> None:
         self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
         self._data: dict[str, TOML_VALUE | CommentValue] = default if default is not None else {}
+        self.event_bus: EventBus = EventBus()
         if self.reload() is False:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
@@ -232,7 +232,7 @@ class TomlFile:
         if isinstance(val, CommentValue):
             val = val.val
 
-        EventBus['settings'].fire(TomlEvents.Get(self, key, val))
+        self.event_bus.fire(TomlEvents.Get(self, key, val))
 
         return val
 
@@ -257,16 +257,16 @@ class TomlFile:
 
         scope[path] = value
 
-        EventBus['settings'].fire(TomlEvents.Set(self, key, prev_val, value.val if isinstance(value, CommentValue) else value))
+        self.event_bus.fire(TomlEvents.Set(self, key, prev_val, value.val if isinstance(value, CommentValue) else value))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
-        EventBus['settings'].fire(TomlEvents.Save(self))
+        self.event_bus.fire(TomlEvents.Save(self))
         return self.export_to(self.path)
 
     def reload(self) -> bool:
         """Reset settings to settings stored in self.path."""
-        EventBus['settings'].fire(TomlEvents.Reload(self))
+        self.event_bus.fire(TomlEvents.Reload(self))
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
@@ -279,11 +279,11 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
-            EventBus['settings'].fire(TomlEvents.Export(self))
-            EventBus['settings'].fire(TomlEvents.Get(self))
+            self.event_bus.fire(TomlEvents.Export(self))
+            self.event_bus.fire(TomlEvents.Get(self))
             return True
 
-        EventBus['settings'].fire(TomlEvents.Fail(self, 'export'))
+        self.event_bus.fire(TomlEvents.Fail(self, 'export'))
         return False
 
     def import_from(self, path: Path | str, update: bool = False) -> bool:
@@ -305,12 +305,12 @@ class TomlFile:
                 pass  # Pass to end of function, to fail.
 
             else:
-                EventBus['settings'].fire(TomlEvents.Import(self))
-                EventBus['settings'].fire(TomlEvents.Set(self))
+                self.event_bus.fire(TomlEvents.Import(self))
+                self.event_bus.fire(TomlEvents.Set(self))
                 return True
 
         # If failed:
-        EventBus['settings'].fire(TomlEvents.Fail(self, 'import'))
+        self.event_bus.fire(TomlEvents.Fail(self, 'import'))
         return False
 
 

@@ -83,7 +83,7 @@ class EventBus(metaclass=_EventBusMeta):
         EventBus['foo'] -> None
     """
 
-    def __init__(self, __id: str, /) -> None:
+    def __init__(self, __id: str | None = None, /) -> None:
         """Create a new :py:class:`EventBus` object with a unique id.
 
         All ids are transformed to lowercase in the :py:class:`_EventBusMeta` id map.
@@ -91,12 +91,11 @@ class EventBus(metaclass=_EventBusMeta):
         :param __id: id to register this instance as.
         :raises KeyError: When a bus with the given id already exists.
         """
-        if type(self)[__id] is None:
-            self._event_subscribers: dict[type[Event], list[tuple[
-                Callable[[Event], None] | Callable,  # Callable to run
-                Callable[[Event], bool] | None       # Optional predicate to run callable
-            ]]] = {}
-            type(self)[__id] = self
+        if __id is None or type(self)[__id] is None:
+            self.id = __id
+            self._event_subscribers = {}
+            if __id is not None:
+                type(self)[__id] = self
         else:
             raise KeyError(f'EventBus id "{__id}" is already defined in {type(type(self)).__name__}')
 

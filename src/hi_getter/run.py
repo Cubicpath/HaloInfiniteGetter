@@ -18,6 +18,7 @@ from PySide6.QtCore import *
 from ._version import __version__
 from .client import Client
 from .constants import *
+from .events import EventBus
 from .gui import *
 from .tomlfile import *
 from .utils import *
@@ -75,6 +76,7 @@ def run(*args, **kwargs) -> int:
 
     APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
     APP.load_themes()
+    EventBus['settings'] = APP.settings.event_bus
 
     CLIENT:     Final[Client] = kwargs.pop('client', Client())
     SIZE:       Final[QSize] = QSize(
