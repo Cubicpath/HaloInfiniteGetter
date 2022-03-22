@@ -21,7 +21,6 @@ import sys
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -66,7 +65,7 @@ class DeferredCallable:
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
 
-    def run(self, *args, **kwargs) -> Any:
+    def run(self, *args: Any | Callable, **kwargs: Any | Callable) -> Any:
         """Run the stored :py:class:`Callable`.
 
         Takes any additional arguments and temporarily adds to the stored arguments before execution.
@@ -80,16 +79,16 @@ class DeferredCallable:
             raise ValueError(f'Amount of args given ({len(args)}) is not equal to the expected amount ({self._extra_pos_args})')
 
         # Add additional arguments from local args
-        args: tuple[Any | Callable, ...] = self.args + args
+        args = self.args + args
         kwargs |= self.kwargs  # PEP 0584
 
         # Evaluate all callable arguments
-        args:   Generator[Any] = (arg() if callable(arg) and (
+        args = tuple(arg() if callable(arg) and (
                 (isinstance(arg, type) and self.call_types) or
                 (not isinstance(arg, type) and self.call_funcs)
         ) else arg for arg in args)
 
-        kwargs: dict[Any] = {key: val() if callable(val) and (
+        kwargs = {key: val() if callable(val) and (
                 (isinstance(val, type) and self.call_types) or
                 (not isinstance(val, type) and self.call_funcs)
         ) else val for key, val in kwargs.items()}

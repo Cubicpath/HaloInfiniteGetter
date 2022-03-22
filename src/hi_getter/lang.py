@@ -13,6 +13,7 @@ from pathlib import Path
 from string import ascii_letters
 from string import digits
 from typing import Annotated
+from typing import Any
 
 from .constants import *
 
@@ -171,7 +172,7 @@ class Language:
         """
         # TODO: Add functionality
 
-    def get(self, key: str, *args: ..., default: str | None = None) -> str | None:
+    def get(self, key: str, *args: Any, default: str | None = None) -> str | None:
         """Get a translation key and format with the given arguments if required.
 
         :param key: Key to get in JSON data.
@@ -212,7 +213,7 @@ class Translator:
     def __init__(self, language: Language | str) -> None:
         self._language = self._lang_to_lang(language)
 
-    def __call__(self, key: str, *args: ..., default: str | None = None) -> str:
+    def __call__(self, key: str, *args: Any, default: str | None = None) -> str:
         """Syntax sugar for get_translation."""
         return self.get_translation(key, *args, default=default if default is not None else key)
 
@@ -225,7 +226,7 @@ class Translator:
     def language(self, value: Language | str) -> None:
         self._language = self._lang_to_lang(value)
 
-    def get_translation(self, key: str, *args: ..., default: str | None = None) -> str:
+    def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
         return self.language.get(key, *args, default=default if default is not None else key)
 

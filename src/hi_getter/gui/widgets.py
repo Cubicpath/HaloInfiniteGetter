@@ -21,6 +21,7 @@ from PySide6.QtWidgets import *
 
 from ..constants import *
 from ..utils import current_requirement_licenses
+from ..utils import DeferredCallable
 from .utils import scroll_to_top
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
@@ -49,7 +50,7 @@ class BetterTextBrowser(QTextBrowser):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.key_callable_map: defaultdict[int, Callable] = defaultdict(lambda: lambda: None)
+        self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable())
 
     # noinspection PyTypeChecker
     def connect_key_to(self, key: Qt.Key, func: Callable) -> None:

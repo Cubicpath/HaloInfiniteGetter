@@ -16,9 +16,9 @@ __all__ = (
 import warnings
 from pathlib import Path
 from pathlib import PurePath
-from types import UnionType
 from typing import Any
 from typing import Final
+from typing import TypeAlias
 
 import toml.decoder
 import toml.encoder
@@ -28,7 +28,7 @@ from .events import *
 
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
-TOML_VALUE: UnionType = dict | list | float | int | str | bool | PurePath
+TOML_VALUE: TypeAlias = dict | list | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 
@@ -65,7 +65,7 @@ class TomlEvents:
         """A key's value is accessed."""
         __slots__ = ('toml_file', 'key')
 
-        def __init__(self, toml_file: 'TomlFile', key: str) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str | None) -> None:
             super().__init__(toml_file=toml_file)
             self.key: str = self._Key(key)
 
@@ -82,11 +82,11 @@ class TomlEvents:
 
             def __init__(self, key: str | None) -> None:
                 super().__init__()
-                self.key:      str = key
+                self.key:      str | None = key
                 self.wildcard: bool = key is None
 
             def __bool__(self) -> bool:
-                return self.wildcard or self.key
+                return bool(self.wildcard or self.key)
 
             def __eq__(self, other: Any) -> bool:
                 return self.wildcard or self.key == other
@@ -122,11 +122,11 @@ class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
-    def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str | bool]:
+    def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str]:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(SPECIAL_PATH_PREFIX):
-            v = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
-            return v, strictly_valid
+            v_path = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
+            return v_path, 'path'
         return super().load_value(v=v, strictly_valid=strictly_valid)
 
 
@@ -160,10 +160,10 @@ class TomlFile:
 
     Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
-    EventBus('settings')
+    EventBus('settings')  # Create global event bus
 
-    def __init__(self, path: Path | str, default: dict[str, TOML_VALUE] | None = None) -> None:
-        self.path = path
+    def __init__(self, path: Path | str, default: dict[str, TOML_VALUE | CommentValue] | None = None) -> None:
+        self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
         self._data: dict[str, TOML_VALUE | CommentValue] = default if default is not None else {}
         if self.reload() is False:
@@ -190,8 +190,8 @@ class TomlFile:
         if not path:
             raise ValueError('Path can not be an empty string.')
 
-        scope = self._data
-        paths = path.split('/')
+        scope: dict = self._data
+        paths: list[str] = path.split('/')
 
         if len(paths) > 1:
             for i, key in enumerate(paths):
