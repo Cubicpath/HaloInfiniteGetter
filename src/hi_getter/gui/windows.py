@@ -77,12 +77,12 @@ class SettingsWindow(QWidget):
 
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
-            save_button.setDisabled(True)
             file_path = Path(QFileDialog.getOpenFileName(self, self.translator('gui.settings.import'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
                 if self.settings.import_from(file_path):
                     self.refresh_dropdowns()
+                    save_button.setDisabled(False)
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""

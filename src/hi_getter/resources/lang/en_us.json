@@ -17,7 +17,7 @@
   "gui.outputs.text.detached": "Detached Text Output",
   "gui.outputs.text.label_empty": "Text Output:",
   "gui.outputs.text.label": "Text Output: %i lines; %i characters (%.4f KiB)",
-  "gui.settings.auth.clear_token": "Clear API Token",
+  "gui.settings.auth.clear_token": "Clear API Token (Not Auth Key)",
   "gui.settings.auth.copy": "Copy to Clipboard",
   "gui.settings.auth.edit": "Edit Auth Key (API Token Generation)",
   "gui.settings.auth.set": "Set",
