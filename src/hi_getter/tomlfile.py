@@ -10,7 +10,7 @@ __all__ = (
     'make_comment_val',
     'TomlFile',
     'TomlEvents',
-    'TOML_VALUE',
+    'TomlValue',
 )
 
 import warnings
@@ -28,7 +28,7 @@ from .events import *
 
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
-TOML_VALUE: TypeAlias = dict | list | float | int | str | bool | PurePath
+TomlValue: TypeAlias = dict | list | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 
@@ -43,23 +43,19 @@ class TomlEvents:
 
     class File(TomlEvent):
         """Accessing a File on disk."""
-        __slots__ = ('toml_file',)
+        __slots__ = ('toml_file', 'path')
+
+        def __init__(self, toml_file: 'TomlFile', path: Path) -> None:
+            super().__init__(toml_file=toml_file)
+            self.path = path
 
     class Import(File):
         """Loading a TomlFile."""
-        __slots__ = ('toml_file',)
-
-    class Reload(Import):
-        """Reloading a TomlFile."""
-        __slots__ = ('toml_file',)
+        __slots__ = ('toml_file', 'path')
 
     class Export(File):
         """Exporting a TomlFile to disk"""
-        __slots__ = ('toml_file',)
-
-    class Save(Export):
-        """Saving a TomlFile to disk."""
-        __slots__ = ('toml_file',)
+        __slots__ = ('toml_file', 'path')
 
     class KeyAccess(TomlEvent):
         """A key's value is accessed."""
@@ -95,7 +91,7 @@ class TomlEvents:
         """Value is given."""
         __slots__ = ('toml_file', 'key', 'value')
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None = None, value: TOML_VALUE | None = None) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str | None = None, value: TomlValue | None = None) -> None:
             super().__init__(toml_file=toml_file, key=key)
             self.value = value
 
@@ -103,10 +99,10 @@ class TomlEvents:
         """Value is set."""
         __slots__ = ('toml_file', 'key', 'old', 'new')
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TOML_VALUE | None = None, new: TOML_VALUE | None = None) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TomlValue | None = None, new: TomlValue | None = None) -> None:
             super().__init__(toml_file=toml_file, key=key)
-            self.old: TOML_VALUE | None = old
-            self.new: TOML_VALUE | None = new
+            self.old: TomlValue | None = old
+            self.new: TomlValue | None = new
 
     class Fail(TomlEvent):
         """General Failure."""
@@ -146,7 +142,7 @@ class BetterTomlEncoder(toml.TomlEncoder):
         # noinspection PyProtectedMember
         return toml.encoder._dump_str(str(v))
 
-    def dump_value(self, v: TOML_VALUE) -> str:
+    def dump_value(self, v: TomlValue) -> str:
         """Support :py:class:`Path` decoding by prefixing a :py:class:`PurePath` string with a special marker."""
         if isinstance(v, PurePath):
             if isinstance(v, Path):
@@ -161,24 +157,24 @@ class TomlFile:
     Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
 
-    def __init__(self, path: Path | str, default: dict[str, TOML_VALUE | CommentValue] | None = None) -> None:
+    def __init__(self, path: Path | str, default: dict[str, TomlValue | CommentValue] | None = None) -> None:
         self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
-        self._data: dict[str, TOML_VALUE | CommentValue] = default if default is not None else {}
+        self._data: dict[str, TomlValue | CommentValue] = default if default is not None else {}
         self.event_bus: EventBus = EventBus()
         if self.reload() is False:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
-    def __getitem__(self, key: str) -> TOML_VALUE | None:
+    def __getitem__(self, key: str) -> TomlValue | None:
         return self.get_key(key)
 
-    def __setitem__(self, key: str, value: TOML_VALUE) -> None:
+    def __setitem__(self, key: str, value: TomlValue) -> None:
         self.set_key(key, value)
 
     def __delitem__(self, key: str) -> None:
         del self._data[key]
 
-    def _search_scope(self, path: str, mode: str) -> tuple[dict[str, TOML_VALUE | CommentValue], str]:
+    def _search_scope(self, path: str, mode: str) -> tuple[dict[str, TomlValue | CommentValue], str]:
         """Search data for the given path to the value, and if found, return the scope and the key that path belongs to.
 
         :param path: Path to search data for.
@@ -220,7 +216,7 @@ class TomlFile:
     def path(self, value: Path | str) -> None:
         self._path = Path(value)
 
-    def get_key(self, key: str) -> TOML_VALUE | None:
+    def get_key(self, key: str) -> TomlValue | None:
         """Get a key from path. Searches with each '/' defining a new table to check.
 
         :param key: Key to get value from.
@@ -236,7 +232,7 @@ class TomlFile:
 
         return val
 
-    def set_key(self, key: str, value: TOML_VALUE, comment: str | None = None) -> None:
+    def set_key(self, key: str, value: TomlValue, comment: str | None = None) -> None:
         """Set a key at path. Searches with each '/' defining a new table to check.
 
         :param key: Key to set.
@@ -261,12 +257,10 @@ class TomlFile:
 
     def save(self) -> bool:
         """Save current settings to self.path."""
-        self.event_bus.fire(TomlEvents.Save(self))
         return self.export_to(self.path)
 
     def reload(self) -> bool:
         """Reset settings to settings stored in self.path."""
-        self.event_bus.fire(TomlEvents.Reload(self))
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
@@ -279,7 +273,7 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=BetterTomlEncoder())
 
-            self.event_bus.fire(TomlEvents.Export(self))
+            self.event_bus.fire(TomlEvents.Export(self, path))
             self.event_bus.fire(TomlEvents.Get(self))
             return True
 
@@ -305,7 +299,7 @@ class TomlFile:
                 pass  # Pass to end of function, to fail.
 
             else:
-                self.event_bus.fire(TomlEvents.Import(self))
+                self.event_bus.fire(TomlEvents.Import(self, path))
                 self.event_bus.fire(TomlEvents.Set(self))
                 return True
 
@@ -314,6 +308,6 @@ class TomlFile:
         return False
 
 
-def make_comment_val(val: TOML_VALUE, comment: str, new_line=False) -> CommentValue:
+def make_comment_val(val: TomlValue, comment: str, new_line=False) -> CommentValue:
     """Build and return :py:class:`CommentValue`."""
     return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)

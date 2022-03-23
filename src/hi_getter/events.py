@@ -11,8 +11,12 @@ __all__ = (
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Optional
+from typing import TypeAlias
 
 from . import utils
+
+EventPredicate: TypeAlias = Callable[['Event'], bool]
+EventRunnable:  TypeAlias = Callable[['Event'], None] | Callable[[], None]
 
 
 class Event:
@@ -44,8 +48,8 @@ class Event:
 
 
 class _Subscribers(defaultdict[type[Event], list[tuple[
-    Callable[[Event], None] | Callable,  # Callable to run
-    Callable[[Event], bool] | None       # Optional predicate to run callable
+    EventRunnable,  # Callable to run
+    EventPredicate | None   # Optional predicate to run callable
 ]]]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
@@ -59,7 +63,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             repr_ += f'{event.__name__}[{len(self[event])}], '
         return f'({repr_.rstrip()})'
 
-    def add(self, event: type[Event], callable_pair: tuple[Callable[[Event], None] | Callable, Callable[[Event], bool] | None]) -> None:
+    def add(self, event: type[Event], callable_pair: tuple[EventRunnable, EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list."""
         if not callable(callable_pair[0]):
             raise TypeError('subscriber is not callable.')
@@ -178,7 +182,7 @@ class EventBus(metaclass=_EventBusMeta):
                         # Finally, call
                         e_callable_pair[0](*event_args)
 
-    def subscribe(self, __callable: Callable, /, event: type[Event], event_predicate: Callable[[Event], bool] | None = None) -> None:
+    def subscribe(self, __callable: EventRunnable, /, event: type[Event], event_predicate: EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.

@@ -50,9 +50,14 @@ class GetterApp(QApplication):
         self.theme_index_map: dict[str, int] = {}
 
         EventBus['settings'] = self.settings.event_bus
-        EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Reload)
-        EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set,
-                                       event_predicate=lambda event: event.key == 'gui/themes/selected')
+        EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
+        EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
+        EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+    def update_language(self) -> None:
+        """Set the application language to the one currently selected in settings."""
+        self.translator = Translator(self.settings['language'])
+        # TODO: Update all text in application to new language data
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
