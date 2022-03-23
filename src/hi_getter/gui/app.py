@@ -38,7 +38,10 @@ class Theme:
 
 # TODO: Add logging functionality
 class GetterApp(QApplication):
-    """The main HaloInfiniteGetter PySide application that runs in the background and manages the process."""
+    """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
+
+    :py:class:`GetterApp` is a singleton and can be accessed via the class using GetterApp.instance()
+    """
     _legacy_style: str = None
 
     def __init__(self, argv: Sequence[str], settings: TomlFile) -> None:
@@ -53,6 +56,14 @@ class GetterApp(QApplication):
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+    @classmethod
+    def instance(cls) -> 'GetterApp':
+        """Return the singleton instance of :py:class:`GetterApp`."""
+        instance: GetterApp | None = super().instance()
+        if instance is None:
+            raise RuntimeError(f'{cls.__name__} is not instantiated.')
+        return instance
 
     def update_language(self) -> None:
         """Set the application language to the one currently selected in settings."""

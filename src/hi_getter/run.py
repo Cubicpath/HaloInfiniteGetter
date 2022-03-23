@@ -82,7 +82,7 @@ def run(*args, **kwargs) -> int:
         max(kwargs.pop('x_size', APP.settings['gui/window/x_size']), 100),
         max(kwargs.pop('y_size', APP.settings['gui/window/y_size']), 100)
     )
-    WINDOW:     Final[AppWindow] = AppWindow(CLIENT, APP, SIZE)
+    WINDOW:     Final[AppWindow] = AppWindow(CLIENT, SIZE)
     WINDOW.show()
     return APP.exec()
 
