@@ -213,9 +213,9 @@ class Translator:
     def __init__(self, language: Language | str) -> None:
         self._language = self._lang_to_lang(language)
 
-    def __call__(self, key: str, *args: Any, default: str | None = None) -> str:
+    def __call__(self, key: str, *args: Any, **kwargs) -> str:
         """Syntax sugar for get_translation."""
-        return self.get_translation(key, *args, default=default if default is not None else key)
+        return self.get_translation(key, *args, **kwargs)
 
     @property
     def language(self) -> Language:

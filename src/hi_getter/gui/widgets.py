@@ -22,6 +22,7 @@ from PySide6.QtWidgets import *
 from ..constants import *
 from ..utils import current_requirement_licenses
 from ..utils import DeferredCallable
+from .app import GetterApp
 from .utils import scroll_to_top
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
@@ -124,8 +125,8 @@ class LicenseViewer(QWidget):
         self.license_label:       QLabel = QLabel(self)
         self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}', self)
         self.license_text_edit:   BetterTextBrowser = BetterTextBrowser(self)
-        self.next_license_button: QPushButton = QPushButton('Next', clicked=self.next_license)
-        self.prev_license_button: QPushButton = QPushButton('Previous', clicked=self.prev_license)
+        self.next_license_button: QPushButton = QPushButton(GetterApp.instance().translator('gui.license_viewer.next'), clicked=self.next_license)
+        self.prev_license_button: QPushButton = QPushButton(GetterApp.instance().translator('gui.license_viewer.previous'), clicked=self.prev_license)
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
@@ -171,7 +172,7 @@ class LicenseViewer(QWidget):
 
     def view_package(self, package: str) -> None:
         """Views the license data of the given package name."""
-        license_text = self.LICENSE_DATA[package][1] or 'LICENSE TEXT NOT FOUND -- COULD BE DUE TO EDITABLE INSTALLATION'
+        license_text = self.LICENSE_DATA[package][1] or GetterApp.instance().translator('gui.license_viewer.not_found')
         self.current_license_index = tuple(self.LICENSE_DATA).index(package)
         self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" License')
         self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')

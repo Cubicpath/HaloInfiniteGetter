@@ -283,7 +283,7 @@ class AppWindow(QMainWindow):
         self.clipboard:             QClipboard = GetterApp.instance().clipboard()
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.setWindowTitle(GetterApp.instance().translator('app.title', __version__))
+        self.setWindowTitle(GetterApp.instance().translator('app.name') + f' v{__version__}')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
