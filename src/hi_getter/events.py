@@ -65,10 +65,10 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
 
     def add(self, event: type[Event], callable_pair: tuple[EventRunnable, EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list."""
-        if not callable(callable_pair[0]):
-            raise TypeError('subscriber is not callable.')
         if not issubclass(event, Event):
             raise TypeError(f'event is not subclass to {Event}.')
+        if not callable(callable_pair[0]):
+            raise TypeError('subscriber is not callable.')
         if callable_pair[1] is not None and not callable(callable_pair[1]):
             raise TypeError('subscriber predicate is defined but not callable.')
 
@@ -109,8 +109,6 @@ class EventBus(metaclass=_EventBusMeta):
     An Event Bus is an event-driven structure that stores both events and functions. When an
     event is fired, all functions "subscribed" to the event or any of its parent events are called with
     the event as a parameter.
-
-    Callables with the "__no_event_arg__" dunder set to True are not passed an event argument.
 
     All :py:class:`EventBus`'s are stored in the class with a unique id.
     You can access created :py:class:`EventBus`'s with subscripts. ex::
@@ -174,22 +172,13 @@ class EventBus(metaclass=_EventBusMeta):
                     # Check predicate if one is given
                     if e_callable_pair[1] is None or e_callable_pair[1](event):
 
-                        # Add event to args if dunder __no_event_arg__ does not evaluate to True
-                        event_args = (event,)
-                        if hasattr(e_callable_pair[0], '__no_event_arg__') and getattr(e_callable_pair[0], '__no_event_arg__') is True:
-                            event_args = ()
-
                         # Finally, call
-                        e_callable_pair[0](*event_args)
+                        e_callable_pair[0](event)
 
     def subscribe(self, __callable: EventRunnable, /, event: type[Event], event_predicate: EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.
-
-        If the :py:class:`Callable` as the attribute "__no_event_arg__" set to True,
-        no arguments are passed to the callable during execution. :py:class:`utils.DeferredCallable` has
-        this set to True during default initialization.
 
         :param __callable: Callable to run.
         :param event: Event to subscribe to.

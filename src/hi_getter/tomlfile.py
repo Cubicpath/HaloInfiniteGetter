@@ -106,7 +106,7 @@ class TomlEvents:
 
     class Fail(TomlEvent):
         """General Failure."""
-        __slots__ = ('failure',)
+        __slots__ = ('toml_file', 'failure',)
 
         def __init__(self, toml_file: 'TomlFile', failure: str) -> None:
             super().__init__(toml_file=toml_file)

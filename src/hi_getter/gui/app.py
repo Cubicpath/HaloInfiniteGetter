@@ -44,12 +44,14 @@ class GetterApp(QApplication):
     """
     _legacy_style: str = None
 
+    # PyCharm detects dict literals in __init__ as a dict[str, EventBus], for no explicable reason.
+    # noinspection PyTypeChecker
     def __init__(self, argv: Sequence[str], settings: TomlFile) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
-        self.themes:          dict[str, Theme] = {}  # PyCharm detects this as a dict[str, str], despite explicit type hints.
+        self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
 
         EventBus['settings'] = self.settings.event_bus
