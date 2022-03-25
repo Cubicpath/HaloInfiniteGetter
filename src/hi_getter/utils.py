@@ -32,29 +32,31 @@ class DeferredCallable:
     This allows the value of the stored arguments to dynamically change depending on
     when the :py:class:`DeferredCallable` is executed.
     """
-    __slots__ = ('__no_event_arg__', '_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
+    __slots__ = ('_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
 
-    def __init__(self, __callable: Callable = lambda: None, /, *args: Any | Callable,
-                 _extra_pos_args: int = -1,
+    def __init__(self, __callable: Callable = lambda: None, /, *args: Any | Callable[[], Any],
+                 _extra_pos_args: int = 0,
                  _call_funcs: bool = True,
                  _call_types: bool = False,
-                 **kwargs: Any | Callable) -> None:
+                 **kwargs: Any | Callable[[], Any]) -> None:
         """Creates a new :py:class:`DeferredCallable`.
+
+        When called, any additional arguments must be expected with _extra_pos_args.
+        Any arguments that exceed the extra positional argument limit will be trimmed off.
 
         :param __callable: Callable to store for later execution.
         :param args: positional arguments to store
-        :param _extra_pos_args: Extra positional arguments to expect with self.run; -1 is wildcard.
+        :param _extra_pos_args: Extra positional arguments to expect with self.run.
         :param _call_funcs: Whether to call non-type callables
         :param _call_types: Whether to call class constructors
         :param kwargs: keyword arguments to store
         """
-        self.__no_event_arg__:  bool = _extra_pos_args < 1
         self._extra_pos_args:   int = _extra_pos_args
         self.call_funcs:        bool = _call_funcs
         self.call_types:        bool = _call_types
         self.callable:          Callable = __callable
-        self.args:              tuple[Any | Callable, ...] = args
-        self.kwargs:            dict[str, Any | Callable] = kwargs
+        self.args:              tuple[Any | Callable[[], Any], ...] = args
+        self.kwargs:            dict[str, Any | Callable[[], Any]] = kwargs
 
     def __call__(self, *args, **kwargs) -> Any:
         """Syntax sugar for self.run()"""
@@ -65,7 +67,18 @@ class DeferredCallable:
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
 
-    def run(self, *args: Any | Callable, **kwargs: Any | Callable) -> Any:
+    def _evaluate_value(self, val: Any) -> Any:
+        """Evaluates any callables to their called values.
+
+        :param val: Value to evaluate.
+        :return: The called value, if callable.
+        """
+        return val() if callable(val) and (
+                (isinstance(val, type) and self.call_types) or
+                (not isinstance(val, type) and self.call_funcs)
+        ) else val
+
+    def run(self, *args: Any | Callable[[], Any], **kwargs: Any | Callable[[], Any]) -> Any:
         """Run the stored :py:class:`Callable`.
 
         Takes any additional arguments and temporarily adds to the stored arguments before execution.
@@ -73,25 +86,14 @@ class DeferredCallable:
         :param args: positional arguments to pass to callable.
         :param kwargs: keyword arguments to pass callable.
         :raises RuntimeError: Internal callable was not expecting the amount of positional arguments given.
-        :raises ValueError: Amount of positional arguments given is not equal to the expected amount defined during object initialization.
         """
-        if 0 <= self._extra_pos_args != len(args):
-            raise ValueError(f'Amount of args given ({len(args)}) is not equal to the expected amount ({self._extra_pos_args})')
-
         # Add additional arguments from local args
-        args = self.args + args
+        args = self.args + args[:self._extra_pos_args]  # Trim all arguments that are not expected
         kwargs |= self.kwargs  # PEP 0584
 
         # Evaluate all callable arguments
-        args = tuple(arg() if callable(arg) and (
-                (isinstance(arg, type) and self.call_types) or
-                (not isinstance(arg, type) and self.call_funcs)
-        ) else arg for arg in args)
-
-        kwargs = {key: val() if callable(val) and (
-                (isinstance(val, type) and self.call_types) or
-                (not isinstance(val, type) and self.call_funcs)
-        ) else val for key, val in kwargs.items()}
+        args = tuple(self._evaluate_value(arg) for arg in args)
+        kwargs = {key: self._evaluate_value(val) for key, val in kwargs.items()}
 
         try:
             return self.callable(*args, **kwargs)
