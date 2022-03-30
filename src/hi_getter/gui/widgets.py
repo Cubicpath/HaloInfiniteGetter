@@ -47,11 +47,35 @@ class BetterLineEdit(QLineEdit):
 
 
 class BetterTextBrowser(QTextBrowser):
-    """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s."""
+    """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s.
+
+    Also supports external image loading and caching.
+    """
+    remote_image_cache: dict[str, bytes] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable())
+
+        # default factory producing empty DeferredCallables
+        self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable(DeferredCallable, _call_types=True))
+
+    # TODO: Make multiple requests asynchronous
+    def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl) -> Any:
+        """Load a resource from an url.
+
+        If resource type is an image and the url is external, download it using requests and cache it.
+        """
+        if resource_type == QTextDocument.ResourceType.ImageResource and not url.isLocalFile():
+            image: QImage = QImage()
+            if url.toDisplayString() not in self.remote_image_cache:
+                img_data: bytes = requests.get(url.toDisplayString()).content
+                image.loadFromData(img_data)
+                self.remote_image_cache[url.toDisplayString()] = img_data
+            else:
+                image.loadFromData(self.remote_image_cache[url.toDisplayString()])
+            return image
+        else:
+            return super().loadResource(int(resource_type), url)
 
     # noinspection PyTypeChecker
     def connect_key_to(self, key: Qt.Key, func: Callable) -> None:
