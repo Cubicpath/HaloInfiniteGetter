@@ -21,6 +21,17 @@ from typing import Final
 HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
 """Example resource. Is pre-filled in the search bar."""
 
+# Paths
+
+HI_CACHE_PATH:      Final[Path] = Path.home() / '.cache/hi_getter'
+"""Directory containing cached API results."""
+
+HI_CONFIG_PATH:     Final[Path] = Path.home() / '.config/hi_getter'
+"""Directory containing user configuration data."""
+
+HI_RESOURCE_PATH:   Final[Path] = Path(__file__).parent / 'resources'
+"""Directory containing application resources."""
+
 # Patterns
 
 HI_PATH_PATTERN:    Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
@@ -34,14 +45,3 @@ HI_URL_PATTERN:     Final[re.Pattern] = re.compile(
     r'\([^\s]+?\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’])|'
     r'(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.][a-z]{2,}\b/?(?!@))')
 """Regex pattern for finding URLs. Derived from https://gist.github.com/gruber/8891611."""
-
-# Paths
-
-HI_CACHE_PATH:      Final[Path] = Path.home() / '.cache/hi_getter'
-"""Directory containing cached API results."""
-
-HI_CONFIG_PATH:     Final[Path] = Path.home() / '.config/hi_getter'
-"""Directory containing user configuration data."""
-
-HI_RESOURCE_PATH:   Final[Path] = Path(__file__).parent / 'resources'
-"""Directory containing application resources."""
