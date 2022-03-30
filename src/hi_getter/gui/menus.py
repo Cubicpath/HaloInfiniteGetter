@@ -137,7 +137,7 @@ class HelpContextMenu(QMenu):
             'Information': (license_view, about_view)
         }
 
-        print({k: v for k, v in locals().items() if isinstance(v, QObject)})
+        # print({k: v for k, v in locals().items() if isinstance(v, QObject)})
 
         for section, actions in section_map.items():
             self.addSection(section)
