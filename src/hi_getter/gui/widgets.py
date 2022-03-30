@@ -8,13 +8,17 @@ __all__ = (
     'BetterTextBrowser',
     'HistoryComboBox',
     'LicenseViewer',
+    'ReadmeViewer',
 )
 
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Sequence
+from importlib.metadata import metadata
+from typing import Any
 from typing import Optional
 
+import requests
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -126,7 +130,7 @@ class HistoryComboBox(QComboBox):
 # TODO: Zoom In/Out Buttons
 # TODO: Move to windows.py
 class LicenseViewer(QWidget):
-    """Widget that formats and shows the project's license file."""
+    """Widget that formats and shows the project's (and all of its requirements') license files."""
     LICENSE_DATA = current_requirement_licenses(_PARENT_PACKAGE)
 
     def __init__(self, *args, **kwargs) -> None:
@@ -135,7 +139,7 @@ class LicenseViewer(QWidget):
         Has a fixed size of 750x380.
         """
         super().__init__(*args, **kwargs)
-        self.setWindowTitle('License Viewer')
+        self.setWindowTitle(instance().translator('gui.license_viewer.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
         self.resize(QSize(750, 380))
         self.current_license_index = 0
@@ -218,3 +222,34 @@ class LicenseViewer(QWidget):
         self.license_text_edit.setHtml(f'<body style="white-space: pre-wrap"><center>{stripped_output}</center></body>')
 
         scroll_to_top(self.license_text_edit)
+
+
+# TODO: Move to windows.py
+class ReadmeViewer(QWidget):
+    """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
+    README_TEXT = metadata(_PARENT_PACKAGE)['Description']
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.setWindowTitle(instance().translator('gui.readme_viewer.title'))
+
+        # TODO: add better image to this and its context menu
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
+        self.resize(QSize(750, 700))
+        self._init_ui()
+
+    def _dummy_func(self):
+        """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
+
+    def _init_ui(self) -> None:
+        readme_viewer = BetterTextBrowser(self)
+        readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func.__doc__
+
+        layout = QHBoxLayout(self)
+        self.setLayout(layout)
+
+        layout.addWidget(readme_viewer)
+
+        readme_viewer.setOpenExternalLinks(True)
+        readme_viewer.setMarkdown(self.README_TEXT)
+        readme_viewer.setFont(QFont(readme_viewer.font().family(), 10))

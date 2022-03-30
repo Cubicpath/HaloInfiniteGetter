@@ -12,6 +12,7 @@ __all__ = (
     'HelpContextMenu',
     'HistoryComboBox',
     'LicenseViewer',
+    'ReadmeViewer',
     'SettingsWindow',
     'Theme',
     'ToolsContextMenu',

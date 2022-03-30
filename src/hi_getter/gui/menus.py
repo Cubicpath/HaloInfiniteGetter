@@ -16,7 +16,6 @@ from platform import platform
 from shutil import rmtree
 
 import requests
-from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
@@ -25,7 +24,7 @@ from ..constants import *
 from ..utils import current_requirement_versions
 from ..utils import has_package
 from .app import instance
-from .widgets import LicenseViewer
+from .widgets import *
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
@@ -107,7 +106,10 @@ class HelpContextMenu(QMenu):
         """Create a new :py:class:`HelpContextMenu`."""
         super().__init__(parent)
 
+        # Make sure when instantiating QObjects that those QObjects reference a Python object that re-references that QObject,
+        # otherwise the QObject will not be considered "in use" by the garbage collector, and will be deleted.
         self.license_window = LicenseViewer()
+        self.readme_window = ReadmeViewer()
 
         github_pixmap = QPixmap()
         github_pixmap.loadFromData(self._github_icon)
@@ -122,19 +124,24 @@ class HelpContextMenu(QMenu):
             instance().translator('gui.menus.help.issue'), self, triggered=self.open_issues
         )
 
-        license_view: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
-            instance().translator('gui.menus.help.license'), self, triggered=self.open_license
-        )
-
         about_view:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')),
             instance().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
+        license_view: QAction = QAction(
+            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
+            instance().translator('gui.menus.help.license'), self, triggered=self.open_license
+        )
+
+        readme: QAction = QAction(
+            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
+            instance().translator('gui.menus.help.readme'), self, triggered=self.open_readme
+        )
+
         section_map = {
             'Github': (github_view, create_issue),
-            'Information': (license_view, about_view)
+            'Information': (about_view, license_view, readme)
         }
 
         # print({k: v for k, v in locals().items() if isinstance(v, QObject)})
@@ -142,6 +149,8 @@ class HelpContextMenu(QMenu):
         for section, actions in section_map.items():
             self.addSection(section)
             self.addActions(actions)
+
+    # TODO: move static methods to deferredcallables
 
     @staticmethod
     def open_github() -> None:
@@ -153,15 +162,19 @@ class HelpContextMenu(QMenu):
         """Creates a new GitHub issue using the user's default browser."""
         webbrowser.open('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new', new=2, autoraise=True)
 
-    def open_license(self) -> None:
-        """Show the :py:class:`LicenseViewer` window."""
-        self.license_window.show()
-
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         """Open the application's about section."""
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())
+
+    def open_license(self) -> None:
+        """Show the :py:class:`LicenseViewer` window."""
+        self.license_window.show()
+
+    def open_readme(self) -> None:
+        """Show the README.md text."""
+        self.readme_window.show()
 
     def about_message(self) -> tuple[str, str]:
         """Generate the 'About' information regarding the application's environment.
