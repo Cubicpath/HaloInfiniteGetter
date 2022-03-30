@@ -24,7 +24,7 @@ from ..constants import *
 from ..events import *
 from ..tomlfile import TomlFile, TomlEvents
 from ..utils import DeferredCallable
-from .app import *
+from .app import instance
 from .menus import *
 from .utils import scroll_to_top
 from .widgets import *
@@ -40,8 +40,8 @@ class SettingsWindow(QWidget):
         self.client = parent.client
         self.clipboard: QClipboard | None = parent.clipboard
         self.getter_window = parent
-        self.settings: TomlFile = GetterApp.instance().settings
-        self.translator = GetterApp.instance().translator
+        self.settings: TomlFile = instance().settings
+        self.translator = instance().translator
 
         self.setWindowTitle(self.translator('gui.settings.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
@@ -112,7 +112,7 @@ class SettingsWindow(QWidget):
         def set_theme() -> None:
             """Set selected theme to the chosen theme."""
             save_button.setDisabled(False)
-            self.settings['gui/themes/selected'] = GetterApp.instance().sorted_themes()[self.theme_dropdown.currentIndex()].id
+            self.settings['gui/themes/selected'] = instance().sorted_themes()[self.theme_dropdown.currentIndex()].id
 
         def hide_key() -> None:
             """Hide API key."""
@@ -217,8 +217,8 @@ class SettingsWindow(QWidget):
         # Modify properties of widgets
         theme_label.setMaximumWidth(85)
 
-        self.theme_dropdown.addItems([theme.display_name for theme in GetterApp.instance().sorted_themes()])
-        self.theme_dropdown.setCurrentIndex(GetterApp.instance().theme_index_map[self.settings['gui/themes/selected']])
+        self.theme_dropdown.addItems([theme.display_name for theme in instance().sorted_themes()])
+        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[self.settings['gui/themes/selected']])
 
         aspect_ratio_label.setMaximumWidth(90)
         transformation_label.setMaximumWidth(90)
@@ -251,7 +251,7 @@ class SettingsWindow(QWidget):
         self.aspect_ratio_dropdown.setCurrentIndex(self.settings['gui/media_output/aspect_ratio_mode'])
         self.transformation_dropdown.setCurrentIndex(self.settings['gui/media_output/transformation_mode'])
         self.line_wrap_dropdown.setCurrentIndex(self.settings['gui/text_output/line_wrap_mode'])
-        self.theme_dropdown.setCurrentIndex(GetterApp.instance().theme_index_map[self.settings['gui/themes/selected']])
+        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[self.settings['gui/themes/selected']])
 
     def open_editor(self) -> None:
         """Open current settings file in the user's default text editor."""
@@ -280,10 +280,10 @@ class AppWindow(QMainWindow):
         """Create the window for the application."""
         super().__init__()
         self.client:                Client = client
-        self.clipboard:             QClipboard = GetterApp.instance().clipboard()
+        self.clipboard:             QClipboard = instance().clipboard()
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.setWindowTitle(GetterApp.instance().translator('app.name') + f' v{__version__}')
+        self.setWindowTitle(instance().translator('app.name') + f' v{__version__}')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
@@ -349,6 +349,7 @@ class AppWindow(QMainWindow):
             """
             window = QMainWindow()
             window.setWindowTitle(title if title is not None else self.windowTitle())
+            window.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
             window.setCentralWidget(frame)
             window.setMinimumHeight(200)
             window.setMinimumWidth(300)
@@ -358,10 +359,12 @@ class AppWindow(QMainWindow):
         def toggle_media_detach() -> None:
             """Handler for detaching and reattaching the media output."""
             if self.detached['media'] is None:
-                self.detached['media'] = window = setup_detached_window('media',
-                                                                        self.media_frame, toggle_media_detach,
-                                                                        GetterApp.instance().translator('gui.outputs.image.detached'))
-                self.image_detach_button.setText(GetterApp.instance().translator('gui.outputs.reattach'))
+                self.detached['media'] = window = setup_detached_window(
+                    'media',
+                    self.media_frame, toggle_media_detach,
+                    instance().translator('gui.outputs.image.detached')
+                )
+                self.image_detach_button.setText(instance().translator('gui.outputs.reattach'))
                 window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
@@ -370,15 +373,17 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(0, self.media_frame)
-                self.image_detach_button.setText(GetterApp.instance().translator('gui.outputs.detach'))
+                self.image_detach_button.setText(instance().translator('gui.outputs.detach'))
 
         def toggle_text_detach() -> None:
             """Handler for detaching and reattaching the text output."""
             if self.detached['text'] is None:
-                self.detached['text'] = window = setup_detached_window('text',
-                                                                       self.text_frame, toggle_text_detach,
-                                                                       GetterApp.instance().translator('gui.outputs.text.label_empty'))
-                self.text_detach_button.setText(GetterApp.instance().translator('gui.outputs.reattach'))
+                self.detached['text'] = window = setup_detached_window(
+                    'text',
+                    self.text_frame, toggle_text_detach,
+                    instance().translator('gui.outputs.text.detached')
+                )
+                self.text_detach_button.setText(instance().translator('gui.outputs.reattach'))
                 window.show()
             else:
                 window = self.detached['text']
@@ -386,11 +391,11 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(-1, self.text_frame)
-                self.text_detach_button.setText(GetterApp.instance().translator('gui.outputs.detach'))
+                self.text_detach_button.setText(instance().translator('gui.outputs.detach'))
 
         def clear_current_pixmap() -> None:
             """Clear the current image from the media output."""
-            self.image_size_label.setText(GetterApp.instance().translator('gui.outputs.image.label_empty'))
+            self.image_size_label.setText(instance().translator('gui.outputs.image.label_empty'))
             self.clear_picture.setDisabled(True)
             self.copy_picture.setDisabled(True)
             self.media_output.scene().clear()
@@ -403,7 +408,7 @@ class AppWindow(QMainWindow):
 
         def clear_current_text() -> None:
             """Clear the current text from the text output."""
-            self.text_size_label.setText(GetterApp.instance().translator('gui.outputs.text.label_empty'))
+            self.text_size_label.setText(instance().translator('gui.outputs.text.label_empty'))
             self.clear_text.setDisabled(True)
             self.copy_text.setDisabled(True)
             self.text_output.setDisabled(True)
@@ -431,21 +436,21 @@ class AppWindow(QMainWindow):
 
         self.input_field:         HistoryComboBox = HistoryComboBox()
         self.media_frame:         QFrame = QFrame()
-        self.image_size_label:    QLabel = QLabel(GetterApp.instance().translator('gui.outputs.image.label_empty'))
-        self.image_detach_button: QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.detach'), clicked=toggle_media_detach)
+        self.image_size_label:    QLabel = QLabel(instance().translator('gui.outputs.image.label_empty'))
+        self.image_detach_button: QPushButton = QPushButton(instance().translator('gui.outputs.detach'), clicked=toggle_media_detach)
         self.media_output:        QGraphicsView = QGraphicsView()
         self.text_frame:          QFrame = QFrame()
-        self.text_size_label:     QLabel = QLabel(GetterApp.instance().translator('gui.outputs.text.label_empty'))
-        self.text_detach_button:  QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.detach'), clicked=toggle_text_detach)
+        self.text_size_label:     QLabel = QLabel(instance().translator('gui.outputs.text.label_empty'))
+        self.text_detach_button:  QPushButton = QPushButton(instance().translator('gui.outputs.detach'), clicked=toggle_text_detach)
         self.text_output:         BetterTextBrowser = BetterTextBrowser()
-        self.clear_picture:       QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.clear'), clicked=clear_current_pixmap)
-        self.copy_picture:        QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
-        self.clear_text:          QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.clear'), clicked=clear_current_text)
-        self.copy_text:           QPushButton = QPushButton(GetterApp.instance().translator('gui.outputs.text.copy'), clicked=copy_current_text)
+        self.clear_picture:       QPushButton = QPushButton(instance().translator('gui.outputs.clear'), clicked=clear_current_pixmap)
+        self.copy_picture:        QPushButton = QPushButton(instance().translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
+        self.clear_text:          QPushButton = QPushButton(instance().translator('gui.outputs.clear'), clicked=clear_current_text)
+        self.copy_text:           QPushButton = QPushButton(instance().translator('gui.outputs.text.copy'), clicked=copy_current_text)
         subdomain_field:          QLineEdit = QLineEdit(self.client.sub_host)
         root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
-        get_button:               QPushButton = QPushButton(GetterApp.instance().translator('gui.input_field.get'), clicked=self.use_input)
-        scan_button:              QPushButton = QPushButton(GetterApp.instance().translator('gui.input_field.scan'), clicked=DeferredCallable(self.use_input,
+        get_button:               QPushButton = QPushButton(instance().translator('gui.input_field.get'), clicked=self.use_input)
+        scan_button:              QPushButton = QPushButton(instance().translator('gui.input_field.scan'), clicked=DeferredCallable(self.use_input,
                                                                                                                                               scan=True))
 
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
@@ -523,7 +528,7 @@ class AppWindow(QMainWindow):
         self.text_size_label.setMinimumWidth(50)
         self.text_detach_button.setMaximumWidth(80)
         self.text_output.setMinimumHeight(28)
-        self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(GetterApp.instance().settings['gui/text_output/line_wrap_mode']))
+        self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(instance().settings['gui/text_output/line_wrap_mode']))
         self.text_output.setOpenLinks(False)
         self.text_output.setDisabled(True)
         self.clear_picture.setMaximumWidth(80)
@@ -582,10 +587,11 @@ class AppWindow(QMainWindow):
                     self.copy_picture.setDisabled(False)
                     self.current_image = QPixmap()
                     self.current_image.loadFromData(data)
-                    size = self.current_image.size()
-                    self.image_size_label.setText(GetterApp.instance().translator('gui.outputs.image.label',
-                                                                      size.width(), size.height(),
-                                                                      round(len(data) / 1024, 4)))
+                    self.image_size_label.setText(instance().translator(
+                        'gui.outputs.image.label',
+                        self.current_image.size().width(), self.current_image.size().height(),
+                        round(len(data) / 1024, 4)
+                    ))
                     self.resize_image()
                 else:
                     self.clear_text.setDisabled(False)
@@ -611,9 +617,11 @@ class AppWindow(QMainWindow):
                             replaced.add(match)
 
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
-                    self.text_size_label.setText(GetterApp.instance().translator('gui.outputs.text.label',
-                                                                     len(data.splitlines()), len(data),
-                                                                     round(len(data.encode('utf8')) / 1024, 4)))
+                    self.text_size_label.setText(instance().translator(
+                        'gui.outputs.text.label',
+                        len(data.splitlines()), len(data),
+                        round(len(data.encode('utf8')) / 1024, 4)
+                    ))
 
     def resize_image(self) -> None:
         """Refresh the media output with a resized version of the current image."""
@@ -624,8 +632,8 @@ class AppWindow(QMainWindow):
                 # Create a new image from the copied source image, scaled to fit the window.
                 new = new.scaled(
                     self.media_output.viewport().size(),
-                    Qt.AspectRatioMode(GetterApp.instance().settings['gui/media_output/aspect_ratio_mode']),
-                    Qt.TransformationMode(GetterApp.instance().settings['gui/media_output/transformation_mode'])
+                    Qt.AspectRatioMode(instance().settings['gui/media_output/aspect_ratio_mode']),
+                    Qt.TransformationMode(instance().settings['gui/media_output/transformation_mode'])
                 )
             # Add image to buffer
             self.media_output.scene().addPixmap(new)
@@ -635,7 +643,7 @@ class AppWindow(QMainWindow):
         """After window is displayed, show warnings if not already warned."""
         super().show()
         if not self.shown_key_warning and self.client.token is None:
-            QMessageBox.warning(self, *(GetterApp.instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
+            QMessageBox.warning(self, *(instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
             self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:
@@ -646,4 +654,4 @@ class AppWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closes all detached/children windows and quit application."""
         super().closeEvent(event)
-        GetterApp.instance().quit()
+        instance().quit()

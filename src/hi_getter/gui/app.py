@@ -5,6 +5,7 @@
 
 __all__ = (
     'GetterApp',
+    'instance',
     'Theme',
 )
 
@@ -18,6 +19,11 @@ from ..events import *
 from ..lang import Translator
 from ..tomlfile import *
 from ..utils import DeferredCallable
+
+
+def instance() -> 'GetterApp':
+    """:return: GetterApp.instance()"""
+    return GetterApp.instance()
 
 
 class Theme:
@@ -62,10 +68,10 @@ class GetterApp(QApplication):
     @classmethod
     def instance(cls) -> 'GetterApp':
         """Return the singleton instance of :py:class:`GetterApp`."""
-        instance: GetterApp | None = super().instance()
-        if instance is None:
-            raise RuntimeError(f'{cls.__name__} is not instantiated.')
-        return instance
+        o: GetterApp | None = super().instance()
+        if o is None:
+            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
+        return o
 
     def update_language(self) -> None:
         """Set the application language to the one currently selected in settings."""

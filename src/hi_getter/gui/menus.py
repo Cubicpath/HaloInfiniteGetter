@@ -24,7 +24,7 @@ from .._version import __version_info__ as ver
 from ..constants import *
 from ..utils import current_requirement_versions
 from ..utils import has_package
-from .app import GetterApp
+from .app import instance
 from .widgets import LicenseViewer
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
@@ -40,21 +40,21 @@ class FileContextMenu(QMenu):
 
         open_in:     QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
-            GetterApp.instance().translator('gui.menus.file.open'), self, triggered=self.open_explorer
+            instance().translator('gui.menus.file.open'), self, triggered=self.open_explorer
         )
 
         flush_cache: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
-            GetterApp.instance().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
+            instance().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
         import_from: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')),
-            GetterApp.instance().translator('gui.menus.file.import'), self, triggered=self.import_data)
+            instance().translator('gui.menus.file.import'), self, triggered=self.import_data)
 
         export_to:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')),
-            GetterApp.instance().translator('gui.menus.file.export'), self, triggered=self.export_data
+            instance().translator('gui.menus.file.export'), self, triggered=self.export_data
         )
 
         section_map = {
@@ -79,8 +79,8 @@ class FileContextMenu(QMenu):
     def flush_cache(self) -> None:
         """Remove all data from cache."""
         response: int = QMessageBox.warning(
-            self, GetterApp.instance().translator('warnings.delete_cache.title'),
-            GetterApp.instance().translator('warnings.delete_cache.description'),
+            self, instance().translator('warnings.delete_cache.title'),
+            instance().translator('warnings.delete_cache.description'),
             QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel, defaultButton=QMessageBox.StandardButton.Cancel
         )
 
@@ -114,22 +114,22 @@ class HelpContextMenu(QMenu):
 
         github_view:  QAction = QAction(
             QIcon(github_pixmap),
-            GetterApp.instance().translator('gui.menus.help.github'), self, triggered=self.open_github
+            instance().translator('gui.menus.help.github'), self, triggered=self.open_github
         )
 
         create_issue: QAction = QAction(
             QIcon(github_pixmap),
-            GetterApp.instance().translator('gui.menus.help.issue'), self, triggered=self.open_issues
+            instance().translator('gui.menus.help.issue'), self, triggered=self.open_issues
         )
 
         license_view: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
-            GetterApp.instance().translator('gui.menus.help.license'), self, triggered=self.open_license
+            instance().translator('gui.menus.help.license'), self, triggered=self.open_license
         )
 
         about_view:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')),
-            GetterApp.instance().translator('gui.menus.help.about'), self, triggered=self.open_about
+            instance().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         section_map = {
@@ -174,13 +174,16 @@ class HelpContextMenu(QMenu):
                                          package, version in current_requirement_versions(_PARENT_PACKAGE, include_extras=True).items() if has_package(package))
 
             self.__class__._about = (
-                GetterApp.instance().translator('information.about.title'),
-                GetterApp.instance().translator('information.about.description',
-                                                GetterApp.instance().translator('app.description'),
-                                                *ver, platform(), sys.implementation.name,
-                                                sys.version.split('[', maxsplit=1)[0],
-                                                package_versions,
-                                                GetterApp.instance().translator('app.copyright')))
+                instance().translator('information.about.title'),
+                instance().translator(
+                    'information.about.description',
+                    instance().translator('app.description'),
+                    *ver, platform(), sys.implementation.name,
+                    sys.version.split('[', maxsplit=1)[0],
+                    package_versions,
+                    instance().translator('app.copyright')
+                )
+            )
         return self._about
 
 
@@ -194,7 +197,7 @@ class ToolsContextMenu(QMenu):
 
         shortcut_tool: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DesktopIcon),
-            GetterApp.instance().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
+            instance().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
         )
 
         section_map = {
@@ -211,8 +214,8 @@ class ToolsContextMenu(QMenu):
 
         if not has_package('pyshortcuts'):
             QMessageBox.critical(
-                self, GetterApp.instance().translator('errors.missing_package.title'),
-                GetterApp.instance().translator('errors.missing_package.description', 'pyshortcuts', exec_path, 'pyshortcuts')
+                self, instance().translator('errors.missing_package.title'),
+                instance().translator('errors.missing_package.description', 'pyshortcuts', exec_path, 'pyshortcuts')
             )
         else:
             from pyshortcuts import make_shortcut
@@ -222,6 +225,6 @@ class ToolsContextMenu(QMenu):
                 name += 'w'
             shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
 
-            make_shortcut(script=shortcut_path, name=GetterApp.instance().translator('app.name'),
-                          description=GetterApp.instance().translator('app.description'),
+            make_shortcut(script=shortcut_path, name=instance().translator('app.name'),
+                          description=instance().translator('app.description'),
                           icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
