@@ -168,7 +168,7 @@ class Language:
     def from_tag(cls, tag: str) -> 'Language':
         """Build a :py:class:`Language` object using a plain string tag.
 
-        Breaks tag into sub-tags and verifies compliancy with RFC 5646.
+        Breaks tag into sub-tags and verifies compliance with RFC 5646.
         """
         # TODO: Add functionality
 
@@ -183,10 +183,12 @@ class Language:
         default = default if default is not None else key
         result = self._data.get(key, default)
 
-        # Dont format default value
         if result is not default:
+            # TODO: Support positional format arguments
+            # TODO: Support referencing other translation keys
             result = result % args
         else:
+            # Dont format default value
             quote = '"'
             for arg1 in (f'%{str(arg0) if not isinstance(arg0, str) else quote + arg0 + quote}%' for arg0 in args):
                 result += arg1

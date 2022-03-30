@@ -16,7 +16,7 @@ from typing import TypeAlias
 from . import utils
 
 EventPredicate: TypeAlias = Callable[['Event'], bool]
-EventRunnable:  TypeAlias = Callable[['Event'], None] | Callable[[], None]
+EventRunnable:  TypeAlias = Callable[['Event'], None]
 
 
 class Event:
