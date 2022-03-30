@@ -135,7 +135,7 @@ class HelpContextMenu(QMenu):
         )
 
         readme: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
+            self.style().standardIcon(QStyle.SP_DialogApplyButton),
             instance().translator('gui.menus.help.readme'), self, triggered=self.open_readme
         )
 

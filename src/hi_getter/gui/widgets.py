@@ -232,10 +232,8 @@ class ReadmeViewer(QWidget):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setWindowTitle(instance().translator('gui.readme_viewer.title'))
-
-        # TODO: add better image to this and its context menu
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
-        self.resize(QSize(750, 700))
+        self.setWindowIcon(self.style().standardIcon(QStyle.SP_DialogApplyButton))
+        self.resize(QSize(750, 750))
         self._init_ui()
 
     def _dummy_func(self):
