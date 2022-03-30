@@ -644,9 +644,6 @@ class AppWindow(QMainWindow):
     def show(self) -> None:
         """After window is displayed, show warnings if not already warned."""
         super().show()
-        if not self.shown_key_warning and self.client.token is None:
-            QMessageBox.warning(self, *(instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
-            self.__class__.shown_key_warning = True
 
         if instance().first_launch:
             readme = ReadmeViewer()
@@ -656,6 +653,9 @@ class AppWindow(QMainWindow):
                 readme, instance().translator('information.first_launch.title'),
                 instance().translator('information.first_launch.description')
             )
+        elif not self.shown_key_warning and self.client.token is None:
+            QMessageBox.warning(self, *(instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
+            self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resize image on resize of window."""
