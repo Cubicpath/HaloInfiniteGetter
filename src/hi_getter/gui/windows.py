@@ -648,6 +648,15 @@ class AppWindow(QMainWindow):
             QMessageBox.warning(self, *(instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
             self.__class__.shown_key_warning = True
 
+        if instance().first_launch:
+            readme = ReadmeViewer()
+            readme.setWindowTitle(instance().translator('gui.readme_viewer.title_first_launch', readme.windowTitle()))
+            readme.show()
+            QMessageBox.information(
+                readme, instance().translator('information.first_launch.title'),
+                instance().translator('information.first_launch.description')
+            )
+
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resize image on resize of window."""
         super().resizeEvent(event)

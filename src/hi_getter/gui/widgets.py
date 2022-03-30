@@ -241,13 +241,18 @@ class ReadmeViewer(QWidget):
 
     def _init_ui(self) -> None:
         readme_viewer = BetterTextBrowser(self)
+        close_button = QPushButton("Close", self, clicked=self.close)
+
         readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func.__doc__
 
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
         self.setLayout(layout)
 
         layout.addWidget(readme_viewer)
+        layout.addWidget(close_button)
 
         readme_viewer.setOpenExternalLinks(True)
         readme_viewer.setMarkdown(self.README_TEXT)
         readme_viewer.setFont(QFont(readme_viewer.font().family(), 10))
+        close_button.setMinimumHeight(40)
+        close_button.setFont(QFont(close_button.font().family(), 16))
