@@ -311,12 +311,14 @@ class AppWindow(QMainWindow):
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
 
-        def context_menu_handler(menu_class: type) -> None:
+        def context_menu_handler(menu_class: type[QMenu]) -> None:
             """Create a new :py:class:`QMenu` and show it at the cursor's position."""
             if not issubclass(menu_class, QMenu):
                 raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
 
             menu = menu_class(self)
+            menu.setAttribute(Qt.WA_DeleteOnClose)
+
             menu.move(self.cursor().pos())
             menu.show()
 
