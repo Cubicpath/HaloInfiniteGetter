@@ -11,6 +11,7 @@ __all__ = (
     'dump_data',
     'get_parent_doc',
     'has_package',
+    'hide_windows_file',
     'patch_windows_taskbar_icon',
     'unique_values',
 )
@@ -136,13 +137,6 @@ def get_parent_doc(__type: type, /) -> str | None:
     return doc
 
 
-def patch_windows_taskbar_icon(app_id: str = '') -> None:
-    """Override Python's default Windows taskbar icon with the custom one set by the app window."""
-    if sys.platform == 'win32':
-        from ctypes import windll
-        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-
-
 def has_package(package: str) -> bool:
     """Returns whether the given package name is installed in the current environment.
 
@@ -154,6 +148,22 @@ def has_package(package: str) -> bool:
         if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
             return True
     return False
+
+
+def hide_windows_file(path: str | Path) -> None:
+    """Hide an existing Windows file. If not running windows, do nothing."""
+    path = Path(path)
+    if sys.platform == 'win32':
+        import win32con
+        from ctypes import windll
+        windll.kernel32.SetFileAttributesW(str(path.resolve()), win32con.FILE_ATTRIBUTE_HIDDEN)
+
+
+def patch_windows_taskbar_icon(app_id: str = '') -> None:
+    """Override Python's default Windows taskbar icon with the custom one set by the app window."""
+    if sys.platform == 'win32':
+        from ctypes import windll
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 
 
 def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:

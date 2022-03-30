@@ -26,12 +26,13 @@ from requests.utils import guess_json_utf
 
 from .constants import *
 from .utils import dump_data
+from .utils import hide_windows_file
 from .utils import unique_values
 
 load_dotenv(verbose=True)
 
-TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / 'token'
-WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / 'wpauth'
+TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
+WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
@@ -230,6 +231,7 @@ class Client:
             self.set_cookie('343-spartan-token', self._token)
             self.session.headers['x-343-authorization-spartan'] = self._token
             TOKEN_PATH.write_text(self._token)
+            hide_windows_file(TOKEN_PATH)
 
     @property
     def wpauth(self) -> str | None:
@@ -248,6 +250,7 @@ class Client:
             self._wpauth = value.split(':')[-1].strip()
             self.set_cookie('wpauth', self._wpauth)
             WPAUTH_PATH.write_text(self._wpauth)
+            hide_windows_file(WPAUTH_PATH)
 
     @property
     def api_root(self) -> str:
