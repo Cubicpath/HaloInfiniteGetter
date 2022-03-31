@@ -23,7 +23,7 @@ from PySide6.QtWidgets import *
 
 from .._version import __version_info__ as ver
 from ..constants import *
-from ..utils import current_requirement_versions
+from ..utils import current_requirement_versions, DeferredCallable
 from ..utils import has_package
 from .app import instance
 from .widgets import *
@@ -39,9 +39,11 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
-        open_in:     QAction = QAction(
+        open_explorer:     QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
-            instance().translator('gui.menus.file.open'), self, triggered=self.open_explorer
+            instance().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
+                webbrowser.open, f'file:///{HI_CACHE_PATH}'
+            )
         )
 
         flush_cache: QAction = QAction(
@@ -51,7 +53,8 @@ class FileContextMenu(QMenu):
 
         import_from: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')),
-            instance().translator('gui.menus.file.import'), self, triggered=self.import_data)
+            instance().translator('gui.menus.file.import'), self, triggered=self.import_data
+        )
 
         export_to:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')),
@@ -59,7 +62,7 @@ class FileContextMenu(QMenu):
         )
 
         section_map = {
-            'Files': (open_in, flush_cache, import_from, export_to)
+            'Files': (open_explorer, flush_cache, import_from, export_to)
         }
 
         for section, actions in section_map.items():
@@ -71,11 +74,6 @@ class FileContextMenu(QMenu):
         # TODO: Add functionality and enable
         import_from.setDisabled(True)
         export_to.setDisabled(True)
-
-    @staticmethod
-    def open_explorer() -> None:
-        """Open the user's file explorer in the current application's export directory."""
-        webbrowser.open(f'file:///{HI_CACHE_PATH}')
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
@@ -118,12 +116,16 @@ class HelpContextMenu(QMenu):
 
         github_view:  QAction = QAction(
             QIcon(github_pixmap),
-            instance().translator('gui.menus.help.github'), self, triggered=self.open_github
+            instance().translator('gui.menus.help.github'), self, triggered=DeferredCallable(
+                webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
+            )
         )
 
         create_issue: QAction = QAction(
             QIcon(github_pixmap),
-            instance().translator('gui.menus.help.issue'), self, triggered=self.open_issues
+            instance().translator('gui.menus.help.issue'), self, triggered=DeferredCallable(
+                webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
+            )
         )
 
         about_view:   QAction = QAction(
@@ -151,18 +153,6 @@ class HelpContextMenu(QMenu):
         for section, actions in section_map.items():
             self.addSection(section)
             self.addActions(actions)
-
-    # TODO: move static methods to deferredcallables
-
-    @staticmethod
-    def open_github() -> None:
-        """Open the project's GitHub repository in the user's default browser."""
-        webbrowser.open('https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True)
-
-    @staticmethod
-    def open_issues() -> None:
-        """Creates a new GitHub issue using the user's default browser."""
-        webbrowser.open('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new', new=2, autoraise=True)
 
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
