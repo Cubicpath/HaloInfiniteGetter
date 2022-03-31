@@ -9,8 +9,10 @@ __all__ = (
     'ToolsContextMenu',
 )
 
+import os
 import sys
 import webbrowser
+from contextlib import redirect_stdout
 from pathlib import Path
 from platform import platform
 from shutil import rmtree
@@ -190,11 +192,9 @@ class HelpContextMenu(QMenu):
                 instance().translator('information.about.title'),
                 instance().translator(
                     'information.about.description',
-                    instance().translator('app.description'),
                     *ver, platform(), sys.implementation.name,
                     sys.version.split('[', maxsplit=1)[0],
-                    package_versions,
-                    instance().translator('app.copyright')
+                    package_versions
                 )
             )
         return self._about
@@ -228,7 +228,7 @@ class ToolsContextMenu(QMenu):
         if not has_package('pyshortcuts'):
             QMessageBox.critical(
                 self, instance().translator('errors.missing_package.title'),
-                instance().translator('errors.missing_package.description', 'pyshortcuts', exec_path, 'pyshortcuts')
+                instance().translator('errors.missing_package.description', 'pyshortcuts', exec_path)
             )
         else:
             from pyshortcuts import make_shortcut
@@ -238,6 +238,7 @@ class ToolsContextMenu(QMenu):
                 name += 'w'
             shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
 
-            make_shortcut(script=shortcut_path, name=instance().translator('app.name'),
-                          description=instance().translator('app.description'),
-                          icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
+            with redirect_stdout(open(os.devnull, 'w', encoding='utf8')):
+                make_shortcut(script=shortcut_path, name=instance().translator('app.name'),
+                              description=instance().translator('app.description'),
+                              icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)

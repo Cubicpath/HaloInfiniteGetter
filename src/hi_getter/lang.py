@@ -9,6 +9,7 @@ __all__ = (
 )
 
 import json
+import re
 from pathlib import Path
 from string import ascii_letters
 from string import digits
@@ -184,14 +185,12 @@ class Language:
         result = self._data.get(key, default)
 
         if result is not default:
-            # TODO: Support positional format arguments
-            # TODO: Support referencing other translation keys
-            result = result % args
+            return format_value(result, *args, _language=self)
         else:
             # Dont format default value
             quote = '"'
-            for arg1 in (f'%{str(arg0) if not isinstance(arg0, str) else quote + arg0 + quote}%' for arg0 in args):
-                result += arg1
+            for arg in (f'%{str(arg) if not isinstance(arg, str) else quote + arg + quote}%' for arg in args):
+                result += arg
 
         return result
 
@@ -243,3 +242,42 @@ class Translator:
             language = language.replace(' ', '-').replace('_', '-').strip()
             language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
         return language
+
+
+def format_value(value: str, *args, _language: Language = None) -> str:
+    """Format a str with positional arguments.
+
+    You can use {0} notation to refer to a specific positional argument.
+    If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
+
+    ex::
+
+        "{0} is the same as {0} using only one argument."
+        "{0} %s will not work and require 2 arguments"
+        "{%s {0} is the same thing, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\"}"
+    """
+    list_args: list = list(args)
+
+    pos_param_ref: re.Pattern = re.compile(r'{([+-]?[1-9]\d*|0)}')
+    key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
+    replaced: set[str] = set()
+
+    for match in pos_param_ref.finditer(value):
+        match = match[0]
+        arg_val = args[int(match.strip('{}'))]
+        if match not in replaced:
+            replaced.add(match)
+            value = value.replace(match, arg_val)
+            list_args.remove(arg_val)
+
+    value = value % tuple(list_args)
+
+    replaced.clear()
+    if _language is not None:
+        for match in key_ref.finditer(value):
+            match = match[0]
+            if match not in replaced:
+                replaced.add(match)
+                value = value.replace(match, _language.get_raw(match.strip('{}')))
+
+    return value

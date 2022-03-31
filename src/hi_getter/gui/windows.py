@@ -647,7 +647,7 @@ class AppWindow(QMainWindow):
 
         if instance().first_launch:
             readme = ReadmeViewer()
-            readme.setWindowTitle(instance().translator('gui.readme_viewer.title_first_launch', readme.windowTitle()))
+            readme.setWindowTitle(instance().translator('gui.readme_viewer.title_first_launch'))
             readme.show()
             QMessageBox.information(
                 readme, instance().translator('information.first_launch.title'),
