@@ -61,7 +61,7 @@ class BetterTextBrowser(QTextBrowser):
         super().__init__(*args, **kwargs)
 
         # default factory producing empty DeferredCallables
-        self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable(DeferredCallable, _call_types=True))
+        self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
 
     # TODO: Make multiple requests asynchronous
     def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl) -> Any:

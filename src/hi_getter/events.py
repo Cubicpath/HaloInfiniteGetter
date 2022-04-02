@@ -54,7 +54,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
     def __init__(self) -> None:
-        super().__init__(lambda: [])
+        super().__init__(list)
 
     def __repr__(self) -> str:
         """Amount of subscribers for every event, encased in parentheses."""
