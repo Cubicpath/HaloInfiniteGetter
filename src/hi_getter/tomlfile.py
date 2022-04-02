@@ -10,6 +10,7 @@ __all__ = (
     'make_comment_val',
     'TomlFile',
     'TomlEvents',
+    'TomlTable',
     'TomlValue',
 )
 
@@ -28,7 +29,8 @@ from .events import *
 
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
-TomlValue: TypeAlias = dict | list | float | int | str | bool | PurePath
+TomlTable: TypeAlias = dict[str, 'TomlValue']
+TomlValue: TypeAlias = TomlTable | list | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 

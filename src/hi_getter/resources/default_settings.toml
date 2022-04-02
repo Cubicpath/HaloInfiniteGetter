@@ -1,0 +1,23 @@
+language = "en-US"
+
+[gui.window]
+x_size = 900 # Minimum value of 100
+y_size = 500 # Minimum value of 100
+
+[gui.themes]
+selected = "light"
+
+[gui.media_output]
+aspect_ratio_mode = 1 # 0: Ignore | 1: Keep | 2: Expanding
+transformation_mode = 0 # 0: Fast | 1: Smooth
+
+[gui.text_output]
+line_wrap_mode = 1 # 0: No Wrap | 1: Widget | 2: Fixed Pixel | 4: Fixed Column
+
+[gui.themes.dark]
+display_name = "Breeze Dark"
+path = "$PATH$|{HI_RESOURCE_PATH}\\themes\\dark"
+
+[gui.themes.light]
+display_name = "Breeze Light"
+path = "$PATH$|{HI_RESOURCE_PATH}\\themes\\light"
