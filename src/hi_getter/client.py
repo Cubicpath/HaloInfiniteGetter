@@ -50,8 +50,8 @@ class Client:
     def __init__(self, **kwargs) -> None:
         """Initializes Halo Waypoint Client
 
-        token is first taken from token kwarg, then SPARTAN_AUTH environment variable, then from user's token file.
-        wpauth is first taken from wpauth kwarg, then WAYPOINT_AUTH environment variable, then from the user's wpauth file.
+        token is first taken from token kwarg, then SPARTAN_AUTH environment variable, then from user's .token file.
+        wpauth is first taken from wpauth kwarg, then WAYPOINT_AUTH environment variable, then from the user's .wpauth file.
 
         :keyword token: Token to authenticate self to 343 API.
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
