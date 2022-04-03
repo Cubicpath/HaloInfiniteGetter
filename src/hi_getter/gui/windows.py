@@ -22,7 +22,8 @@ from ..client import Client
 from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
-from ..tomlfile import TomlFile, TomlEvents
+from ..tomlfile import TomlEvents
+from ..tomlfile import TomlFile
 from ..utils import DeferredCallable
 from .app import instance
 from .menus import *
