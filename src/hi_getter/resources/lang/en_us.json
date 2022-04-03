@@ -29,6 +29,7 @@
   "gui.outputs.image.label_empty": "Image Output:",
   "gui.outputs.text.copy": "Copy Text",
   "gui.outputs.text.detached": "Detached Text Output",
+  "gui.outputs.text.error": "Could not get resource at:\n%s\n\nReason:\n-----------------------------------\n%i: %s\n%s",
   "gui.outputs.text.label": "Text Output: %i lines; %i characters (%.4f KiB)",
   "gui.outputs.text.label_empty": "Text Output:",
   "gui.readme_viewer.title": "README Viewer",

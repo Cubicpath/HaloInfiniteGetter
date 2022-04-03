@@ -173,7 +173,7 @@ class Language:
         """
         # TODO: Add functionality
 
-    def get(self, key: str, *args: Any, default: str | None = None) -> str | None:
+    def get(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key and format with the given arguments if required.
 
         :param key: Key to get in JSON data.
@@ -182,7 +182,7 @@ class Language:
         """
         # Default value is key if not overridden
         default = default if default is not None else key
-        result = self._data.get(key, default)
+        result: str = self._data.get(key, default)
 
         if result is not default:
             return format_value(result, *args, _language=self)
@@ -229,7 +229,7 @@ class Translator:
 
     def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
-        return self.language.get(key, *args, default=default if default is not None else key)
+        return self.language.get(key, *args, default=default)
 
     @staticmethod
     def _lang_to_lang(language: Language | str) -> Language:

@@ -591,8 +591,8 @@ class AppWindow(QMainWindow):
                     self.current_image.loadFromData(data)
                     self.image_size_label.setText(instance().translator(
                         'gui.outputs.image.label',
-                        self.current_image.size().width(), self.current_image.size().height(),
-                        round(len(data) / 1024, 4)
+                        self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
+                        round(len(data) / 1024, 4)                                              # Size in bytes
                     ))
                     self.resize_image()
                 else:
@@ -603,11 +603,11 @@ class AppWindow(QMainWindow):
                     if isinstance(data, dict):
                         data = json.dumps(data, indent=2)
                     elif isinstance(data, int):
-                        data = (
-                            f'Could not get resource at:\n'
-                            f'{self.client.api_root}{search_path}\n\n'
-                            f'{data}: {HTTP_CODE_MAP[data][0]}\n'
-                            f'{HTTP_CODE_MAP[data][1]}'
+                        data = instance().translator(
+                            'gui.outputs.text.error',
+                            self.client.api_root + search_path,  # Search path
+                            data, HTTP_CODE_MAP[data][0],        # Error code and phrase
+                            HTTP_CODE_MAP[data][1]               # Error description
                         )
 
                     output = data
@@ -621,8 +621,8 @@ class AppWindow(QMainWindow):
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
                     self.text_size_label.setText(instance().translator(
                         'gui.outputs.text.label',
-                        len(data.splitlines()), len(data),
-                        round(len(data.encode('utf8')) / 1024, 4)
+                        len(data.splitlines()), len(data),         # Line and character count
+                        round(len(data.encode('utf8')) / 1024, 4)  # Size in bytes
                     ))
 
     def resize_image(self) -> None:
