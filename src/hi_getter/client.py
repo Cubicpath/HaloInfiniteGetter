@@ -230,7 +230,8 @@ class Client:
             self._token = value[key_start_index:].rstrip()
             self.set_cookie('343-spartan-token', self._token)
             self.session.headers['x-343-authorization-spartan'] = self._token
-            TOKEN_PATH.write_text(self._token)
+            hide_windows_file(TOKEN_PATH, unhide=True)
+            TOKEN_PATH.write_text(self._token, encoding='utf8')
             hide_windows_file(TOKEN_PATH)
 
     @property
@@ -249,7 +250,8 @@ class Client:
             value = decode_escapes(value)
             self._wpauth = value.split(':')[-1].strip()
             self.set_cookie('wpauth', self._wpauth)
-            WPAUTH_PATH.write_text(self._wpauth)
+            hide_windows_file(WPAUTH_PATH, unhide=True)
+            WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
             hide_windows_file(WPAUTH_PATH)
 
     @property

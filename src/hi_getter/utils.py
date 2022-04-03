@@ -26,6 +26,51 @@ from pathlib import Path
 from typing import Any
 
 
+def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
+    """Return the current versions for the requirements of the given package.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: dict mapping package names to their version string.
+    """
+    from importlib.metadata import version
+    return {name: version(name) for name in current_requirement_names(package, include_extras)}
+
+
+def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
+    """Return the current licenses for the requirements of the given package.
+
+    CANNOT get license file from a package with an editable installation.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: dict mapping a package nams to a tuple containing the license name and contents.
+    """
+    from importlib.metadata import metadata
+    from pkg_resources import get_distribution
+
+    result = {}
+    for requirement in ([package] + current_requirement_names(package, include_extras)):
+        dist = get_distribution(requirement)
+        name = dist.project_name.replace("-", "_")
+        license_text = None
+
+        info_path = Path(dist.location) / f'{name}-{dist.version}.dist-info'
+        if not info_path.is_dir():
+            egg_path = info_path.with_name(f'{name}.egg-info')
+            if egg_path.is_dir():
+                info_path = egg_path
+
+        for file in info_path.iterdir():
+            f_name = file.name.lower()
+            if 'license' in f_name:
+                license_text = file.read_text(encoding='utf8')
+
+        result[name] = (metadata(name).get('License', 'UNKNOWN'), license_text)
+
+    return result
+
+
 class DeferredCallable:
     """A :py:class:`Callable` with args and kwargs stored for further execution.
 
@@ -150,13 +195,35 @@ def has_package(package: str) -> bool:
     return False
 
 
-def hide_windows_file(path: str | Path) -> None:
-    """Hide an existing Windows file. If not running windows, do nothing."""
-    path = Path(path)
+def hide_windows_file(path: str | Path, *, unhide: bool = False) -> None:
+    """Hide an existing Windows file. If not running windows, do nothing.
+
+    Use unhide kwarg to reverse the operation
+
+    :param path: Absolute or relative path to hide.
+    :param unhide: Unhide a hidden file in Windows.
+    """
+    # Resolve string path to use with kernel32
+    path = str(Path(path).resolve())
     if sys.platform == 'win32':
         import win32con
         from ctypes import windll
-        windll.kernel32.SetFileAttributesW(str(path.resolve()), win32con.FILE_ATTRIBUTE_HIDDEN)
+
+        # bitarray for boolean flags representing file attributes
+        current_attributes: int = windll.kernel32.GetFileAttributesW(path)
+        if not unhide:
+            # Add hide attribute to bitarray using bitwise OR
+            # 0b000000 -> 0b000010 ---- 0b000110 -> 0b000110
+            merged_attributes: int = current_attributes | win32con.FILE_ATTRIBUTE_HIDDEN
+            windll.kernel32.SetFileAttributesW(path, merged_attributes)
+        else:
+            # Remove hide attribute from bitarray if it exists
+            # Check with bitwise AND; Remove with bitwise XOR
+            # 0b000100 -> 0b000100 ---- 0b000110 -> 0b000100
+            # Only Truthy returns (which contain the hidden attribute) will subtract from the bitarray
+            is_hidden = bool(current_attributes & win32con.FILE_ATTRIBUTE_HIDDEN)
+            if is_hidden:
+                windll.kernel32.SetFileAttributesW(path, current_attributes ^ win32con.FILE_ATTRIBUTE_HIDDEN)
 
 
 def patch_windows_taskbar_icon(app_id: str = '') -> None:
@@ -189,51 +256,6 @@ def current_requirement_names(package: str, include_extras: bool = False) -> lis
         req_names.append(requirement[:split_char])
 
     return req_names
-
-
-def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
-    """Return the current versions for the requirements of the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping package names to their version string.
-    """
-    from importlib.metadata import version
-    return {name: version(name) for name in current_requirement_names(package, include_extras)}
-
-
-def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
-    """Return the current licenses for the requirements of the given package.
-
-    CANNOT get license file from a package with an editable installation.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping a package nams to a tuple containing the license name and contents.
-    """
-    from importlib.metadata import metadata
-    from pkg_resources import get_distribution
-
-    result = {}
-    for requirement in ([package] + current_requirement_names(package, include_extras)):
-        dist = get_distribution(requirement)
-        name = dist.project_name.replace("-", "_")
-        license_text = None
-
-        info_path = Path(dist.location) / f'{name}-{dist.version}.dist-info'
-        if not info_path.is_dir():
-            egg_path = info_path.with_name(f'{name}.egg-info')
-            if egg_path.is_dir():
-                info_path = egg_path
-
-        for file in info_path.iterdir():
-            f_name = file.name.lower()
-            if 'license' in f_name:
-                license_text = file.read_text(encoding='utf8')
-
-        result[name] = (metadata(name).get('License', 'UNKNOWN'), license_text)
-
-    return result
 
 
 def unique_values(data: Iterable) -> set:
