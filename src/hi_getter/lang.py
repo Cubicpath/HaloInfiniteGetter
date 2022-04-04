@@ -10,6 +10,7 @@ __all__ = (
 
 import json
 import re
+from contextlib import contextmanager
 from pathlib import Path
 from string import ascii_letters
 from string import digits
@@ -230,6 +231,17 @@ class Translator:
     def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
         return self.language.get(key, *args, default=default)
+
+    @contextmanager
+    def as_language(self, language: Language | str):
+        """Temporarily translate for a specific language using a context manager."""
+        # __enter__
+        old_lang = self._language
+        self.language = language
+        yield
+
+        # __exit__
+        self._language = old_lang
 
     @staticmethod
     def _lang_to_lang(language: Language | str) -> Language:
