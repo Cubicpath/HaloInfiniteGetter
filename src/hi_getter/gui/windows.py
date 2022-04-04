@@ -165,22 +165,22 @@ class SettingsWindow(QWidget):
         )
 
         widget_data: dict[QWidget: dict[str: str | Iterable[str] | Callable]] = {
-            save_button: {'text': 'gui.settings.save', 'clicked': save_settings},
-            reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings},
+            save_button: {'text': 'gui.settings.save', 'disabled': True, 'clicked': save_settings, 'size': {'maximum': (50, None)}},
+            reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings, 'size': {'maximum': (60, None)}},
             import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
             export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
             open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))},
             key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
             key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
-            self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key},
-            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'clicked': clear_token},
+            self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key, 'size': {'minimum': (40, None)}},
+            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token, 'clicked': clear_token},
 
-            theme_label: {'text': 'gui.settings.gui.theme'},
-            aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio'},
-            transformation_label: {'text': 'gui.settings.media.image_transform'},
-            line_wrap_label: {'text': 'gui.settings.text.line_wrap'},
+            theme_label: {'text': 'gui.settings.gui.theme', 'size': {'maximum': (85, None)}},
+            aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio', 'size': {'maximum': (90, None)}},
+            transformation_label: {'text': 'gui.settings.media.image_transform', 'size': {'maximum': (90, None)}},
+            line_wrap_label: {'text': 'gui.settings.text.line_wrap', 'size': {'maximum': (90, None)}},
 
-            self.key_field: {'text': self.client.hidden_key(), 'pasted': set_key, 'returnPressed': self.key_set_button.click},
+            self.key_field: {'text': self.client.hidden_key(), 'pasted': set_key, 'returnPressed': self.key_set_button.click}, 'size': {'minimum': (220, None)},
 
             self.theme_dropdown: {'activated': set_theme, 'items': (
                 theme.display_name for theme in app().sorted_themes()
@@ -249,19 +249,8 @@ class SettingsWindow(QWidget):
         token_layout.addWidget(self.token_clear_button)
 
         # Modify properties of widgets
-        theme_label.setMaximumWidth(85)
-        aspect_ratio_label.setMaximumWidth(90)
-        transformation_label.setMaximumWidth(90)
-        line_wrap_label.setMaximumWidth(90)
-        save_button.setMaximumWidth(50)
-        save_button.setDisabled(True)
-        reload_button.setMaximumWidth(60)
-
         self.key_field.setAlignment(Qt.AlignCenter)
-        self.key_field.setMinimumWidth(220)
         self.key_field.setFont(QFont('segoe ui', 8))
-        self.key_set_button.setMinimumWidth(40)
-        self.token_clear_button.setDisabled(not self.client.token)
 
         self.refresh_dropdowns()
 

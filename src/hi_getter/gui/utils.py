@@ -46,14 +46,15 @@ def init_widgets(widget_data: dict[QWidget: dict[str: str | bool | int | Iterabl
         # If translator is unavailable, return any string/key unchanged.
         translator = _return_arg
 
+    # Initialize widget attributes
     for widget, data in widget_data.items():
         disabled, size, text, items = data.get('disabled'), data.get('size'), data.get('text'), data.get('items')
 
-        # Disabling widget
+        # Disable widget
         if disabled is not None:
             widget.setDisabled(data['disabled'])
 
-        # Set size attributes
+        # Set size
         if size is not None:
             for s_type in ('minimum', 'maximum', 'fixed'):
                 if size.get(s_type) is not None:
