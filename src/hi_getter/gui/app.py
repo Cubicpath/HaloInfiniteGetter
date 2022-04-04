@@ -4,8 +4,8 @@
 """Module for the main application classes."""
 
 __all__ = (
+    'app',
     'GetterApp',
-    'instance',
     'Theme',
 )
 
@@ -21,7 +21,7 @@ from ..tomlfile import *
 from ..utils import DeferredCallable
 
 
-def instance() -> 'GetterApp':
+def app() -> 'GetterApp':
     """:return: GetterApp.instance()"""
     return GetterApp.instance()
 

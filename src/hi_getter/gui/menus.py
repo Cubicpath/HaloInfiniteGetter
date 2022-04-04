@@ -26,7 +26,7 @@ from ..constants import *
 from ..utils import current_requirement_versions
 from ..utils import DeferredCallable
 from ..utils import has_package
-from .app import instance
+from .app import app
 from .widgets import *
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
@@ -42,24 +42,24 @@ class FileContextMenu(QMenu):
 
         open_explorer:     QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
-            instance().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
+            app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
         flush_cache: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
-            instance().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
+            app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
         import_from: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')),
-            instance().translator('gui.menus.file.import'), self, triggered=self.import_data
+            app().translator('gui.menus.file.import'), self, triggered=self.import_data
         )
 
         export_to:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')),
-            instance().translator('gui.menus.file.export'), self, triggered=self.export_data
+            app().translator('gui.menus.file.export'), self, triggered=self.export_data
         )
 
         section_map = {
@@ -79,8 +79,8 @@ class FileContextMenu(QMenu):
     def flush_cache(self) -> None:
         """Remove all data from cache."""
         response: int = QMessageBox.warning(
-            self, instance().translator('warnings.delete_cache.title'),
-            instance().translator('warnings.delete_cache.description'),
+            self, app().translator('warnings.delete_cache.title'),
+            app().translator('warnings.delete_cache.description'),
             QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel, defaultButton=QMessageBox.StandardButton.Cancel
         )
 
@@ -117,31 +117,31 @@ class HelpContextMenu(QMenu):
 
         github_view:  QAction = QAction(
             QIcon(github_pixmap),
-            instance().translator('gui.menus.help.github'), self, triggered=DeferredCallable(
+            app().translator('gui.menus.help.github'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
             )
         )
 
         create_issue: QAction = QAction(
             QIcon(github_pixmap),
-            instance().translator('gui.menus.help.issue'), self, triggered=DeferredCallable(
+            app().translator('gui.menus.help.issue'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
             )
         )
 
         about_view:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')),
-            instance().translator('gui.menus.help.about'), self, triggered=self.open_about
+            app().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         license_view: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
-            instance().translator('gui.menus.help.license'), self, triggered=self.open_license
+            app().translator('gui.menus.help.license'), self, triggered=self.open_license
         )
 
         readme: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DialogApplyButton),
-            instance().translator('gui.menus.help.readme'), self, triggered=self.open_readme
+            app().translator('gui.menus.help.readme'), self, triggered=self.open_readme
         )
 
         section_map = {
@@ -180,8 +180,8 @@ class HelpContextMenu(QMenu):
                                          package, version in current_requirement_versions(_PARENT_PACKAGE, include_extras=True).items() if has_package(package))
 
             self.__class__._about = (
-                instance().translator('information.about.title'),
-                instance().translator(
+                app().translator('information.about.title'),
+                app().translator(
                     'information.about.description',
                     *ver, platform(), sys.implementation.name,
                     sys.version.split('[', maxsplit=1)[0],
@@ -201,7 +201,7 @@ class ToolsContextMenu(QMenu):
 
         shortcut_tool: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DesktopIcon),
-            instance().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
+            app().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
         )
 
         section_map = {
@@ -218,8 +218,8 @@ class ToolsContextMenu(QMenu):
 
         if not has_package('pyshortcuts'):
             QMessageBox.critical(
-                self, instance().translator('errors.missing_package.title'),
-                instance().translator('errors.missing_package.description', 'pyshortcuts', exec_path)
+                self, app().translator('errors.missing_package.title'),
+                app().translator('errors.missing_package.description', 'pyshortcuts', exec_path)
             )
         else:
             from pyshortcuts import make_shortcut
@@ -230,6 +230,6 @@ class ToolsContextMenu(QMenu):
             shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
 
             with redirect_stdout(open(os.devnull, 'w', encoding='utf8')):
-                make_shortcut(script=shortcut_path, name=instance().translator('app.name'),
-                              description=instance().translator('app.description'),
+                make_shortcut(script=shortcut_path, name=app().translator('app.name'),
+                              description=app().translator('app.description'),
                               icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)

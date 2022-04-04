@@ -25,8 +25,9 @@ from ..constants import *
 from ..events import *
 from ..tomlfile import TomlEvents
 from ..utils import DeferredCallable
-from .app import instance
+from .app import app
 from .menus import *
+from .utils import init_widgets
 from .utils import scroll_to_top
 from .widgets import *
 
@@ -42,15 +43,15 @@ class SettingsWindow(QWidget):
         self.clipboard: QClipboard | None = parent.clipboard
         self.getter_window = parent
 
-        self.setWindowTitle(instance().translator('gui.settings.title'))
+        self.setWindowTitle(app().translator('gui.settings.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
         self.resize(size)
         self.setFixedWidth(self.width())
 
         # Create a app().translator DeferredCallable with every tuple acting as arguments.
         EventBus['settings'].subscribe(DeferredCallable(
-            QMessageBox.warning, self, *(DeferredCallable(instance().translator, *key) for key in (
-                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', instance().settings.path)))),
+            QMessageBox.warning, self, *(DeferredCallable(app().translator, *key) for key in (
+                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', app().settings.path)))),
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
 
         self.theme_dropdown:          QComboBox
@@ -66,55 +67,55 @@ class SettingsWindow(QWidget):
         def save_settings() -> None:
             """Save current settings to the user's settings file."""
             save_button.setDisabled(True)
-            instance().settings.save()
+            app().settings.save()
 
         def reload_settings() -> None:
             """Reload current settings from the user's settings file."""
             save_button.setDisabled(True)
-            if instance().settings.reload():
+            if app().settings.reload():
                 self.refresh_dropdowns()
 
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
-            file_path = Path(QFileDialog.getOpenFileName(self, instance().translator('gui.settings.import'),
+            file_path = Path(QFileDialog.getOpenFileName(self, app().translator('gui.settings.import'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
-                if instance().settings.import_from(file_path):
+                if app().settings.import_from(file_path):
                     self.refresh_dropdowns()
                     save_button.setDisabled(False)
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""
-            file_path = Path(QFileDialog.getSaveFileName(self, instance().translator('gui.settings.export'),
+            file_path = Path(QFileDialog.getSaveFileName(self, app().translator('gui.settings.export'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if str(file_path) != '.':
-                instance().settings.export_to(file_path)
+                app().settings.export_to(file_path)
 
         def set_aspect_ratio_method() -> None:
             """Set the media output's aspect ratio method to the chosen method."""
             print('test')
             save_button.setDisabled(False)
-            instance().settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
+            app().settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
             self.getter_window.resize_image()
 
         def set_transformation_method() -> None:
             """Set the media output's image transformation method to the chosen method."""
             print('test2')
             save_button.setDisabled(False)
-            instance().settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
+            app().settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
             self.getter_window.resize_image()
 
         def set_line_wrap_method() -> None:
             """Set the text output's line wrap method to the chosen method."""
             print('test3')
             save_button.setDisabled(False)
-            instance().settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
-            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(instance().settings['gui/text_output/line_wrap_mode']))
+            app().settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
+            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']))
 
         def set_theme() -> None:
             """Set selected theme to the chosen theme."""
             save_button.setDisabled(False)
-            instance().settings['gui/themes/selected'] = instance().sorted_themes()[self.theme_dropdown.currentIndex()].id
+            app().settings['gui/themes/selected'] = app().sorted_themes()[self.theme_dropdown.currentIndex()].id
 
         def hide_key() -> None:
             """Hide API key."""
@@ -168,7 +169,7 @@ class SettingsWindow(QWidget):
             reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings},
             import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
             export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
-            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(instance().settings.path))},
+            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))},
             key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
             key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
             self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key},
@@ -182,7 +183,7 @@ class SettingsWindow(QWidget):
             self.key_field: {'text': self.client.hidden_key(), 'pasted': set_key, 'returnPressed': self.key_set_button.click},
 
             self.theme_dropdown: {'activated': set_theme, 'items': (
-                theme.display_name for theme in instance().sorted_themes()
+                theme.display_name for theme in app().sorted_themes()
             )},
             self.aspect_ratio_dropdown: {'activated': set_aspect_ratio_method, 'items': (
                 'gui.settings.media.aspect_ratio.ignore',
@@ -201,17 +202,7 @@ class SettingsWindow(QWidget):
             )}
         }
 
-        for widget, data in widget_data.items():
-            # Translate widget texts
-            if data.get('text') is not None:
-                widget.setText(instance().translator(data['text']))
-            # Translate dropdown items
-            if data.get('items') is not None:
-                widget.addItems(instance().translator(key) for key in data['items'])
-            # Connect any slots with their respective function call
-            for signal in ('activated', 'clicked', 'pasted', 'returnPressed'):
-                if data.get(signal) is not None:
-                    getattr(widget, signal).connect(data[signal])
+        init_widgets(widget_data, app().translator)
 
         # Define layouts
         layout = QGridLayout(self)  # Main layout
@@ -276,10 +267,10 @@ class SettingsWindow(QWidget):
 
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
-        self.aspect_ratio_dropdown.setCurrentIndex(instance().settings['gui/media_output/aspect_ratio_mode'])
-        self.transformation_dropdown.setCurrentIndex(instance().settings['gui/media_output/transformation_mode'])
-        self.line_wrap_dropdown.setCurrentIndex(instance().settings['gui/text_output/line_wrap_mode'])
-        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[instance().settings['gui/themes/selected']])
+        self.aspect_ratio_dropdown.setCurrentIndex(app().settings['gui/media_output/aspect_ratio_mode'])
+        self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])
+        self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])
+        self.theme_dropdown.setCurrentIndex(app().theme_index_map[app().settings['gui/themes/selected']])
 
     # # # # # Events
 
@@ -304,10 +295,10 @@ class AppWindow(QMainWindow):
         """Create the window for the application."""
         super().__init__()
         self.client:                Client = client
-        self.clipboard:             QClipboard = instance().clipboard()
+        self.clipboard:             QClipboard = app().clipboard()
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.setWindowTitle(instance().translator('app.name') + f' v{__version__}')
+        self.setWindowTitle(app().translator('app.name') + f' v{__version__}')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
@@ -330,7 +321,7 @@ class AppWindow(QMainWindow):
         self._init_toolbar()
         self._init_ui()
 
-        instance().settings_window = SettingsWindow(self, QSize(420, 600))
+        app().settings_window = SettingsWindow(self, QSize(420, 600))
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
@@ -388,9 +379,9 @@ class AppWindow(QMainWindow):
                 self.detached['media'] = window = setup_detached_window(
                     'media',
                     self.media_frame, toggle_media_detach,
-                    instance().translator('gui.outputs.image.detached')
+                    app().translator('gui.outputs.image.detached')
                 )
-                self.image_detach_button.setText(instance().translator('gui.outputs.reattach'))
+                self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
                 window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
@@ -399,7 +390,7 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(0, self.media_frame)
-                self.image_detach_button.setText(instance().translator('gui.outputs.detach'))
+                self.image_detach_button.setText(app().translator('gui.outputs.detach'))
 
         def toggle_text_detach() -> None:
             """Handler for detaching and reattaching the text output."""
@@ -407,9 +398,9 @@ class AppWindow(QMainWindow):
                 self.detached['text'] = window = setup_detached_window(
                     'text',
                     self.text_frame, toggle_text_detach,
-                    instance().translator('gui.outputs.text.detached')
+                    app().translator('gui.outputs.text.detached')
                 )
-                self.text_detach_button.setText(instance().translator('gui.outputs.reattach'))
+                self.text_detach_button.setText(app().translator('gui.outputs.reattach'))
                 window.show()
             else:
                 window = self.detached['text']
@@ -417,11 +408,11 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(-1, self.text_frame)
-                self.text_detach_button.setText(instance().translator('gui.outputs.detach'))
+                self.text_detach_button.setText(app().translator('gui.outputs.detach'))
 
         def clear_current_pixmap() -> None:
             """Clear the current image from the media output."""
-            self.image_size_label.setText(instance().translator('gui.outputs.image.label_empty'))
+            self.image_size_label.setText(app().translator('gui.outputs.image.label_empty'))
             self.clear_picture.setDisabled(True)
             self.copy_picture.setDisabled(True)
             self.media_output.scene().clear()
@@ -434,7 +425,7 @@ class AppWindow(QMainWindow):
 
         def clear_current_text() -> None:
             """Clear the current text from the text output."""
-            self.text_size_label.setText(instance().translator('gui.outputs.text.label_empty'))
+            self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
             self.clear_text.setDisabled(True)
             self.copy_text.setDisabled(True)
             self.text_output.setDisabled(True)
@@ -462,22 +453,23 @@ class AppWindow(QMainWindow):
 
         self.input_field:         HistoryComboBox = HistoryComboBox()
         self.media_frame:         QFrame = QFrame()
-        self.image_size_label:    QLabel = QLabel(instance().translator('gui.outputs.image.label_empty'))
-        self.image_detach_button: QPushButton = QPushButton(instance().translator('gui.outputs.detach'), clicked=toggle_media_detach)
+        self.image_size_label:    QLabel = QLabel(app().translator('gui.outputs.image.label_empty'))
+        self.image_detach_button: QPushButton = QPushButton(app().translator('gui.outputs.detach'), clicked=toggle_media_detach)
         self.media_output:        QGraphicsView = QGraphicsView()
         self.text_frame:          QFrame = QFrame()
-        self.text_size_label:     QLabel = QLabel(instance().translator('gui.outputs.text.label_empty'))
-        self.text_detach_button:  QPushButton = QPushButton(instance().translator('gui.outputs.detach'), clicked=toggle_text_detach)
+        self.text_size_label:     QLabel = QLabel(app().translator('gui.outputs.text.label_empty'))
+        self.text_detach_button:  QPushButton = QPushButton(app().translator('gui.outputs.detach'), clicked=toggle_text_detach)
         self.text_output:         BetterTextBrowser = BetterTextBrowser()
-        self.clear_picture:       QPushButton = QPushButton(instance().translator('gui.outputs.clear'), clicked=clear_current_pixmap)
-        self.copy_picture:        QPushButton = QPushButton(instance().translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
-        self.clear_text:          QPushButton = QPushButton(instance().translator('gui.outputs.clear'), clicked=clear_current_text)
-        self.copy_text:           QPushButton = QPushButton(instance().translator('gui.outputs.text.copy'), clicked=copy_current_text)
+        self.clear_picture:       QPushButton = QPushButton(app().translator('gui.outputs.clear'), clicked=clear_current_pixmap)
+        self.copy_picture:        QPushButton = QPushButton(app().translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
+        self.clear_text:          QPushButton = QPushButton(app().translator('gui.outputs.clear'), clicked=clear_current_text)
+        self.copy_text:           QPushButton = QPushButton(app().translator('gui.outputs.text.copy'), clicked=copy_current_text)
         subdomain_field:          QLineEdit = QLineEdit(self.client.sub_host)
         root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
-        get_button:               QPushButton = QPushButton(instance().translator('gui.input_field.get'), clicked=self.use_input)
-        scan_button:              QPushButton = QPushButton(instance().translator('gui.input_field.scan'), clicked=DeferredCallable(self.use_input,
-                                                                                                                                    scan=True))
+        get_button:               QPushButton = QPushButton(app().translator('gui.input_field.get'), clicked=self.use_input)
+        scan_button:              QPushButton = QPushButton(app().translator('gui.input_field.scan'), clicked=DeferredCallable(
+            self.use_input, scan=True
+        ))
 
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
@@ -554,7 +546,7 @@ class AppWindow(QMainWindow):
         self.text_size_label.setMinimumWidth(50)
         self.text_detach_button.setMaximumWidth(80)
         self.text_output.setMinimumHeight(28)
-        self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(instance().settings['gui/text_output/line_wrap_mode']))
+        self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']))
         self.text_output.setOpenLinks(False)
         self.text_output.setDisabled(True)
         self.clear_picture.setMaximumWidth(80)
@@ -572,9 +564,9 @@ class AppWindow(QMainWindow):
 
     def open_settings_window(self) -> None:
         """Show the :py:class:`SettingsWindow` and bring it the front."""
-        instance().settings_window.show()
-        instance().settings_window.activateWindow()
-        instance().settings_window.raise_()
+        app().settings_window.show()
+        app().settings_window.activateWindow()
+        app().settings_window.raise_()
 
     def navigate_to(self, path: str) -> None:
         """Set input field text to path and get resource."""
@@ -613,7 +605,7 @@ class AppWindow(QMainWindow):
                     self.copy_picture.setDisabled(False)
                     self.current_image = QPixmap()
                     self.current_image.loadFromData(data)
-                    self.image_size_label.setText(instance().translator(
+                    self.image_size_label.setText(app().translator(
                         'gui.outputs.image.label',
                         self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
                         round(len(data) / 1024, 4)                                              # Size in bytes
@@ -627,7 +619,7 @@ class AppWindow(QMainWindow):
                     if isinstance(data, dict):
                         data = json.dumps(data, indent=2)
                     elif isinstance(data, int):
-                        data = instance().translator(
+                        data = app().translator(
                             'gui.outputs.text.error',
                             self.client.api_root + search_path,  # Search path
                             data, HTTP_CODE_MAP[data][0],        # Error code and phrase
@@ -643,7 +635,7 @@ class AppWindow(QMainWindow):
                             replaced.add(match)
 
                     self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
-                    self.text_size_label.setText(instance().translator(
+                    self.text_size_label.setText(app().translator(
                         'gui.outputs.text.label',
                         len(data.splitlines()), len(data),         # Line and character count
                         round(len(data.encode('utf8')) / 1024, 4)  # Size in bytes
@@ -658,8 +650,8 @@ class AppWindow(QMainWindow):
                 # Create a new image from the copied source image, scaled to fit the window.
                 new = new.scaled(
                     self.media_output.viewport().size(),
-                    Qt.AspectRatioMode(instance().settings['gui/media_output/aspect_ratio_mode']),
-                    Qt.TransformationMode(instance().settings['gui/media_output/transformation_mode'])
+                    Qt.AspectRatioMode(app().settings['gui/media_output/aspect_ratio_mode']),
+                    Qt.TransformationMode(app().settings['gui/media_output/transformation_mode'])
                 )
             # Add image to buffer
             self.media_output.scene().addPixmap(new)
@@ -669,16 +661,16 @@ class AppWindow(QMainWindow):
         """After window is displayed, show warnings if not already warned."""
         super().show()
 
-        if instance().first_launch:
+        if app().first_launch:
             readme = ReadmeViewer()
-            readme.setWindowTitle(instance().translator('gui.readme_viewer.title_first_launch'))
+            readme.setWindowTitle(app().translator('gui.readme_viewer.title_first_launch'))
             readme.show()
             QMessageBox.information(
-                readme, instance().translator('information.first_launch.title'),
-                instance().translator('information.first_launch.description')
+                readme, app().translator('information.first_launch.title'),
+                app().translator('information.first_launch.description')
             )
         elif not self.shown_key_warning and self.client.token is None:
-            QMessageBox.warning(self, *(instance().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
+            QMessageBox.warning(self, *(app().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
             self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:
@@ -689,4 +681,4 @@ class AppWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closes all detached/children windows and quit application."""
         super().closeEvent(event)
-        instance().quit()
+        app().quit()
