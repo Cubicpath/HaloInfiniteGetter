@@ -10,7 +10,10 @@ __all__ = (
 
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Sequence
+from typing import Annotated
 
+from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 from ..lang import Translator
@@ -21,16 +24,17 @@ def _return_arg(__arg: ..., /) -> ...:
     return __arg
 
 
-def init_widgets(widget_data: dict[QWidget: dict[str: str | Iterable[str] | Callable]], translator: Translator | None = None) -> None:
+def init_widgets(widget_data: dict[QWidget: dict[str: str | bool | int | Iterable[str] | Callable | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
+                 translator: Translator | None = None) -> None:
     """Initialize widgets with the given data. Translation key strings are evaluated using the given translator, if provided.
 
     widget_data should be a dictionary structured like this::
 
         {
             widget1: {'text': 'some.translation.key', 'clicked': on_click},
-            widget2: {'text': 'some.translation.key'},
+            widget2: {'text': 'some.translation.key', 'size': {'fixed': (None, 400)}},
             widget3: {'text': string_value, 'pasted': on_paste, 'returnPressed': on_return},
-            widget4: {'activated': when_activated, 'items': (
+            widget4: {'activated': when_activated, 'size': widget_size, 'items': (
                 f'The Number "{i}"' for i in range(1, 11)
             )}
         }
@@ -43,12 +47,35 @@ def init_widgets(widget_data: dict[QWidget: dict[str: str | Iterable[str] | Call
         translator = _return_arg
 
     for widget, data in widget_data.items():
+        disabled, size, text, items = data.get('disabled'), data.get('size'), data.get('text'), data.get('items')
+
+        # Disabling widget
+        if disabled is not None:
+            widget.setDisabled(data['disabled'])
+
+        # Set size attributes
+        if size is not None:
+            for s_type in ('minimum', 'maximum', 'fixed'):
+                if size.get(s_type) is not None:
+                    if isinstance(size.get(s_type), QSize):
+                        # For PySide6.QtCore.QSize objects
+                        getattr(widget, f'set{s_type.title()}Size')(size[s_type][0])
+                    elif isinstance(size.get(s_type), Sequence):
+                        # For lists, tuples, etc. Set width and height separately.
+                        # None can be used rather than int to skip a dimension.
+                        if size.get(s_type)[0]:
+                            getattr(widget, f'set{s_type.title()}Width')(size[s_type][0])
+                        if size.get(s_type)[1]:
+                            getattr(widget, f'set{s_type.title()}Height')(size[s_type][1])
+
         # Translate widget texts
-        if data.get('text') is not None:
-            widget.setText(translator(data['text']))
+        if text is not None:
+            widget.setText(translator(text))
+
         # Translate dropdown items
-        if data.get('items') is not None:
-            widget.addItems(translator(key) for key in data['items'])
+        if items is not None:
+            widget.addItems(translator(key) for key in items)
+
         # Connect any slots with their respective function call
         for signal in ('activated', 'clicked', 'pasted', 'returnPressed'):
             if data.get(signal) is not None:
