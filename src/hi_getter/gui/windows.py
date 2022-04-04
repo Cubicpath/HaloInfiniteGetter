@@ -11,6 +11,7 @@ __all__ = (
 import json
 import webbrowser
 from collections.abc import Callable
+from collections.abc import Iterable
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -23,7 +24,6 @@ from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
 from ..tomlfile import TomlEvents
-from ..tomlfile import TomlFile
 from ..utils import DeferredCallable
 from .app import instance
 from .menus import *
@@ -41,18 +41,16 @@ class SettingsWindow(QWidget):
         self.client = parent.client
         self.clipboard: QClipboard | None = parent.clipboard
         self.getter_window = parent
-        self.settings: TomlFile = instance().settings
-        self.translator = instance().translator
 
-        self.setWindowTitle(self.translator('gui.settings.title'))
+        self.setWindowTitle(instance().translator('gui.settings.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
         self.resize(size)
         self.setFixedWidth(self.width())
 
-        # Create a self.translator DeferredCallable with every tuple acting as arguments.
+        # Create a app().translator DeferredCallable with every tuple acting as arguments.
         EventBus['settings'].subscribe(DeferredCallable(
-            QMessageBox.warning, self, *(DeferredCallable(self.translator, *key) for key in (
-                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', self.settings.path)))),
+            QMessageBox.warning, self, *(DeferredCallable(instance().translator, *key) for key in (
+                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', instance().settings.path)))),
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
 
         self.theme_dropdown:          QComboBox
@@ -68,52 +66,55 @@ class SettingsWindow(QWidget):
         def save_settings() -> None:
             """Save current settings to the user's settings file."""
             save_button.setDisabled(True)
-            self.settings.save()
+            instance().settings.save()
 
         def reload_settings() -> None:
             """Reload current settings from the user's settings file."""
             save_button.setDisabled(True)
-            if self.settings.reload():
+            if instance().settings.reload():
                 self.refresh_dropdowns()
 
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
-            file_path = Path(QFileDialog.getOpenFileName(self, self.translator('gui.settings.import'),
+            file_path = Path(QFileDialog.getOpenFileName(self, instance().translator('gui.settings.import'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
-                if self.settings.import_from(file_path):
+                if instance().settings.import_from(file_path):
                     self.refresh_dropdowns()
                     save_button.setDisabled(False)
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""
-            file_path = Path(QFileDialog.getSaveFileName(self, self.translator('gui.settings.export'),
+            file_path = Path(QFileDialog.getSaveFileName(self, instance().translator('gui.settings.export'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if str(file_path) != '.':
-                self.settings.export_to(file_path)
+                instance().settings.export_to(file_path)
 
         def set_aspect_ratio_method() -> None:
             """Set the media output's aspect ratio method to the chosen method."""
+            print('test')
             save_button.setDisabled(False)
-            self.settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
+            instance().settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
             self.getter_window.resize_image()
 
         def set_transformation_method() -> None:
             """Set the media output's image transformation method to the chosen method."""
+            print('test2')
             save_button.setDisabled(False)
-            self.settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
+            instance().settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
             self.getter_window.resize_image()
 
         def set_line_wrap_method() -> None:
             """Set the text output's line wrap method to the chosen method."""
+            print('test3')
             save_button.setDisabled(False)
-            self.settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
-            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(self.settings['gui/text_output/line_wrap_mode']))
+            instance().settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
+            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(instance().settings['gui/text_output/line_wrap_mode']))
 
         def set_theme() -> None:
             """Set selected theme to the chosen theme."""
             save_button.setDisabled(False)
-            self.settings['gui/themes/selected'] = instance().sorted_themes()[self.theme_dropdown.currentIndex()].id
+            instance().settings['gui/themes/selected'] = instance().sorted_themes()[self.theme_dropdown.currentIndex()].id
 
         def hide_key() -> None:
             """Hide API key."""
@@ -147,39 +148,80 @@ class SettingsWindow(QWidget):
             self.client.token = None
             self.token_clear_button.setDisabled(True)
 
-        save_button:                  QPushButton = QPushButton(self.translator('gui.settings.save'), clicked=save_settings)
-        reload_button:                QPushButton = QPushButton(self.translator('gui.settings.reload'), clicked=reload_settings)
-        import_button:                QPushButton = QPushButton(self.translator('gui.settings.import'), clicked=import_settings)
-        export_button:                QPushButton = QPushButton(self.translator('gui.settings.export'), clicked=export_settings)
-        theme_label:                  QLabel = QLabel(self.translator('gui.settings.gui.theme'))
-        aspect_ratio_label:           QLabel = QLabel(self.translator('gui.settings.media.aspect_ratio'))
-        transformation_label:         QLabel = QLabel(self.translator('gui.settings.media.image_transform'))
-        line_wrap_label:              QLabel = QLabel(self.translator('gui.settings.text.line_wrap'))
-        self.theme_dropdown:          QComboBox = QComboBox(self)
-        self.aspect_ratio_dropdown:   QComboBox = QComboBox(self)
-        self.transformation_dropdown: QComboBox = QComboBox(self)
-        self.line_wrap_dropdown:      QComboBox = QComboBox(self)
-        open_editor_button:           QPushButton = QPushButton(self.translator('gui.settings.open_editor'), clicked=self.open_editor)
-        key_show_button:              QPushButton = QPushButton(self.translator('gui.settings.auth.edit'), clicked=show_key)
-        key_copy_button:              QPushButton = QPushButton(self.translator('gui.settings.auth.copy'), clicked=copy_key)
-        self.key_set_button:          QPushButton = QPushButton(self.translator('gui.settings.auth.set'), clicked=set_key)
-        self.key_field:               BetterLineEdit = BetterLineEdit(returnPressed=self.key_set_button.click, pasted=set_key)
-        self.token_clear_button:      QPushButton = QPushButton(self.translator('gui.settings.auth.clear_token'), clicked=clear_token)
+        # Define base widgets
+        (
+            save_button, reload_button, import_button, export_button, open_editor_button,
+            key_show_button, key_copy_button, self.key_set_button, self.token_clear_button,
+            theme_label, aspect_ratio_label, transformation_label, line_wrap_label,
+            self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown, self.line_wrap_dropdown,
+            self.key_field
+        ) = (
+            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
+            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
+            QLabel(self), QLabel(self), QLabel(self), QLabel(self),
+            QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
+            BetterLineEdit(self)
+        )
 
-        self.theme_dropdown.activated.connect(set_theme)
-        self.transformation_dropdown.activated.connect(set_transformation_method)
-        self.line_wrap_dropdown.activated.connect(set_line_wrap_method)
-        self.aspect_ratio_dropdown.activated.connect(set_aspect_ratio_method)
+        widget_data: dict[QWidget: dict[str: str | Iterable[str] | Callable]] = {
+            save_button: {'text': 'gui.settings.save', 'clicked': save_settings},
+            reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings},
+            import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
+            export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
+            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(instance().settings.path))},
+            key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
+            key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
+            self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key},
+            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'clicked': clear_token},
+
+            theme_label: {'text': 'gui.settings.gui.theme'},
+            aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio'},
+            transformation_label: {'text': 'gui.settings.media.image_transform'},
+            line_wrap_label: {'text': 'gui.settings.text.line_wrap'},
+
+            self.key_field: {'text': self.client.hidden_key(), 'pasted': set_key, 'returnPressed': self.key_set_button.click},
+
+            self.theme_dropdown: {'activated': set_theme, 'items': (
+                theme.display_name for theme in instance().sorted_themes()
+            )},
+            self.aspect_ratio_dropdown: {'activated': set_aspect_ratio_method, 'items': (
+                'gui.settings.media.aspect_ratio.ignore',
+                'gui.settings.media.aspect_ratio.keep',
+                'gui.settings.media.aspect_ratio.expanding'
+            )},
+            self.transformation_dropdown: {'activated': set_transformation_method, 'items': (
+                'gui.settings.media.image_transform.fast',
+                'gui.settings.media.image_transform.smooth'
+            )},
+            self.line_wrap_dropdown: {'activated': set_line_wrap_method, 'items': (
+                'gui.settings.text.line_wrap.no_wrap',
+                'gui.settings.text.line_wrap.widget',
+                'gui.settings.text.line_wrap.fixed_pixel',
+                'gui.settings.text.line_wrap.fixed_column'
+            )}
+        }
+
+        for widget, data in widget_data.items():
+            # Translate widget texts
+            if data.get('text') is not None:
+                widget.setText(instance().translator(data['text']))
+            # Translate dropdown items
+            if data.get('items') is not None:
+                widget.addItems(instance().translator(key) for key in data['items'])
+            # Connect any slots with their respective function call
+            for signal in ('activated', 'clicked', 'pasted', 'returnPressed'):
+                if data.get(signal) is not None:
+                    getattr(widget, signal).connect(data[signal])
 
         # Define layouts
-        layout = QGridLayout()  # Main layout
-        top = QHBoxLayout()
-        middle = QVBoxLayout()
-        theme_layout = QHBoxLayout()
-        output_layout = QGridLayout()
-        bottom = QVBoxLayout()
-        key_layout = QHBoxLayout()
-        token_layout = QHBoxLayout()
+        layout = QGridLayout(self)  # Main layout
+        top = QHBoxLayout(self)
+        middle = QVBoxLayout(self)
+        theme_layout = QHBoxLayout(self)
+        output_layout = QGridLayout(self)
+        bottom = QVBoxLayout(self)
+        key_layout = QHBoxLayout(self)
+        token_layout = QHBoxLayout(self)
 
         # Assign positions of layouts
         self.setLayout(layout)
@@ -217,26 +259,9 @@ class SettingsWindow(QWidget):
 
         # Modify properties of widgets
         theme_label.setMaximumWidth(85)
-
-        self.theme_dropdown.addItems([theme.display_name for theme in instance().sorted_themes()])
-        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[self.settings['gui/themes/selected']])
-
         aspect_ratio_label.setMaximumWidth(90)
         transformation_label.setMaximumWidth(90)
         line_wrap_label.setMaximumWidth(90)
-        self.aspect_ratio_dropdown.addItems((self.translator('gui.settings.media.aspect_ratio.ignore'),
-                                             self.translator('gui.settings.media.aspect_ratio.keep'),
-                                             self.translator('gui.settings.media.aspect_ratio.expanding')))
-        self.transformation_dropdown.addItems((self.translator('gui.settings.media.image_transform.fast'),
-                                               self.translator('gui.settings.media.image_transform.smooth')))
-        self.line_wrap_dropdown.addItems((self.translator('gui.settings.text.line_wrap.no_wrap'),
-                                          self.translator('gui.settings.text.line_wrap.widget'),
-                                          self.translator('gui.settings.text.line_wrap.fixed_pixel'),
-                                          self.translator('gui.settings.text.line_wrap.fixed_column')))
-        self.aspect_ratio_dropdown.setCurrentIndex(self.settings['gui/media_output/aspect_ratio_mode'])
-        self.transformation_dropdown.setCurrentIndex(self.settings['gui/media_output/transformation_mode'])
-        self.line_wrap_dropdown.setCurrentIndex(self.settings['gui/text_output/line_wrap_mode'])
-
         save_button.setMaximumWidth(50)
         save_button.setDisabled(True)
         reload_button.setMaximumWidth(60)
@@ -247,16 +272,14 @@ class SettingsWindow(QWidget):
         self.key_set_button.setMinimumWidth(40)
         self.token_clear_button.setDisabled(not self.client.token)
 
+        self.refresh_dropdowns()
+
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
-        self.aspect_ratio_dropdown.setCurrentIndex(self.settings['gui/media_output/aspect_ratio_mode'])
-        self.transformation_dropdown.setCurrentIndex(self.settings['gui/media_output/transformation_mode'])
-        self.line_wrap_dropdown.setCurrentIndex(self.settings['gui/text_output/line_wrap_mode'])
-        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[self.settings['gui/themes/selected']])
-
-    def open_editor(self) -> None:
-        """Open current settings file in the user's default text editor."""
-        webbrowser.open(str(self.settings.path))
+        self.aspect_ratio_dropdown.setCurrentIndex(instance().settings['gui/media_output/aspect_ratio_mode'])
+        self.transformation_dropdown.setCurrentIndex(instance().settings['gui/media_output/transformation_mode'])
+        self.line_wrap_dropdown.setCurrentIndex(instance().settings['gui/text_output/line_wrap_mode'])
+        self.theme_dropdown.setCurrentIndex(instance().theme_index_map[instance().settings['gui/themes/selected']])
 
     # # # # # Events
 
@@ -307,7 +330,7 @@ class AppWindow(QMainWindow):
         self._init_toolbar()
         self._init_ui()
 
-        self.settings_window = SettingsWindow(self, QSize(420, 600))
+        instance().settings_window = SettingsWindow(self, QSize(420, 600))
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
@@ -454,7 +477,7 @@ class AppWindow(QMainWindow):
         root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
         get_button:               QPushButton = QPushButton(instance().translator('gui.input_field.get'), clicked=self.use_input)
         scan_button:              QPushButton = QPushButton(instance().translator('gui.input_field.scan'), clicked=DeferredCallable(self.use_input,
-                                                                                                                                              scan=True))
+                                                                                                                                    scan=True))
 
         self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
         self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
@@ -549,9 +572,9 @@ class AppWindow(QMainWindow):
 
     def open_settings_window(self) -> None:
         """Show the :py:class:`SettingsWindow` and bring it the front."""
-        self.settings_window.show()
-        self.settings_window.activateWindow()
-        self.settings_window.raise_()
+        instance().settings_window.show()
+        instance().settings_window.activateWindow()
+        instance().settings_window.raise_()
 
     def navigate_to(self, path: str) -> None:
         """Set input field text to path and get resource."""

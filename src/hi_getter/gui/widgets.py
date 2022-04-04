@@ -34,20 +34,18 @@ _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
 class BetterLineEdit(QLineEdit):
     """A :py:class:`QLineEdit` with an added paste listener."""
+    pasted = Signal(name='pasted')
 
     def __init__(self, *args, pasted: Optional[Callable] = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if pasted is not None:
-            vars(self)['pasted'] = pasted
-
-    def pasted(self) -> None:
-        """Function called when a paste key combo is detected."""
+            self.pasted.connect(pasted)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Call self.pasted on paste."""
         super().keyPressEvent(event)
         if event.matches(QKeySequence.Paste):
-            self.pasted()
+            self.pasted.emit()
 
 
 class BetterTextBrowser(QTextBrowser):
