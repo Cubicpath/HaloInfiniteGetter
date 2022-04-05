@@ -10,6 +10,7 @@ __all__ = (
 
 import json
 import re
+from contextlib import AbstractContextManager
 from contextlib import contextmanager
 from pathlib import Path
 from string import ascii_letters
@@ -215,6 +216,10 @@ class Translator:
     def __init__(self, language: Language | str) -> None:
         self._language = self._lang_to_lang(language)
 
+    def __bool__(self) -> bool:
+        """Return whether the Translator is available."""
+        return True
+
     def __call__(self, key: str, *args: Any, **kwargs) -> str:
         """Syntax sugar for get_translation."""
         return self.get_translation(key, *args, **kwargs)
@@ -233,7 +238,7 @@ class Translator:
         return self.language.get(key, *args, default=default)
 
     @contextmanager
-    def as_language(self, language: Language | str):
+    def as_language(self, language: Language | str) -> AbstractContextManager[None]:
         """Temporarily translate for a specific language using a context manager."""
         # __enter__
         old_lang = self._language

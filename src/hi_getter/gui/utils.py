@@ -60,7 +60,6 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
             if hasattr(widget, key):
                 attribute = getattr(widget, key)
                 if isinstance(attribute, SignalInstance):
-                    print(f'connecting {val} to {widget}.{key}')
                     attribute.connect(val)
             else:
                 # Call setter to update value

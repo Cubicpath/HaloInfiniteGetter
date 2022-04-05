@@ -176,8 +176,9 @@ class HelpContextMenu(QMenu):
         :return: Tuple containing the title and the message
         """
         if self._about is None:
-            package_versions = '\n'.join(f'Using package {package}: {version}' for
-                                         package, version in current_requirement_versions(_PARENT_PACKAGE, include_extras=True).items() if has_package(package))
+            package_versions = '\n'.join(
+                f'Using package {package}: {version}' for package, version in current_requirement_versions(_PARENT_PACKAGE).items() if has_package(package)
+            )
 
             self.__class__._about = (
                 app().translator('information.about.title'),

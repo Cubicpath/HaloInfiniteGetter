@@ -37,7 +37,7 @@ default_settings: TomlTable = toml.loads(
 def _create_paths() -> None:
     """Create files and directories if they do not exist."""
     if not LAUNCHED_FILE.is_file():
-        # Create first launch marker
+        # Create first-launch marker
         LAUNCHED_FILE.touch()
         hide_windows_file(LAUNCHED_FILE)
 
