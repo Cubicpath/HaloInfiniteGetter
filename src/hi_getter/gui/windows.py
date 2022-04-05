@@ -150,36 +150,36 @@ class SettingsWindow(QWidget):
 
         # Define base widgets
         (
+            theme_label, aspect_ratio_label, transformation_label, line_wrap_label,
             save_button, reload_button, import_button, export_button, open_editor_button,
             key_show_button, key_copy_button, self.key_set_button, self.token_clear_button,
-            theme_label, aspect_ratio_label, transformation_label, line_wrap_label,
             self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown, self.line_wrap_dropdown,
             self.key_field
         ) = (
+            QLabel(self), QLabel(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QLabel(self), QLabel(self), QLabel(self), QLabel(self),
             QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
             BetterLineEdit(self)
         )
 
-        widget_data: dict[QWidget: dict[str]] = {
-            # Button
-            save_button: {'text': 'gui.settings.save', 'disabled': True, 'clicked': save_settings, 'size': {'maximum': (50, None)}},
-            reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings, 'size': {'maximum': (60, None)}},
-            import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
-            export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
-            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))},
-            key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
-            key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
-            self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key, 'size': {'minimum': (40, None)}},
-            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token, 'clicked': clear_token},
-
+        init_widgets({
             # Labels
             theme_label: {'text': 'gui.settings.gui.theme', 'size': {'maximum': (85, None)}},
             aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio', 'size': {'maximum': (90, None)}},
             transformation_label: {'text': 'gui.settings.media.image_transform', 'size': {'maximum': (90, None)}},
             line_wrap_label: {'text': 'gui.settings.text.line_wrap', 'size': {'maximum': (90, None)}},
+
+            # Buttons
+            save_button: {'text': 'gui.settings.save', 'disabled': True, 'size': {'maximum': (50, None)}, 'clicked': save_settings},
+            reload_button: {'text': 'gui.settings.reload', 'size': {'maximum': (60, None)}, 'clicked': reload_settings},
+            import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
+            export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
+            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))},
+            key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
+            key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
+            self.key_set_button: {'text': 'gui.settings.auth.set', 'size': {'minimum': (40, None)}, 'clicked': set_key},
+            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token, 'clicked': clear_token},
 
             # Line editors
             self.key_field: {
@@ -207,7 +207,7 @@ class SettingsWindow(QWidget):
                 'gui.settings.text.line_wrap.fixed_pixel',
                 'gui.settings.text.line_wrap.fixed_column'
             )}
-        }
+        }, translator=app().translator)
 
         # Define layouts
         layout = QGridLayout(self)  # Main layout
@@ -253,7 +253,6 @@ class SettingsWindow(QWidget):
         key_layout.addWidget(self.key_set_button)
         token_layout.addWidget(self.token_clear_button)
 
-        init_widgets(widget_data, app().translator)
         self.refresh_dropdowns()
 
     def refresh_dropdowns(self) -> None:
@@ -442,28 +441,88 @@ class AppWindow(QMainWindow):
                 self.input_field.setCurrentIndex(self.input_field.count() - 1)
             self.use_input()
 
-        self.input_field:         HistoryComboBox = HistoryComboBox()
-        self.media_frame:         QFrame = QFrame()
-        self.image_size_label:    QLabel = QLabel(app().translator('gui.outputs.image.label_empty'))
-        self.image_detach_button: QPushButton = QPushButton(app().translator('gui.outputs.detach'), clicked=toggle_media_detach)
-        self.media_output:        QGraphicsView = QGraphicsView()
-        self.text_frame:          QFrame = QFrame()
-        self.text_size_label:     QLabel = QLabel(app().translator('gui.outputs.text.label_empty'))
-        self.text_detach_button:  QPushButton = QPushButton(app().translator('gui.outputs.detach'), clicked=toggle_text_detach)
-        self.text_output:         BetterTextBrowser = BetterTextBrowser()
-        self.clear_picture:       QPushButton = QPushButton(app().translator('gui.outputs.clear'), clicked=clear_current_pixmap)
-        self.copy_picture:        QPushButton = QPushButton(app().translator('gui.outputs.image.copy'), clicked=copy_current_pixmap)
-        self.clear_text:          QPushButton = QPushButton(app().translator('gui.outputs.clear'), clicked=clear_current_text)
-        self.copy_text:           QPushButton = QPushButton(app().translator('gui.outputs.text.copy'), clicked=copy_current_text)
-        subdomain_field:          QLineEdit = QLineEdit(self.client.sub_host)
-        root_folder_field:        QLineEdit = QLineEdit(self.client.parent_path)
-        get_button:               QPushButton = QPushButton(app().translator('gui.input_field.get'), clicked=self.use_input)
-        scan_button:              QPushButton = QPushButton(app().translator('gui.input_field.scan'), clicked=DeferredCallable(
-            self.use_input, scan=True
-        ))
+        # Define base widgets
+        (
+            self.input_field, self.image_size_label, self.text_size_label,
+            self.image_detach_button, self.text_detach_button, self.clear_picture, self.copy_picture,
+            self.clear_text, self.copy_text, get_button, scan_button,
+            self.media_frame, self.text_frame, self.media_output, self.text_output,
+            subdomain_field, root_folder_field
+        ) = (
+            HistoryComboBox(self), QLabel(self), QLabel(self),
+            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
+            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
+            QFrame(self), QFrame(self), QGraphicsView(self), BetterTextBrowser(self),
+            BetterLineEdit(self), BetterLineEdit(self)
+        )
 
-        self.input_field.lineEdit().returnPressed.connect(self.use_input)  # Connect pressing enter while in the line edit to use_input
-        self.text_output.anchorClicked.connect(lambda e: self.navigate_to(e.toDisplayString()))
+        init_widgets({
+            # Labels
+            self.image_size_label: {'text': 'gui.outputs.image.label_empty', 'size': {'minimum': (50, None)}},
+            self.text_size_label: {'text': 'gui.outputs.text.label_empty', 'size': {'minimum': (50, None)}},
+
+            # Buttons
+            self.image_detach_button: {
+                'text': 'gui.outputs.detach',
+                'size': {'maximum': (80, None)},
+                'clicked': toggle_media_detach
+            },
+            self.text_detach_button: {
+                'text': 'gui.outputs.detach',
+                'size': {'maximum': (80, None)},
+                'clicked': toggle_text_detach
+            },
+            self.clear_picture: {
+                'text': 'gui.outputs.clear', 'disabled': True,
+                'size': {'maximum': (80, None), 'minimum': (40, None)},
+                'clicked': clear_current_pixmap
+            },
+            self.copy_picture: {
+                'text': 'gui.outputs.image.copy', 'disabled': True,
+                'size': {'maximum': (160, None), 'minimum': (80, None)},
+                'clicked': copy_current_pixmap
+            },
+            self.clear_text: {
+                'text': 'gui.outputs.clear', 'disabled': True,
+                'size': {'maximum': (80, None), 'minimum': (40, None)},
+                'clicked': clear_current_text
+            },
+            self.copy_text: {
+                'text': 'gui.outputs.text.copy', 'disabled': True,
+                'size': {'maximum': (160, None), 'minimum': (80, None)},
+                'clicked': copy_current_text
+            },
+            get_button: {
+                'text': 'gui.input_field.get',
+                'size': {'maximum': (40, None)},
+                'clicked': self.use_input
+            },
+            scan_button: {
+                'text': 'gui.input_field.scan',
+                'size': {'maximum': (55, None)},
+                'clicked': DeferredCallable(self.use_input, scan=True)
+            },
+
+            # Line editors
+            self.input_field: {'items': (HI_SAMPLE_RESOURCE,)},
+            self.input_field.lineEdit(): {'returnPressed': self.use_input},
+            subdomain_field: {'text': self.client.sub_host, 'disabled': True, 'size': {'fixed': (125, None)}},
+            root_folder_field: {'text': self.client.parent_path, 'disabled': True, 'size': {'fixed': (28, None)}},
+
+            # Outputs
+            self.media_output: {
+                'disabled': True, 'size': {'minimum': (None, 28)},
+                'scene': QGraphicsScene(self), 'autoFillBackground': False,
+                'horizontalScrollBarPolicy': Qt.ScrollBarPolicy.ScrollBarAlwaysOff,
+                'verticalScrollBarPolicy': Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            },
+            self.text_output: {
+                'disabled': True, 'size': {'minimum': (None, 28)},
+                'lineWrapMode': QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']),
+                'openLinks': False, 'anchorClicked': lambda url: self.navigate_to(url.toDisplayString())
+            }
+        }, translator=app().translator)
+
         self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
         self.text_output.connect_key_to(Qt.Key_Right, next_in_history)
 
@@ -518,40 +577,6 @@ class AppWindow(QMainWindow):
         text_bottom.setSpacing(5)
 
         bottom.addLayout(statuses, 10, 0)
-
-        subdomain_field.setFixedWidth(125)
-        subdomain_field.setDisabled(True)
-        root_folder_field.setFixedWidth(28)
-        root_folder_field.setDisabled(True)
-        self.input_field.addItem(HI_SAMPLE_RESOURCE)
-        get_button.setMaximumWidth(40)
-        scan_button.setMaximumWidth(55)
-        self.image_size_label.setMinimumWidth(50)
-        self.image_detach_button.setMaximumWidth(80)
-        self.media_output.setScene(QGraphicsScene())
-        self.media_output.setMinimumHeight(28)
-        self.media_output.setAutoFillBackground(False)
-        self.media_output.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.media_output.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.media_output.setDisabled(True)
-        self.text_size_label.setMinimumWidth(50)
-        self.text_detach_button.setMaximumWidth(80)
-        self.text_output.setMinimumHeight(28)
-        self.text_output.setLineWrapMode(QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']))
-        self.text_output.setOpenLinks(False)
-        self.text_output.setDisabled(True)
-        self.clear_picture.setMaximumWidth(80)
-        self.clear_picture.setMinimumWidth(40)
-        self.clear_picture.setDisabled(True)
-        self.copy_picture.setMaximumWidth(160)
-        self.copy_picture.setMinimumWidth(80)
-        self.copy_picture.setDisabled(True)
-        self.clear_text.setMaximumWidth(80)
-        self.clear_text.setMinimumWidth(40)
-        self.clear_text.setDisabled(True)
-        self.copy_text.setMaximumWidth(160)
-        self.copy_text.setMinimumWidth(80)
-        self.copy_text.setDisabled(True)
 
     def open_settings_window(self) -> None:
         """Show the :py:class:`SettingsWindow` and bring it the front."""
