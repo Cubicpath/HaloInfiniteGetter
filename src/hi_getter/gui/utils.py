@@ -48,8 +48,8 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
 
     # Initialize widget attributes
     for widget, data in widget_data.items():
-        special_keys = ('size', 'text', 'items')
-        size, text, items = data.get('size'), data.get('text'), data.get('items')
+        special_keys = ('items', 'size', 'text',)
+        items, size, text = (data.get(key) for key in special_keys)
 
         # Find setter method for all non specially-handled keys
         for key, val in data.items():
@@ -61,9 +61,14 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
                 attribute = getattr(widget, key)
                 if isinstance(attribute, SignalInstance):
                     attribute.connect(val)
-            else:
-                # Call setter to update value
-                getattr(widget, f'set{key.title()}')(val)
+                    continue
+
+            # Else call setter to update value
+            getattr(widget, f'set{key.title()}')(val)
+
+        # Translate dropdown items
+        if items is not None:
+            widget.addItems(translator(key) for key in items)
 
         # Set size
         if size is not None:
@@ -83,10 +88,6 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
         # Translate widget texts
         if text is not None:
             widget.setText(translator(text))
-
-        # Translate dropdown items
-        if items is not None:
-            widget.addItems(translator(key) for key in items)
 
 
 def scroll_to_top(widget: QTextEdit) -> None:

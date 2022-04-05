@@ -11,7 +11,6 @@ __all__ = (
 import json
 import webbrowser
 from collections.abc import Callable
-from collections.abc import Iterable
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -164,7 +163,7 @@ class SettingsWindow(QWidget):
             BetterLineEdit(self)
         )
 
-        widget_data: dict[QWidget: dict[str: str | Iterable[str] | Callable]] = {
+        widget_data: dict[QWidget: dict[str]] = {
             # Button
             save_button: {'text': 'gui.settings.save', 'disabled': True, 'clicked': save_settings, 'size': {'maximum': (50, None)}},
             reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings, 'size': {'maximum': (60, None)}},
@@ -210,8 +209,6 @@ class SettingsWindow(QWidget):
             )}
         }
 
-        init_widgets(widget_data, app().translator)
-
         # Define layouts
         layout = QGridLayout(self)  # Main layout
         top = QHBoxLayout(self)
@@ -256,8 +253,7 @@ class SettingsWindow(QWidget):
         key_layout.addWidget(self.key_set_button)
         token_layout.addWidget(self.token_clear_button)
 
-        self.key_field.setAlignment(Qt.AlignCenter)
-
+        init_widgets(widget_data, app().translator)
         self.refresh_dropdowns()
 
     def refresh_dropdowns(self) -> None:
