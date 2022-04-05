@@ -312,7 +312,7 @@ class AppWindow(QMainWindow):
         self._init_toolbar()
         self._init_ui()
 
-        app().settings_window = SettingsWindow(self, QSize(420, 600))
+        self.settings_window = SettingsWindow(self, QSize(420, 600))
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
@@ -555,9 +555,9 @@ class AppWindow(QMainWindow):
 
     def open_settings_window(self) -> None:
         """Show the :py:class:`SettingsWindow` and bring it the front."""
-        app().settings_window.show()
-        app().settings_window.activateWindow()
-        app().settings_window.raise_()
+        self.settings_window.show()
+        self.settings_window.activateWindow()
+        self.settings_window.raise_()
 
     def navigate_to(self, path: str) -> None:
         """Set input field text to path and get resource."""

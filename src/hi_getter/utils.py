@@ -71,6 +71,7 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
     return result
 
 
+# TODO: Make DistributedCallable in models.py
 class DeferredCallable:
     """A :py:class:`Callable` with args and kwargs stored for further execution.
 
