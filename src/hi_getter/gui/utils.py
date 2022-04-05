@@ -8,10 +8,9 @@ __all__ = (
     'scroll_to_top',
 )
 
-from collections.abc import Callable
-from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Annotated
+from typing import Any
 
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
@@ -24,7 +23,8 @@ def _return_arg(__arg: ..., /) -> ...:
     return __arg
 
 
-def init_widgets(widget_data: dict[QWidget, dict[str, str | bool | int | Iterable[str] | Callable | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
+# noinspection PyUnresolvedReferences
+def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
                  translator: Translator | None = None) -> None:
     """Initialize widgets with the given data. Translation key strings are evaluated using the given translator, if provided.
 
@@ -48,11 +48,23 @@ def init_widgets(widget_data: dict[QWidget, dict[str, str | bool | int | Iterabl
 
     # Initialize widget attributes
     for widget, data in widget_data.items():
-        disabled, size, font, text, items = data.get('disabled'), data.get('size'), data.get('font'), data.get('text'), data.get('items')
+        special_keys = ('size', 'text', 'items')
+        size, text, items = data.get('size'), data.get('text'), data.get('items')
 
-        # Disable widget
-        if disabled is not None:
-            widget.setDisabled(data['disabled'])
+        # Find setter method for all non specially-handled keys
+        for key, val in data.items():
+            if key in special_keys:
+                continue
+
+            # Check if key is a signal on widget
+            if hasattr(widget, key):
+                attribute = getattr(widget, key)
+                if isinstance(attribute, SignalInstance):
+                    print(f'connecting {val} to {widget}.{key}')
+                    attribute.connect(val)
+            else:
+                # Call setter to update value
+                getattr(widget, f'set{key.title()}')(val)
 
         # Set size
         if size is not None:
@@ -69,22 +81,13 @@ def init_widgets(widget_data: dict[QWidget, dict[str, str | bool | int | Iterabl
                         if size.get(s_type)[1]:
                             getattr(widget, f'set{s_type.title()}Height')(size[s_type][1])
 
-        # Change font
-        if font is not None and hasattr(widget, 'setFont'):
-            widget.setFont(font)
-
         # Translate widget texts
-        if text is not None and hasattr(widget, 'setText'):
+        if text is not None:
             widget.setText(translator(text))
 
         # Translate dropdown items
-        if items is not None and hasattr(widget, 'addItems'):
+        if items is not None:
             widget.addItems(translator(key) for key in items)
-
-        # Connect any slots with their respective function call
-        for signal in ('activated', 'clicked', 'pasted', 'returnPressed'):
-            if data.get(signal) is not None:
-                getattr(widget, signal).connect(data[signal])
 
 
 def scroll_to_top(widget: QTextEdit) -> None:
