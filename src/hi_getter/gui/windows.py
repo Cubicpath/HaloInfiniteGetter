@@ -26,7 +26,7 @@ from ..tomlfile import TomlEvents
 from ..utils import DeferredCallable
 from .app import app
 from .menus import *
-from .utils import init_widgets
+from .utils import init_objects
 from .utils import scroll_to_top
 from .widgets import *
 
@@ -163,7 +163,7 @@ class SettingsWindow(QWidget):
             BetterLineEdit(self)
         )
 
-        init_widgets({
+        init_objects({
             # Labels
             theme_label: {
                 'text': 'gui.settings.gui.theme',
@@ -379,21 +379,41 @@ class AppWindow(QMainWindow):
             menu.move(self.cursor().pos())
             menu.show()
 
-        toolbar = QToolBar('Toolbar', self)
-        file = QAction('File', self, triggered=DeferredCallable(context_menu_handler, FileContextMenu))
-        settings = QAction('Settings', self, triggered=self.open_settings_window)
-        tools = QAction('Tools', self, triggered=DeferredCallable(context_menu_handler, ToolsContextMenu))
-        help_ = QAction('Help', self, triggered=DeferredCallable(context_menu_handler, HelpContextMenu))
+        (
+            toolbar,
+            file, settings, tools, help_
+        ) = (
+            QToolBar('Toolbar', self),
+            QAction(self), QAction(self), QAction(self), QAction(self)
+        )
+
+        init_objects({
+            file: {
+                'text': 'gui.menus.file',
+                'menuRole': QAction.MenuRole.ApplicationSpecificRole,
+                'triggered': DeferredCallable(context_menu_handler, FileContextMenu)
+            },
+            settings: {
+                'text': 'gui.menus.settings',
+                'menuRole': QAction.MenuRole.PreferencesRole,
+                'triggered': self.open_settings_window
+            },
+            tools: {
+                'text': 'gui.menus.tools',
+                'menuRole': QAction.MenuRole.ApplicationSpecificRole,
+                'triggered': DeferredCallable(context_menu_handler, ToolsContextMenu)
+            },
+            help_: {
+                'text': 'gui.menus.help',
+                'menuRole': QAction.MenuRole.AboutRole,
+                'triggered': DeferredCallable(context_menu_handler, HelpContextMenu)
+            },
+        }, translator=app().translator)
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         for action in (file, settings, tools, help_):
             toolbar.addSeparator()
             toolbar.addAction(action)
-
-        file.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-        settings.setMenuRole(QAction.MenuRole.PreferencesRole)
-        tools.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-        help_.setMenuRole(QAction.MenuRole.AboutRole)
 
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""
@@ -508,7 +528,7 @@ class AppWindow(QMainWindow):
             BetterLineEdit(self), BetterLineEdit(self)
         )
 
-        init_widgets({
+        init_objects({
             # Labels
             self.image_size_label: {
                 'text': 'gui.outputs.image.label_empty',

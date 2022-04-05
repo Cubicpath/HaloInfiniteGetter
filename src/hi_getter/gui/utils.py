@@ -4,12 +4,11 @@
 """Module containing utils for GUI elements."""
 
 __all__ = (
-    'init_widgets',
+    'init_objects',
     'scroll_to_top',
 )
 
 from collections.abc import Sequence
-from typing import Annotated
 from typing import Any
 
 from PySide6.QtCore import *
@@ -24,9 +23,11 @@ def _return_arg(__arg: ..., /) -> ...:
 
 
 # noinspection PyUnresolvedReferences
-def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
+def init_objects(object_data: dict[QObject, dict[str, Any]],
                  translator: Translator | None = None) -> None:
-    """Initialize widgets with the given data. Translation key strings are evaluated using the given translator, if provided.
+    """Initialize :py:class:`QObject` attributes with the given data.
+
+    Translation key strings are evaluated using the given translator, if provided.
 
     widget_data should be a dictionary structured like this::
 
@@ -39,7 +40,7 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
             )}
         }
 
-    :param widget_data: Dictionary containing data used to initialize basic widget values.
+    :param object_data: Dictionary containing data used to initialize basic QObject values.
     :param translator: Translator used for translation key evaluation.
     """
     if not translator:
@@ -47,7 +48,7 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
         translator = _return_arg
 
     # Initialize widget attributes
-    for widget, data in widget_data.items():
+    for widget, data in object_data.items():
         special_keys = ('items', 'size', 'text',)
         items, size, text = (data.get(key) for key in special_keys)
 
