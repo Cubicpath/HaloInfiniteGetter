@@ -165,21 +165,63 @@ class SettingsWindow(QWidget):
 
         init_widgets({
             # Labels
-            theme_label: {'text': 'gui.settings.gui.theme', 'size': {'maximum': (85, None)}},
-            aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio', 'size': {'maximum': (90, None)}},
-            transformation_label: {'text': 'gui.settings.media.image_transform', 'size': {'maximum': (90, None)}},
-            line_wrap_label: {'text': 'gui.settings.text.line_wrap', 'size': {'maximum': (90, None)}},
+            theme_label: {
+                'text': 'gui.settings.gui.theme',
+                'size': {'maximum': (85, None)}
+            },
+            aspect_ratio_label: {
+                'text': 'gui.settings.media.aspect_ratio',
+                'size': {'maximum': (90, None)}
+            },
+            transformation_label: {
+                'text': 'gui.settings.media.image_transform',
+                'size': {'maximum': (90, None)}
+            },
+            line_wrap_label: {
+                'text': 'gui.settings.text.line_wrap',
+                'size': {'maximum': (90, None)}
+            },
 
             # Buttons
-            save_button: {'text': 'gui.settings.save', 'disabled': True, 'size': {'maximum': (50, None)}, 'clicked': save_settings},
-            reload_button: {'text': 'gui.settings.reload', 'size': {'maximum': (60, None)}, 'clicked': reload_settings},
-            import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
-            export_button: {'text': 'gui.settings.export', 'clicked': export_settings},
-            open_editor_button: {'text': 'gui.settings.open_editor', 'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))},
-            key_show_button: {'text': 'gui.settings.auth.edit', 'clicked': show_key},
-            key_copy_button: {'text': 'gui.settings.auth.copy', 'clicked': copy_key},
-            self.key_set_button: {'text': 'gui.settings.auth.set', 'size': {'minimum': (40, None)}, 'clicked': set_key},
-            self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token, 'clicked': clear_token},
+            save_button: {
+                'text': 'gui.settings.save', 'disabled': True,
+                'size': {'maximum': (50, None)},
+                'clicked': save_settings
+            },
+            reload_button: {
+                'text': 'gui.settings.reload',
+                'size': {'maximum': (60, None)},
+                'clicked': reload_settings
+            },
+            import_button: {
+                'text': 'gui.settings.import',
+                'clicked': import_settings
+            },
+            export_button: {
+                'text': 'gui.settings.export',
+                'clicked': export_settings
+            },
+            open_editor_button: {
+                'text': 'gui.settings.open_editor',
+                'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))
+            },
+            key_show_button: {
+                'text': 'gui.settings.auth.edit',
+                'clicked': show_key
+            },
+            key_copy_button: {
+                'text': 'gui.settings.auth.copy',
+                'clicked': copy_key
+            },
+            self.key_set_button: {
+                'text': 'gui.settings.auth.set',
+                'size': {'minimum': (40, None)},
+                'clicked': set_key
+            },
+            self.token_clear_button: {
+                'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token,
+                'clicked': clear_token
+            },
 
             # Line editors
             self.key_field: {
@@ -189,24 +231,34 @@ class SettingsWindow(QWidget):
             },
 
             # Dropdowns
-            self.theme_dropdown: {'activated': set_theme, 'items': (
-                theme.display_name for theme in app().sorted_themes()
-            )},
-            self.aspect_ratio_dropdown: {'activated': set_aspect_ratio_method, 'items': (
-                'gui.settings.media.aspect_ratio.ignore',
-                'gui.settings.media.aspect_ratio.keep',
-                'gui.settings.media.aspect_ratio.expanding'
-            )},
-            self.transformation_dropdown: {'activated': set_transformation_method, 'items': (
-                'gui.settings.media.image_transform.fast',
-                'gui.settings.media.image_transform.smooth'
-            )},
-            self.line_wrap_dropdown: {'activated': set_line_wrap_method, 'items': (
-                'gui.settings.text.line_wrap.no_wrap',
-                'gui.settings.text.line_wrap.widget',
-                'gui.settings.text.line_wrap.fixed_pixel',
-                'gui.settings.text.line_wrap.fixed_column'
-            )}
+            self.theme_dropdown: {
+                'activated': set_theme,
+                'items': (theme.display_name for theme in app().sorted_themes())
+            },
+            self.aspect_ratio_dropdown: {
+                'activated': set_aspect_ratio_method,
+                'items': (
+                    'gui.settings.media.aspect_ratio.ignore',
+                    'gui.settings.media.aspect_ratio.keep',
+                    'gui.settings.media.aspect_ratio.expanding'
+                )
+            },
+            self.transformation_dropdown: {
+                'activated': set_transformation_method,
+                'items': (
+                    'gui.settings.media.image_transform.fast',
+                    'gui.settings.media.image_transform.smooth'
+                )
+            },
+            self.line_wrap_dropdown: {
+                'activated': set_line_wrap_method,
+                'items': (
+                    'gui.settings.text.line_wrap.no_wrap',
+                    'gui.settings.text.line_wrap.widget',
+                    'gui.settings.text.line_wrap.fixed_pixel',
+                    'gui.settings.text.line_wrap.fixed_column'
+                )
+            }
         }, translator=app().translator)
 
         # Define layouts
@@ -458,8 +510,14 @@ class AppWindow(QMainWindow):
 
         init_widgets({
             # Labels
-            self.image_size_label: {'text': 'gui.outputs.image.label_empty', 'size': {'minimum': (50, None)}},
-            self.text_size_label: {'text': 'gui.outputs.text.label_empty', 'size': {'minimum': (50, None)}},
+            self.image_size_label: {
+                'text': 'gui.outputs.image.label_empty',
+                'size': {'minimum': (50, None)}
+            },
+            self.text_size_label: {
+                'text': 'gui.outputs.text.label_empty',
+                'size': {'minimum': (50, None)}
+            },
 
             # Buttons
             self.image_detach_button: {
@@ -506,8 +564,14 @@ class AppWindow(QMainWindow):
             # Line editors
             self.input_field: {'items': (HI_SAMPLE_RESOURCE,)},
             self.input_field.lineEdit(): {'returnPressed': self.use_input},
-            subdomain_field: {'text': self.client.sub_host, 'disabled': True, 'size': {'fixed': (125, None)}},
-            root_folder_field: {'text': self.client.parent_path, 'disabled': True, 'size': {'fixed': (28, None)}},
+            subdomain_field: {
+                'text': self.client.sub_host, 'disabled': True,
+                'size': {'fixed': (125, None)}
+            },
+            root_folder_field: {
+                'text': self.client.parent_path, 'disabled': True,
+                'size': {'fixed': (28, None)}
+            },
 
             # Outputs
             self.media_output: {
