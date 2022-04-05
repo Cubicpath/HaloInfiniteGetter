@@ -64,7 +64,8 @@ def init_widgets(widget_data: dict[QWidget, dict[str, Any | dict[str, QSize | An
                     continue
 
             # Else call setter to update value
-            getattr(widget, f'set{key.title()}')(val)
+            # Capitalize first character of key
+            getattr(widget, f'set{key[0].upper() + key[1:]}')(val)
 
         # Translate dropdown items
         if items is not None:
