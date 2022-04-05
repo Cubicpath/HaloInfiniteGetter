@@ -24,7 +24,7 @@ def _return_arg(__arg: ..., /) -> ...:
     return __arg
 
 
-def init_widgets(widget_data: dict[QWidget: dict[str: str | bool | int | Iterable[str] | Callable | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
+def init_widgets(widget_data: dict[QWidget, dict[str, str | bool | int | Iterable[str] | Callable | dict[str, QSize | Annotated[Sequence[int | None], 2]]]],
                  translator: Translator | None = None) -> None:
     """Initialize widgets with the given data. Translation key strings are evaluated using the given translator, if provided.
 
@@ -48,7 +48,7 @@ def init_widgets(widget_data: dict[QWidget: dict[str: str | bool | int | Iterabl
 
     # Initialize widget attributes
     for widget, data in widget_data.items():
-        disabled, size, text, items = data.get('disabled'), data.get('size'), data.get('text'), data.get('items')
+        disabled, size, font, text, items = data.get('disabled'), data.get('size'), data.get('font'), data.get('text'), data.get('items')
 
         # Disable widget
         if disabled is not None:
@@ -69,12 +69,16 @@ def init_widgets(widget_data: dict[QWidget: dict[str: str | bool | int | Iterabl
                         if size.get(s_type)[1]:
                             getattr(widget, f'set{s_type.title()}Height')(size[s_type][1])
 
+        # Change font
+        if font is not None and hasattr(widget, 'setFont'):
+            widget.setFont(font)
+
         # Translate widget texts
-        if text is not None:
+        if text is not None and hasattr(widget, 'setText'):
             widget.setText(translator(text))
 
         # Translate dropdown items
-        if items is not None:
+        if items is not None and hasattr(widget, 'addItems'):
             widget.addItems(translator(key) for key in items)
 
         # Connect any slots with their respective function call

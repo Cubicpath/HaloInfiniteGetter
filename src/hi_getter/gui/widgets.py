@@ -234,7 +234,7 @@ class ReadmeViewer(QWidget):
         self.resize(QSize(750, 750))
         self._init_ui()
 
-    def _dummy_func(self):
+    def _dummy_func(self) -> None:
         """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
 
     def _init_ui(self) -> None:

@@ -165,6 +165,7 @@ class SettingsWindow(QWidget):
         )
 
         widget_data: dict[QWidget: dict[str: str | Iterable[str] | Callable]] = {
+            # Button
             save_button: {'text': 'gui.settings.save', 'disabled': True, 'clicked': save_settings, 'size': {'maximum': (50, None)}},
             reload_button: {'text': 'gui.settings.reload', 'clicked': reload_settings, 'size': {'maximum': (60, None)}},
             import_button: {'text': 'gui.settings.import', 'clicked': import_settings},
@@ -175,13 +176,20 @@ class SettingsWindow(QWidget):
             self.key_set_button: {'text': 'gui.settings.auth.set', 'clicked': set_key, 'size': {'minimum': (40, None)}},
             self.token_clear_button: {'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token, 'clicked': clear_token},
 
+            # Labels
             theme_label: {'text': 'gui.settings.gui.theme', 'size': {'maximum': (85, None)}},
             aspect_ratio_label: {'text': 'gui.settings.media.aspect_ratio', 'size': {'maximum': (90, None)}},
             transformation_label: {'text': 'gui.settings.media.image_transform', 'size': {'maximum': (90, None)}},
             line_wrap_label: {'text': 'gui.settings.text.line_wrap', 'size': {'maximum': (90, None)}},
 
-            self.key_field: {'text': self.client.hidden_key(), 'pasted': set_key, 'returnPressed': self.key_set_button.click}, 'size': {'minimum': (220, None)},
+            # Line editors
+            self.key_field: {
+                'font': QFont('segoe ui', 8), 'text': self.client.hidden_key(),
+                'pasted': set_key, 'returnPressed': self.key_set_button.click,
+                'size': {'minimum': (220, None)}, 'alignment': Qt.AlignCenter
+            },
 
+            # Dropdowns
             self.theme_dropdown: {'activated': set_theme, 'items': (
                 theme.display_name for theme in app().sorted_themes()
             )},
@@ -248,9 +256,7 @@ class SettingsWindow(QWidget):
         key_layout.addWidget(self.key_set_button)
         token_layout.addWidget(self.token_clear_button)
 
-        # Modify properties of widgets
         self.key_field.setAlignment(Qt.AlignCenter)
-        self.key_field.setFont(QFont('segoe ui', 8))
 
         self.refresh_dropdowns()
 
