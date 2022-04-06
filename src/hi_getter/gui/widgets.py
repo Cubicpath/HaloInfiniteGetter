@@ -4,8 +4,8 @@
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
 
 __all__ = (
-    'BetterLineEdit',
-    'BetterTextBrowser',
+    'PasteLineEdit',
+    'RequestsTextBrowser',
     'HistoryComboBox',
     'LicenseViewer',
     'ReadmeViewer',
@@ -32,7 +32,7 @@ from .utils import scroll_to_top
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
 
-class BetterLineEdit(QLineEdit):
+class PasteLineEdit(QLineEdit):
     """A :py:class:`QLineEdit` with an added paste listener."""
     pasted = Signal(name='pasted')
 
@@ -48,7 +48,7 @@ class BetterLineEdit(QLineEdit):
             self.pasted.emit()
 
 
-class BetterTextBrowser(QTextBrowser):
+class RequestsTextBrowser(QTextBrowser):
     """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s.
 
     Also supports external image loading and caching.
@@ -92,7 +92,7 @@ class BetterTextBrowser(QTextBrowser):
 
 class HistoryComboBox(QComboBox):
     """Editable :py:class:`QComboBox` acting as a history wrapper over :py:class:`BetterLineEdit`; has no duplicate values."""
-    line_edit_class = BetterLineEdit
+    line_edit_class = PasteLineEdit
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -144,7 +144,7 @@ class LicenseViewer(QWidget):
 
         self.license_label:       QLabel
         self.license_index_label: QLabel
-        self.license_text_edit:   BetterTextBrowser
+        self.license_text_edit:   RequestsTextBrowser
         self.next_license_button: QPushButton
         self.prev_license_button: QPushButton
         self._init_ui()
@@ -152,7 +152,7 @@ class LicenseViewer(QWidget):
     def _init_ui(self) -> None:
         self.license_label:       QLabel = QLabel(self)
         self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}', self)
-        self.license_text_edit:   BetterTextBrowser = BetterTextBrowser(self)
+        self.license_text_edit:   RequestsTextBrowser = RequestsTextBrowser(self)
         self.next_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.next'), clicked=self.next_license)
         self.prev_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.previous'), clicked=self.prev_license)
 
@@ -238,7 +238,7 @@ class ReadmeViewer(QWidget):
         """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
 
     def _init_ui(self) -> None:
-        readme_viewer = BetterTextBrowser(self)
+        readme_viewer = RequestsTextBrowser(self)
         close_button = QPushButton("Close", self, clicked=self.close)
 
         readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func.__doc__

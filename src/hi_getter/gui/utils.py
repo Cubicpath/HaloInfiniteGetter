@@ -23,8 +23,7 @@ def _return_arg(__arg: ..., /) -> ...:
 
 
 # noinspection PyUnresolvedReferences
-def init_objects(object_data: dict[QObject, dict[str, Any]],
-                 translator: Translator | None = None) -> None:
+def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Translator | None = None) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
 
     Translation key strings are evaluated using the given translator, if provided.

@@ -5,14 +5,14 @@
 
 __all__ = (
     'AppWindow',
-    'BetterLineEdit',
-    'BetterTextBrowser',
     'FileContextMenu',
     'GetterApp',
     'HelpContextMenu',
     'HistoryComboBox',
     'LicenseViewer',
+    'PasteLineEdit',
     'ReadmeViewer',
+    'RequestsTextBrowser',
     'SettingsWindow',
     'Theme',
     'ToolsContextMenu',

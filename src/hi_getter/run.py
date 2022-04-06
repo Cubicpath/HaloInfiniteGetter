@@ -30,7 +30,7 @@ SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 default_settings: TomlTable = toml.loads(
     DEFAULTS_FILE.read_text(encoding='utf8').replace(
         '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
-    ), decoder=BetterTomlDecoder()
+    ), decoder=PathTomlDecoder()
 )
 
 
@@ -48,7 +48,7 @@ def _create_paths() -> None:
     if not SETTINGS_FILE.is_file():
         # Write default_settings to user's SETTINGS_FILE
         with SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
-            toml.dump(default_settings, file, encoder=BetterTomlEncoder())
+            toml.dump(default_settings, file, encoder=PathTomlEncoder())
 
 
 def run(*args, **kwargs) -> int:

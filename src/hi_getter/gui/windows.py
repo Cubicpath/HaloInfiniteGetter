@@ -160,7 +160,7 @@ class SettingsWindow(QWidget):
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
-            BetterLineEdit(self)
+            PasteLineEdit(self)
         )
 
         init_objects({
@@ -354,7 +354,7 @@ class AppWindow(QMainWindow):
         self.text_frame:          QFrame
         self.text_size_label:     QLabel
         self.text_detach_button:  QPushButton
-        self.text_output:         BetterTextBrowser
+        self.text_output:         RequestsTextBrowser
         self.clear_picture:       QPushButton
         self.copy_picture:        QPushButton
         self.clear_text:          QPushButton
@@ -524,8 +524,8 @@ class AppWindow(QMainWindow):
             HistoryComboBox(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QFrame(self), QFrame(self), QGraphicsView(self), BetterTextBrowser(self),
-            BetterLineEdit(self), BetterLineEdit(self)
+            QFrame(self), QFrame(self), QGraphicsView(self), RequestsTextBrowser(self),
+            PasteLineEdit(self), PasteLineEdit(self)
         )
 
         init_objects({

@@ -4,10 +4,10 @@
 """Module used for TOML configurations."""
 
 __all__ = (
-    'BetterTomlDecoder',
-    'BetterTomlEncoder',
     'CommentValue',
     'make_comment_val',
+    'PathTomlDecoder',
+    'PathTomlEncoder',
     'TomlFile',
     'TomlEvents',
     'TomlTable',
@@ -115,7 +115,7 @@ class TomlEvents:
             self.failure = failure
 
 
-class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
+class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
     """Inherits the effects of :py:class:`toml.TomlPreserveCommentEncoder`.
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
@@ -128,7 +128,7 @@ class BetterTomlDecoder(toml.TomlPreserveCommentDecoder):
         return super().load_value(v=v, strictly_valid=strictly_valid)
 
 
-class BetterTomlEncoder(toml.TomlEncoder):
+class PathTomlEncoder(toml.TomlEncoder):
     """Combines both the effects of :py:class:`toml.TomlPreserveCommentEncoder` and of :py:class:`toml.TomlPathlibEncoder`.
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
@@ -273,7 +273,7 @@ class TomlFile:
         path = Path(path)  # Make sure path is of type Path
         if path.parent.is_dir():
             with path.open(mode='w', encoding='utf8') as file:
-                toml.dump(self._data, file, encoder=BetterTomlEncoder())
+                toml.dump(self._data, file, encoder=PathTomlEncoder())
 
             self.event_bus.fire(TomlEvents.Export(self, path))
             self.event_bus.fire(TomlEvents.Get(self))
@@ -291,7 +291,7 @@ class TomlFile:
         if path.is_file():
             try:
                 with path.open(mode='r', encoding='utf8') as file:
-                    toml_data = toml.load(file, decoder=BetterTomlDecoder())
+                    toml_data = toml.load(file, decoder=PathTomlDecoder())
                     if update:
                         self._data.update(toml_data)
                     else:
