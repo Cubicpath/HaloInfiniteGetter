@@ -9,6 +9,8 @@ __all__ = (
 )
 
 import json
+import string
+import sys
 import webbrowser
 from collections.abc import Callable
 from pathlib import Path
@@ -18,7 +20,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from .._version import __version__
-from ..client import Client
+from ..client import *
 from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
@@ -603,7 +605,7 @@ class AppWindow(QMainWindow):
             self.text_output: {
                 'disabled': True, 'size': {'minimum': (None, 28)},
                 'lineWrapMode': QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']),
-                'openLinks': False, 'anchorClicked': lambda url: self.navigate_to(url.toDisplayString())
+                'openLinks': False, 'anchorClicked': self.navigate_to
             }
         }, translator=app().translator)
 
@@ -668,11 +670,19 @@ class AppWindow(QMainWindow):
         self.settings_window.activateWindow()
         self.settings_window.raise_()
 
-    def navigate_to(self, path: str) -> None:
+    def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""
-        self.input_field.addItem(path)
-        self.input_field.setCurrentIndex(self.input_field.count() - 1)
-        self.use_input()
+        str_path = decode_escapes(path.toDisplayString())
+        if (  # Open local absolute resource locations
+                sys.platform.startswith('win') and (str_path[0] in string.ascii_letters and str_path[1:].startswith(':\\'))
+                or
+                sys.platform.startswith('linux') and str_path.startswith('/')
+        ):
+            webbrowser.open(str_path)
+        else:
+            self.input_field.addItem(str_path)
+            self.input_field.setCurrentIndex(self.input_field.count() - 1)
+            self.use_input()
 
     def use_input(self, scan: bool = False) -> None:
         """Use the current input field's text to search through the Client for data.
@@ -682,7 +692,6 @@ class AppWindow(QMainWindow):
         :param scan: Whether to recursively scan a resource.
         """
         user_input = self.input_field.currentText()
-        scroll_to_top(self.text_output)
         if not user_input:
             return
 
@@ -700,6 +709,23 @@ class AppWindow(QMainWindow):
                 self.use_input()
             else:
                 data = self.client.get_hi_data(search_path)
+                if isinstance(data, dict):
+                    data = json.dumps(data, indent=2)
+                data_size = (
+                    len(data) if isinstance(data, bytes)
+                    else len(data.encode('utf8', errors='ignore')) if isinstance(data, str)
+                    else 0
+                )
+                # Find the best size label for the data size
+                display_unit = 'Bytes'
+                for size_label in BYTE_UNITS:
+                    if data_size >= (BYTE_UNITS[size_label] // 2):
+                        display_unit = size_label
+                    else:
+                        break
+
+                display_size = round(data_size / BYTE_UNITS[display_unit], 4)
+
                 if isinstance(data, bytes):
                     self.clear_picture.setDisabled(False)
                     self.copy_picture.setDisabled(False)
@@ -708,38 +734,56 @@ class AppWindow(QMainWindow):
                     self.image_size_label.setText(app().translator(
                         'gui.outputs.image.label',
                         self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
-                        round(len(data) / 1024, 4)                                              # Size in bytes
+                        display_size, display_unit                                              # Size in given unit
                     ))
                     self.resize_image()
                 else:
+                    scroll_to_top(self.text_output)
                     self.clear_text.setDisabled(False)
                     self.copy_text.setDisabled(False)
                     self.text_output.setDisabled(False)
+                    self.text_output.clear()
 
-                    if isinstance(data, dict):
-                        data = json.dumps(data, indent=2)
-                    elif isinstance(data, int):
+                    if isinstance(data, int):
                         data = app().translator(
-                            'gui.outputs.text.error',
+                            'gui.outputs.text.errors.http',
                             self.client.api_root + search_path,  # Search path
                             data, HTTP_CODE_MAP[data][0],        # Error code and phrase
                             HTTP_CODE_MAP[data][1]               # Error description
                         )
+                        self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
+                        self.text_output.setPlainText(data)
+                        return
 
-                    output = data
+                    # Load up to 8 MiB of text data
+                    if data_size <= BYTE_UNITS['MiB'] * 8:
+                        output = data
+                    else:
+                        output = app().translator(
+                            'gui.outputs.text.errors.too_large',
+                            self.client.os_path(search_path)
+                        )
+
+                    original_output = output
+
                     replaced = set()
-                    for match in HI_PATH_PATTERN.finditer(data):
+                    for match in HI_PATH_PATTERN.finditer(original_output):
                         match = match[0].replace('"', '')
                         if match not in replaced:
                             output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                             replaced.add(match)
 
-                    self.text_output.setHtml(f'<body style="white-space: pre-wrap">{output}</body>')
                     self.text_size_label.setText(app().translator(
                         'gui.outputs.text.label',
-                        len(data.splitlines()), len(data),         # Line and character count
-                        round(len(data.encode('utf8')) / 1024, 4)  # Size in bytes
+                        len(data.splitlines()), len(data),  # Line and character count
+                        display_size, display_unit          # Size in given unit
                     ))
+
+                    self.text_output.setHtml(
+                        '<body style="white-space: pre-wrap">'
+                        f'{output}'
+                        '</body>'
+                    )
 
     def resize_image(self) -> None:
         """Refresh the media output with a resized version of the current image."""
