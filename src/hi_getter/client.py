@@ -35,10 +35,16 @@ load_dotenv(verbose=True)
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
+# TODO: Move this to another module
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 for _description in (
+        (400, 'Your search path has malformed syntax or bad characters.'),
         (401, 'No permission -- Your API token is most likely invalid.'),
+        (403, 'Request forbidden -- You cannot get this resource with or without an API token.'),
+        (404, 'No resource found at the given location.'),
+        (405, 'Invalid method -- GET requests are not accepted for this resource.'),
+        (406, 'Client does not support the given resource format.'),
 ):
     code = _description[0]
     HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], _description[1])
