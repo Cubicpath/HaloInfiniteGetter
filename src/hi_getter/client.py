@@ -5,6 +5,7 @@
 
 __all__ = (
     'Client',
+    'decode_escapes',
     'HTTP_CODE_MAP',
 )
 
@@ -34,10 +35,16 @@ load_dotenv(verbose=True)
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
+# TODO: Move this to another module
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
 for _description in (
+        (400, 'Your search path has malformed syntax or bad characters.'),
         (401, 'No permission -- Your API token is most likely invalid.'),
+        (403, 'Request forbidden -- You cannot get this resource with or without an API token.'),
+        (404, 'No resource found at the given location.'),
+        (405, 'Invalid method -- GET requests are not accepted for this resource.'),
+        (406, 'Client does not support the given resource format.'),
 ):
     code = _description[0]
     HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], _description[1])
@@ -123,18 +130,19 @@ class Client:
                 response = self.get(path, False, **kwargs)
         return response
 
-    def get_hi_data(self, path: str, only_dump: bool = False, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int | None:
+    def get_hi_data(self, path: str, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
         """
-        os_path: Path = dump_path / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
-        data: dict[str, Any] | bytes | None = None
+        os_path: Path = self.os_path(path, parent=dump_path)
+        data: dict[str, Any] | bytes
 
         if not os_path.is_file():
             response: Response = self.get(path)
             if not response.ok:
                 return response.status_code
+
             if 'json' in response.headers.get('content-type', ()):
                 data = response.json()
             else:
@@ -145,7 +153,7 @@ class Client:
             if micro_sleep:
                 time.sleep(random.randint(100, 200) / 750)
 
-        elif not only_dump:
+        else:
             print(path)
             data = os_path.read_bytes()
             if os_path.suffix == '.json':
@@ -159,6 +167,10 @@ class Client:
         if key is not None and len(key) > 6:
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
+
+    def os_path(self, path, parent: Path = HI_CACHE_PATH) -> Path:
+        """Translate a given GET path to the equivalent cache location is."""
+        return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
 
     def recursive_search(self, search_path: str) -> None:
         """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
@@ -180,7 +192,7 @@ class Client:
                     self.searched_paths.update({path: self.searched_paths.get(path, 0) + 1})
                     self.recursive_search(path)
                 elif end in ('png', 'jpg', 'jpeg', 'webp', 'gif'):
-                    self.get_hi_data('images/file/' + value, True)
+                    self.get_hi_data('images/file/' + value)
 
     def refresh_auth(self) -> None:
         """Refreshes authentication to Halo Waypoint servers.

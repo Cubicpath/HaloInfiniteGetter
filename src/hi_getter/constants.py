@@ -4,6 +4,7 @@
 """Neutral namespace for constants. Meant to be star imported."""
 
 __all__ = (
+    'BYTE_UNITS',
     'HI_CACHE_PATH',
     'HI_CONFIG_PATH',
     'HI_PATH_PATTERN',
@@ -15,6 +16,10 @@ __all__ = (
 import re
 from pathlib import Path
 from typing import Final
+
+# Mappings
+
+BYTE_UNITS = {'Bytes': 1, 'KiB': 1024, 'MiB': 1048576, 'GiB': 1073741824, 'TiB': 1099511627776}
 
 # Strings
 
@@ -34,7 +39,7 @@ HI_RESOURCE_PATH:   Final[Path] = Path(__file__).parent / 'resources'
 
 # Patterns
 
-HI_PATH_PATTERN:    Final[re.Pattern] = re.compile(r'\"([\w\-_]+/)+[\w\-_]*\.\w+\"')
+HI_PATH_PATTERN:    Final[re.Pattern] = re.compile(r'([A-Z]:\\)*([\w\-_.]+[/\\])+[\w\-_]*\.\w+|[/\\]\.\w+')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
 
 HI_URL_PATTERN:     Final[re.Pattern] = re.compile(
