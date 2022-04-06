@@ -255,7 +255,11 @@ class TomlFile:
 
         scope[path] = value
 
-        self.event_bus.fire(TomlEvents.Set(self, key, prev_val, value.val if isinstance(value, CommentValue) else value))
+        self.event_bus.fire(TomlEvents.Set(
+            self, key,
+            prev_val.val if isinstance(prev_val, CommentValue) else value,
+            value.val if isinstance(value, CommentValue) else value
+        ))
 
     def save(self) -> bool:
         """Save current settings to self.path."""
