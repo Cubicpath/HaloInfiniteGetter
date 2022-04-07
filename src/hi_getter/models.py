@@ -5,11 +5,14 @@
 
 __all__ = (
     'DeferredCallable',
+    'DistributedCallable',
 )
 
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Generator
 from typing import Any
 
 
@@ -22,7 +25,11 @@ class _AbstractCallable(ABC):
 
     @abstractmethod
     def run(self, *args, **kwargs) -> Any:
-        """Run the callable."""
+        """Execute functionality with the provided arguments and return the result.
+
+        :param args: positional arguments to call with.
+        :param kwargs: keyword arguments to call with.
+        """
         raise NotImplementedError
 
 
@@ -98,3 +105,33 @@ class DeferredCallable(_AbstractCallable):
             if ' positional argument but ' in str(e):
                 raise RuntimeError(f'{str(e).split(" ", maxsplit=1)[0]} was not expecting additional args, '
                                    f'{type(self).__name__}._extra_call_args may not be set correctly.') from e
+
+
+class DistributedCallable(_AbstractCallable):
+    """A :py:class:`Callable` that distributes arguments to all specified callables."""
+
+    def __init__(self, __callables: Collection[Callable], *args: Any, **kwargs: Any) -> None:
+        """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs."""
+        self.callables: Collection[Callable] = __callables
+        self.args:      tuple[Any] = args
+        self.kwargs:    dict[str, Any] = kwargs
+
+    def __repr__(self) -> str:
+        """Represents the :py:class:`DistributedCallable` with the stored callable, args, and kwargs."""
+        args, kwargs = self.args, self.kwargs
+        return f'<{type(self).__name__} {len(self.callables)} functions with {args=}, {kwargs=}>'
+
+    def run(self, *args, **kwargs) -> tuple[Any]:
+        """Run all stored :py:class:`Callable`'s with the given extra arguments.
+
+        :returns: The results of each callable, packaged in a tuple.
+        """
+        return tuple(func(*self.args, **self.kwargs) for func in self.callables)
+
+    def generate(self, *args, **kwargs) -> Generator[Any]:
+        """Run all stored :py:class:`Callable`'s with the given extra arguments. Yielding every result.
+
+        :returns: A generator yielding the results of each callable.
+        """
+        for func in self.callables:
+            yield func(*args, **kwargs)
