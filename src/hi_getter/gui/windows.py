@@ -247,16 +247,15 @@ class SettingsWindow(QWidget):
 
         # Define layouts
         layout = QGridLayout(self)  # Main layout
-        top = QHBoxLayout(self)
-        middle = QVBoxLayout(self)
-        theme_layout = QHBoxLayout(self)
-        output_layout = QGridLayout(self)
-        bottom = QVBoxLayout(self)
-        key_layout = QHBoxLayout(self)
-        token_layout = QHBoxLayout(self)
+        top = QHBoxLayout()
+        middle = QVBoxLayout()
+        theme_layout = QHBoxLayout()
+        output_layout = QGridLayout()
+        bottom = QVBoxLayout()
+        key_layout = QHBoxLayout()
+        token_layout = QHBoxLayout()
 
         # Assign positions of layouts
-        self.setLayout(layout)
         layout.addLayout(top, 0, 0, Qt.AlignTop)
         layout.addLayout(middle, 10, 0, Qt.AlignTop)
         layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
@@ -430,7 +429,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = self.resize_image
+                window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
                 window = self.detached['media']
@@ -594,10 +593,10 @@ class AppWindow(QMainWindow):
         layout = QGridLayout()
         top = QHBoxLayout()
         self.outputs = QHBoxLayout()
-        media_layout = QVBoxLayout()
+        media_layout = QVBoxLayout(self.media_frame)
         media_top = QHBoxLayout()
         media_bottom = QHBoxLayout()
-        text_layout = QVBoxLayout()
+        text_layout = QVBoxLayout(self.text_frame)
         text_top = QHBoxLayout()
         text_bottom = QHBoxLayout()
         bottom = QGridLayout()
@@ -620,7 +619,6 @@ class AppWindow(QMainWindow):
         self.outputs.addWidget(self.text_frame)
 
         # noinspection Duplicates
-        self.media_frame.setLayout(media_layout)
         media_layout.addLayout(media_top)
         media_layout.addWidget(self.media_output)
         media_layout.addLayout(media_bottom)
@@ -630,7 +628,6 @@ class AppWindow(QMainWindow):
         media_bottom.addWidget(self.copy_picture, Qt.AlignLeft)
 
         # noinspection Duplicates
-        self.text_frame.setLayout(text_layout)
         text_layout.addLayout(text_top)
         text_layout.addWidget(self.text_output)
         text_layout.addLayout(text_bottom)
@@ -773,6 +770,7 @@ class AppWindow(QMainWindow):
             self.media_output.scene().addPixmap(new)
 
     # # # # # Events
+
     def show(self) -> None:
         """After window is displayed, show warnings if not already warned."""
         super().show()
