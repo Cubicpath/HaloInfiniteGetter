@@ -63,37 +63,15 @@ class TomlEvents:
         """A key's value is accessed."""
         __slots__ = ('toml_file', 'key')
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str) -> None:
             super().__init__(toml_file=toml_file)
-            self.key: str = self._Key(key)
-
-        class _Key(str):
-            """Proxy for a key :py:class:`str`.
-
-            If key was none, act as a wildcard for :py:class:`str` comparisons
-            """
-            __slots__ = ('toml_file', 'key', 'wildcard')
-
-            def __new__(cls, key: str | None) -> 'TomlEvents.KeyAccess._Key':
-                o = super().__new__(cls, key if key is not None else '%WILDCARD%')
-                return o
-
-            def __init__(self, key: str | None) -> None:
-                super().__init__()
-                self.key:      str | None = key
-                self.wildcard: bool = key is None
-
-            def __bool__(self) -> bool:
-                return bool(self.wildcard or self.key)
-
-            def __eq__(self, other: Any) -> bool:
-                return self.wildcard or self.key == other
+            self.key: str = key
 
     class Get(KeyAccess):
         """Value is given."""
         __slots__ = ('toml_file', 'key', 'value')
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None = None, value: TomlValue | None = None) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str, value: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
             self.value = value
 
@@ -101,7 +79,7 @@ class TomlEvents:
         """Value is set."""
         __slots__ = ('toml_file', 'key', 'old', 'new')
 
-        def __init__(self, toml_file: 'TomlFile', key: str | None = None, old: TomlValue | None = None, new: TomlValue | None = None) -> None:
+        def __init__(self, toml_file: 'TomlFile', key: str, old: TomlValue, new: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
             self.old: TomlValue | None = old
             self.new: TomlValue | None = new
@@ -257,8 +235,8 @@ class TomlFile:
 
         self.event_bus.fire(TomlEvents.Set(
             self, key,
-            prev_val.val if isinstance(prev_val, CommentValue) else value,
-            value.val if isinstance(value, CommentValue) else value
+            old=prev_val.val if isinstance(prev_val, CommentValue) else prev_val,
+            new=value.val if isinstance(value, CommentValue) else value
         ))
 
     def save(self) -> bool:
@@ -280,7 +258,6 @@ class TomlFile:
                 toml.dump(self._data, file, encoder=PathTomlEncoder())
 
             self.event_bus.fire(TomlEvents.Export(self, path))
-            self.event_bus.fire(TomlEvents.Get(self))
             return True
 
         self.event_bus.fire(TomlEvents.Fail(self, 'export'))
@@ -306,7 +283,6 @@ class TomlFile:
 
             else:
                 self.event_bus.fire(TomlEvents.Import(self, path))
-                self.event_bus.fire(TomlEvents.Set(self))
                 return True
 
         # If failed:
