@@ -25,6 +25,7 @@ from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
 from ..models import DeferredCallable
+from ..models import DistributedCallable
 from ..tomlfile import TomlEvents
 from .app import app
 from .menus import *
@@ -41,8 +42,7 @@ class SettingsWindow(QWidget):
         """Create a new settings window. Should only have one instance."""
         super().__init__()
         self.client = parent.client
-        self.clipboard: QClipboard | None = parent.clipboard
-        self.getter_window = parent
+        self.app_window = parent
 
         self.setWindowTitle(app().translator('gui.settings.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
@@ -65,24 +65,12 @@ class SettingsWindow(QWidget):
 
     def _init_ui(self) -> None:
 
-        def save_settings() -> None:
-            """Save current settings to the user's settings file."""
-            save_button.setDisabled(True)
-            app().settings.save()
-
-        def reload_settings() -> None:
-            """Reload current settings from the user's settings file."""
-            save_button.setDisabled(True)
-            if app().settings.reload():
-                self.refresh_dropdowns()
-
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
             file_path = Path(QFileDialog.getOpenFileName(self, app().translator('gui.settings.import'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
                 if app().settings.import_from(file_path):
-                    self.refresh_dropdowns()
                     save_button.setDisabled(False)
 
         def export_settings() -> None:
@@ -92,32 +80,6 @@ class SettingsWindow(QWidget):
             if str(file_path) != '.':
                 app().settings.export_to(file_path)
 
-        def set_aspect_ratio_method() -> None:
-            """Set the media output's aspect ratio method to the chosen method."""
-            print('test')
-            save_button.setDisabled(False)
-            app().settings['gui/media_output/aspect_ratio_mode'] = self.aspect_ratio_dropdown.currentIndex()
-            self.getter_window.resize_image()
-
-        def set_transformation_method() -> None:
-            """Set the media output's image transformation method to the chosen method."""
-            print('test2')
-            save_button.setDisabled(False)
-            app().settings['gui/media_output/transformation_mode'] = self.transformation_dropdown.currentIndex()
-            self.getter_window.resize_image()
-
-        def set_line_wrap_method() -> None:
-            """Set the text output's line wrap method to the chosen method."""
-            print('test3')
-            save_button.setDisabled(False)
-            app().settings['gui/text_output/line_wrap_mode'] = self.line_wrap_dropdown.currentIndex()
-            self.getter_window.text_output.setLineWrapMode(QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']))
-
-        def set_theme() -> None:
-            """Set selected theme to the chosen theme."""
-            save_button.setDisabled(False)
-            app().settings['gui/themes/selected'] = app().sorted_themes()[self.theme_dropdown.currentIndex()].id
-
         def hide_key() -> None:
             """Hide API key."""
             self.key_set_button.setDisabled(True)
@@ -125,7 +87,7 @@ class SettingsWindow(QWidget):
             self.key_field.setText(self.client.hidden_key())
             self.key_field.setAlignment(Qt.AlignCenter)
 
-        def show_key() -> None:
+        def toggle_key_visibility() -> None:
             """Toggle hiding and showing the API key."""
             if not self.key_field.isEnabled():
                 self.key_field.setAlignment(Qt.AlignLeft)
@@ -136,15 +98,10 @@ class SettingsWindow(QWidget):
             else:
                 hide_key()
 
-        def copy_key() -> None:
-            """Copy the current key value to the system clipboard."""
-            if self.clipboard is not None:
-                self.clipboard.setText(self.client.wpauth)
-
         def set_key() -> None:
             """Set the client's auth_key to the current text in the key field."""
             self.client.wpauth = self.key_field.text().strip() or None
-            show_key()
+            toggle_key_visibility()
 
         def clear_token() -> None:
             self.client.token = None
@@ -164,6 +121,15 @@ class SettingsWindow(QWidget):
             QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
             PasteLineEdit(self)
         )
+
+        for subscribe_params in (
+                (DeferredCallable(self.app_window.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
+                (lambda val: self.app_window.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
+                (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
+                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
+                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
+                (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
+        ): EventBus['settings'].subscribe(*subscribe_params)
 
         init_objects({
             # Labels
@@ -188,12 +154,12 @@ class SettingsWindow(QWidget):
             save_button: {
                 'text': 'gui.settings.save', 'disabled': True,
                 'size': {'maximum': (50, None)},
-                'clicked': save_settings
+                'clicked': app().settings.save
             },
             reload_button: {
                 'text': 'gui.settings.reload',
                 'size': {'maximum': (60, None)},
-                'clicked': reload_settings
+                'clicked': app().settings.reload
             },
             import_button: {
                 'text': 'gui.settings.import',
@@ -205,15 +171,15 @@ class SettingsWindow(QWidget):
             },
             open_editor_button: {
                 'text': 'gui.settings.open_editor',
-                'clicked': DeferredCallable(webbrowser.open, str(app().settings.path))
+                'clicked': DeferredCallable(webbrowser.open, lambda: app().settings.path)
             },
             key_show_button: {
                 'text': 'gui.settings.auth.edit',
-                'clicked': show_key
+                'clicked': toggle_key_visibility
             },
             key_copy_button: {
                 'text': 'gui.settings.auth.copy',
-                'clicked': copy_key
+                'clicked': DeferredCallable(app().clipboard().setText, lambda: self.client.wpauth)
             },
             self.key_set_button: {
                 'text': 'gui.settings.auth.set',
@@ -234,11 +200,19 @@ class SettingsWindow(QWidget):
 
             # Dropdowns
             self.theme_dropdown: {
-                'activated': set_theme,
+                'activated': DeferredCallable(
+                    app().settings.__setitem__,
+                    'gui/themes/selected',
+                    lambda: app().sorted_themes()[self.theme_dropdown.currentIndex()].id
+                ),
                 'items': (theme.display_name for theme in app().sorted_themes())
             },
             self.aspect_ratio_dropdown: {
-                'activated': set_aspect_ratio_method,
+                'activated': DeferredCallable(
+                    app().settings.__setitem__,
+                    'gui/media_output/aspect_ratio_mode',
+                    lambda: self.aspect_ratio_dropdown.currentIndex
+                ),
                 'items': (
                     'gui.settings.media.aspect_ratio.ignore',
                     'gui.settings.media.aspect_ratio.keep',
@@ -246,14 +220,22 @@ class SettingsWindow(QWidget):
                 )
             },
             self.transformation_dropdown: {
-                'activated': set_transformation_method,
+                'activated': DeferredCallable(
+                    app().settings.__setitem__,
+                    'gui/media_output/transformation_mode',
+                    lambda: self.transformation_dropdown.currentIndex
+                ),
                 'items': (
                     'gui.settings.media.image_transform.fast',
                     'gui.settings.media.image_transform.smooth'
                 )
             },
             self.line_wrap_dropdown: {
-                'activated': set_line_wrap_method,
+                'activated': DeferredCallable(
+                    app().settings.__setitem__,
+                    'gui/text_output/line_wrap_mode',
+                    lambda: self.line_wrap_dropdown.currentIndex
+                ),
                 'items': (
                     'gui.settings.text.line_wrap.no_wrap',
                     'gui.settings.text.line_wrap.widget',
@@ -339,14 +321,14 @@ class AppWindow(QMainWindow):
         """Create the window for the application."""
         super().__init__()
         self.client:                Client = client
-        self.clipboard:             QClipboard = app().clipboard()
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setWindowTitle(app().translator('app.name') + f' v{__version__}')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.settings_window = SettingsWindow(self, QSize(420, 600))
 
         self.input_field:         HistoryComboBox
         self.media_frame:         QFrame
@@ -364,8 +346,6 @@ class AppWindow(QMainWindow):
 
         self._init_toolbar()
         self._init_ui()
-
-        self.settings_window = SettingsWindow(self, QSize(420, 600))
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
@@ -398,7 +378,11 @@ class AppWindow(QMainWindow):
             settings: {
                 'text': 'gui.menus.settings',
                 'menuRole': QAction.MenuRole.PreferencesRole,
-                'triggered': self.open_settings_window
+                'triggered': DistributedCallable((
+                    self.settings_window.show,
+                    self.settings_window.activateWindow,
+                    self.settings_window.raise_
+                ))
             },
             tools: {
                 'text': 'gui.menus.tools',
@@ -446,7 +430,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = DeferredCallable(self.resize_image)
+                window.resizeEvent = self.resize_image
                 window.show()
             else:
                 window = self.detached['media']
@@ -482,11 +466,6 @@ class AppWindow(QMainWindow):
             self.media_output.scene().clear()
             self.current_image = None
 
-        def copy_current_pixmap() -> None:
-            """Copy the current image to the system clipboard."""
-            if self.clipboard is not None:
-                self.clipboard.setPixmap(self.current_image)
-
         def clear_current_text() -> None:
             """Clear the current text from the text output."""
             self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
@@ -494,11 +473,6 @@ class AppWindow(QMainWindow):
             self.copy_text.setDisabled(True)
             self.text_output.setDisabled(True)
             self.text_output.clear()
-
-        def copy_current_text() -> None:
-            """Copy the current output text to the system clipboard."""
-            if self.clipboard is not None:
-                self.clipboard.setText(self.text_output.toPlainText())
 
         def next_in_history() -> None:
             """View the next license."""
@@ -560,7 +534,7 @@ class AppWindow(QMainWindow):
             self.copy_picture: {
                 'text': 'gui.outputs.image.copy', 'disabled': True,
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
-                'clicked': copy_current_pixmap
+                'clicked': DeferredCallable(app().clipboard().setPixmap, lambda: self.current_image)
             },
             self.clear_text: {
                 'text': 'gui.outputs.clear', 'disabled': True,
@@ -570,7 +544,7 @@ class AppWindow(QMainWindow):
             self.copy_text: {
                 'text': 'gui.outputs.text.copy', 'disabled': True,
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
-                'clicked': copy_current_text
+                'clicked':  DeferredCallable(app().clipboard().setText, self.text_output.toPlainText)
             },
             get_button: {
                 'text': 'gui.input_field.get',
@@ -584,8 +558,12 @@ class AppWindow(QMainWindow):
             },
 
             # Line editors
-            self.input_field: {'items': (HI_SAMPLE_RESOURCE,)},
-            self.input_field.lineEdit(): {'returnPressed': self.use_input},
+            self.input_field: {
+                'items': (HI_SAMPLE_RESOURCE,)
+            },
+            self.input_field.lineEdit(): {
+                'returnPressed': self.use_input
+            },
             subdomain_field: {
                 'text': self.client.sub_host, 'disabled': True,
                 'size': {'fixed': (125, None)}
@@ -663,12 +641,6 @@ class AppWindow(QMainWindow):
         text_bottom.setSpacing(5)
 
         bottom.addLayout(statuses, 10, 0)
-
-    def open_settings_window(self) -> None:
-        """Show the :py:class:`SettingsWindow` and bring it the front."""
-        self.settings_window.show()
-        self.settings_window.activateWindow()
-        self.settings_window.raise_()
 
     def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""

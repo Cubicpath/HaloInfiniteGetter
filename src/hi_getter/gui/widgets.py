@@ -79,6 +79,10 @@ class RequestsTextBrowser(QTextBrowser):
         else:
             return super().loadResource(int(resource_type), url)
 
+    def setLineWrapMode(self, mode: int | QTextEdit.LineWrapMode) -> None:
+        """Set the line wrap mode. Allows use of ints."""
+        super().setLineWrapMode(QTextEdit.LineWrapMode(mode))
+
     # noinspection PyTypeChecker
     def connect_key_to(self, key: Qt.Key, func: Callable) -> None:
         """Connect a :py:class:`Callable` to a key press."""
@@ -202,6 +206,7 @@ class LicenseViewer(QWidget):
         """Views the license data of the given package name."""
         license_text = self.LICENSE_DATA[package][1] or app().translator('gui.license_viewer.not_found')
         self.current_license_index = tuple(self.LICENSE_DATA).index(package)
+        # TODO: Add translations
         self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" License')
         self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')
 
@@ -217,7 +222,11 @@ class LicenseViewer(QWidget):
         for line in output.splitlines():
             stripped_output += line.strip() + '\n'
         stripped_output = stripped_output.strip()
-        self.license_text_edit.setHtml(f'<body style="white-space: pre-wrap"><center>{stripped_output}</center></body>')
+        self.license_text_edit.setHtml(
+            f'<body style="white-space: pre-wrap">'
+            f'<center>{stripped_output}</center>'
+            f'</body>'
+        )
 
         scroll_to_top(self.license_text_edit)
 
