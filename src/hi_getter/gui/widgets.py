@@ -24,8 +24,8 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..constants import *
+from ..models import DeferredCallable
 from ..utils import current_requirement_licenses
-from ..utils import DeferredCallable
 from .app import app
 from .utils import scroll_to_top
 

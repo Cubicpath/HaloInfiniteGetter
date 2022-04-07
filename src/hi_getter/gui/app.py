@@ -17,8 +17,8 @@ from PySide6.QtWidgets import *
 
 from ..events import *
 from ..lang import Translator
+from ..models import DeferredCallable
 from ..tomlfile import *
-from ..utils import DeferredCallable
 
 
 def app() -> 'GetterApp':

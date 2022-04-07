@@ -23,8 +23,8 @@ from PySide6.QtWidgets import *
 
 from .._version import __version_info__ as ver
 from ..constants import *
+from ..models import DeferredCallable
 from ..utils import current_requirement_versions
-from ..utils import DeferredCallable
 from ..utils import has_package
 from .app import app
 from .widgets import *
