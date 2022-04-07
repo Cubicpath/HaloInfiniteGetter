@@ -27,6 +27,7 @@ from toml.decoder import CommentValue
 
 from .events import *
 
+COMMENT_PREFIX:      Final[str] = '# '
 SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
 TomlTable: TypeAlias = dict[str, 'TomlValue']
@@ -164,7 +165,7 @@ class TomlFile:
         :raises ValueError: If path is an empty string.
         """
         if not path:
-            raise ValueError('Path can not be an empty string.')
+            raise ValueError('Path cannot be an empty string.')
 
         scope: dict = self._data
         paths: list[str] = path.split('/')
@@ -224,12 +225,11 @@ class TomlFile:
         # Preserve comments, or edit them if comment argument was filled
         prev_val = scope.get(path)
         if isinstance(prev_val, CommentValue):
-            prev_val.val = value
-            value = prev_val
+            value = make_comment_val(value, prev_val.comment.lstrip().removeprefix(COMMENT_PREFIX))
             if comment is not None:
-                prev_val.comment = comment
+                value.comment = comment
         if not isinstance(value, CommentValue) and comment is not None:
-            value = CommentValue(val=value, comment=f'# {comment}', beginline=True, _dict=dict)
+            value = make_comment_val(value, comment)
 
         scope[path] = value
 
@@ -290,6 +290,11 @@ class TomlFile:
         return False
 
 
-def make_comment_val(val: TomlValue, comment: str, new_line=False) -> CommentValue:
+def make_comment_val(val: TomlValue, comment: str | None = None, new_line=False) -> CommentValue:
     """Build and return :py:class:`CommentValue`."""
-    return CommentValue(val=val, comment=f'# {comment}', beginline=new_line, _dict=dict)
+    return CommentValue(
+        val=val,
+        comment=f'{COMMENT_PREFIX}{comment}' if comment is not None else None,
+        beginline=new_line,
+        _dict=dict
+    )
