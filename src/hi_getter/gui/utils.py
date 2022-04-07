@@ -57,6 +57,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
                 continue
 
             # Check if key is a signal on widget
+            # If so, connect it to the given function
             if hasattr(widget, key):
                 attribute = getattr(widget, key)
                 if isinstance(attribute, SignalInstance):
@@ -65,7 +66,8 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
 
             # Else call setter to update value
             # Capitalize first character of key
-            getattr(widget, f'set{key[0].upper() + key[1:]}')(val)
+            setter = f'set{key[0].upper()}{key[1:]}'
+            getattr(widget, setter)(val)
 
         # Translate dropdown items
         if items is not None:
@@ -77,7 +79,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
                 if size.get(s_type) is not None:
                     if isinstance(size.get(s_type), QSize):
                         # For PySide6.QtCore.QSize objects
-                        getattr(widget, f'set{s_type.title()}Size')(size[s_type][0])
+                        getattr(widget, f'set{s_type.title()}Size')(size[s_type])
                     elif isinstance(size.get(s_type), Sequence):
                         # For lists, tuples, etc. Set width and height separately.
                         # None can be used rather than int to skip a dimension.
