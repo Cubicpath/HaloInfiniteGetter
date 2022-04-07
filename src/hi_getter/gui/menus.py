@@ -136,12 +136,12 @@ class HelpContextMenu(QMenu):
 
         license_view: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
-            app().translator('gui.menus.help.license'), self, triggered=self.open_license
+            app().translator('gui.menus.help.license'), self, triggered=self.license_window.show
         )
 
         readme: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DialogApplyButton),
-            app().translator('gui.menus.help.readme'), self, triggered=self.open_readme
+            app().translator('gui.menus.help.readme'), self, triggered=self.readme_window.show
         )
 
         section_map = {
@@ -160,14 +160,6 @@ class HelpContextMenu(QMenu):
         """Open the application's about section."""
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())
-
-    def open_license(self) -> None:
-        """Show the :py:class:`LicenseViewer` window."""
-        self.license_window.show()
-
-    def open_readme(self) -> None:
-        """Show the README.md text."""
-        self.readme_window.show()
 
     def about_message(self) -> tuple[str, str]:
         """Generate the 'About' information regarding the application's environment.
