@@ -15,13 +15,17 @@ py-version="3.10"
 disable = [
     "C",    # Conventions
     "R",    # Reformats
+    # These do not work with custom bitshifts that return None
+    "pointless-statement",      # W0104
+    "expression-not-assigned",  # W0106
+    # These don't work the general design choices of the project
     "unnecessary-lambda",       # W0108
     "protected-access",         # W0212
     "wildcard-import",          # W0401
     "fixme",                    # W0511
     "unused-wildcard-import",   # W0614
     "redefined-builtin",        # W0622
-    # Does not work with (positional arguments with a default value) before a backslash and *args
+    # Doesn't work with (positional arguments with a default value) before a backslash and *args
     "keyword-arg-before-vararg",# W1113
     # These do not work with starred parameter names
     "missing-param-doc",        # W9015
