@@ -20,12 +20,25 @@ EventRunnable:  TypeAlias = Callable[['Event'], None]
 
 
 class Event:
-    """Normal event with no special abilities."""
+    """Normal event with no special abilities.
+
+    You can also use the >> operator to fire an :py:class:`Event` on an :py:class:`EventBus`. ex::
+
+        Event() >> EventBus['foo']
+    """
     __slots__ = ()
 
     def __repr__(self) -> str:
         values = {attr: val for attr, val in ((attr, getattr(self, attr)) for attr in self.__slots__)}
         return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
+
+    def __rshift__(self, __bus: 'EventBus', /) -> None:
+        """Syntax sugar for __bus.fire(event)"""
+        __bus.fire(event=self)
+
+    def __rlshift__(self, __bus: 'EventBus', /) -> None:
+        """Right shift is the EventBus.__lshift__ dunder is not working."""
+        self >> __bus
 
     @property
     def name(self) -> str:
@@ -113,11 +126,22 @@ class EventBus(metaclass=_EventBusMeta):
     All :py:class:`EventBus`'s are stored in the class with a unique id.
     You can access created :py:class:`EventBus`'s with subscripts. ex::
 
-        EventBus['foo'] -> None
-        EventBus('foo') -> EventBus object at 0x000000001
-        EventBus['foo'] -> EventBus object at 0x000000001
-        del EventBus['foo']
-        EventBus['foo'] -> None
+        [Python Interactive Prompt]
+            EventBus['foo'] -> None
+            EventBus('foo') -> EventBus object at 0x000000001
+            EventBus['foo'] -> EventBus object at 0x000000001
+            del EventBus['foo']
+            EventBus['foo'] -> None
+
+    You can also use the << operator to fire an event, or an Event's >> operator. ex::
+
+        [Python Interactive Prompt]
+            # These fire an event
+            EventBus['foo'] << Event()
+            Event() >> EventBus['foo']
+
+            # This raises an error:
+            Event() << EventBus['foo']
     """
 
     def __init__(self, __id: str | None = None, /) -> None:
@@ -136,8 +160,12 @@ class EventBus(metaclass=_EventBusMeta):
         else:
             raise KeyError(f'EventBus id "{__id}" is already registered in {type(type(self)).__name__}')
 
+    def __lshift__(self, __event: Event | type[Event], /) -> None:
+        """Syntax sugar for self.fire(event)"""
+        self.fire(__event)
+
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} id='{self.id!r}'; Subscribers={self._subscribers!r}>"
+        return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'
 
     def clear(self, event: type[Event] | None = None) -> None:
         """Clear event _subscribers of a given type.

@@ -209,7 +209,7 @@ class TomlFile:
         if isinstance(val, CommentValue):
             val = val.val
 
-        self.event_bus.fire(TomlEvents.Get(self, key, val))
+        self.event_bus << TomlEvents.Get(self, key, val)
 
         return val
 
@@ -233,11 +233,11 @@ class TomlFile:
 
         scope[path] = value
 
-        self.event_bus.fire(TomlEvents.Set(
+        self.event_bus << TomlEvents.Set(
             self, key,
             old=prev_val.val if isinstance(prev_val, CommentValue) else prev_val,
             new=value.val if isinstance(value, CommentValue) else value
-        ))
+        )
 
     def save(self) -> bool:
         """Save current settings to self.path."""
@@ -257,10 +257,10 @@ class TomlFile:
             with path.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._data, file, encoder=PathTomlEncoder())
 
-            self.event_bus.fire(TomlEvents.Export(self, path))
+            self.event_bus << TomlEvents.Export(self, path)
             return True
 
-        self.event_bus.fire(TomlEvents.Fail(self, 'export'))
+        self.event_bus << TomlEvents.Fail(self, 'export')
         return False
 
     def import_from(self, path: Path | str, update: bool = False) -> bool:
@@ -286,7 +286,7 @@ class TomlFile:
                 return True
 
         # If failed:
-        self.event_bus.fire(TomlEvents.Fail(self, 'import'))
+        self.event_bus << TomlEvents.Fail(self, 'import')
         return False
 
 
