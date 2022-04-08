@@ -8,6 +8,7 @@ __all__ = (
     'scroll_to_top',
 )
 
+from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
 
@@ -61,7 +62,11 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
             if hasattr(widget, key):
                 attribute = getattr(widget, key)
                 if isinstance(attribute, SignalInstance):
-                    attribute.connect(val)
+                    if isinstance(val, Iterable):
+                        for slot in val:
+                            attribute.connect(slot)
+                    else:
+                        attribute.connect(val)
                     continue
 
             # Else call setter to update value
