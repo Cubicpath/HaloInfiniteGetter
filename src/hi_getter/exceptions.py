@@ -11,8 +11,11 @@ __all__ = (
 import sys
 from collections.abc import Callable
 from types import TracebackType
+from typing import TypeAlias
 
 from .events import *
+
+ExceptHookCallable: TypeAlias = Callable[[type[BaseException], BaseException, TracebackType], None]
 
 
 class ExceptionEvent(Event):
@@ -29,7 +32,7 @@ class ExceptionHook:
 
     def __init__(self):
         """Initialize the :py:class:`ExceptionHook` for use in a context manager."""
-        self.__old_hook: Callable[[type[BaseException], BaseException, TracebackType], None] | None = None
+        self.__old_hook: ExceptHookCallable | None = None
         self.event_bus:  EventBus | None = None
 
     def __call__(self, type_: type[BaseException], exception: BaseException, traceback: TracebackType) -> None:
