@@ -4,6 +4,8 @@
   "app.description": "A simple way to get live Halo data straight from Halo Waypoint.",
   "errors.missing_package.description": "This action requires the \"{0}\" package, which is not currently installed.\nYou can install it using the \"%s -m pip install {0}\" command.",
   "errors.missing_package.title": "Missing Package",
+  "errors.settings.import_failure.description": "Could not import settings from \"%s\". Make sure both the file and the parent folder exist, and that the file contains valid TOML.",
+  "errors.settings.import_failure.title": "Import Error",
   "gui.input_field.get": "GET",
   "gui.input_field.scan": "SCAN",
   "gui.license_viewer.next": "Next",
@@ -69,7 +71,5 @@
   "warnings.delete_cache.description": "Are you sure you want to delete the contents of the cache? This action cannot be undone.",
   "warnings.delete_cache.title": "Confirm Cache Deletion",
   "warnings.empty_token.description": "The spartan authorization token is not set, please set SPARTAN_AUTH environment variable and restart, or set the auth key value in Settings.\n\nYou will be unable to acquire new data until a new token is provided.",
-  "warnings.empty_token.title": "Empty API Token",
-  "warnings.settings.import_failure.description": "Could not import settings from \"%s\". Make sure both the file and the parent folder exist, and that the file contains valid TOML.",
-  "warnings.settings.import_failure.title": "Import Error"
+  "warnings.empty_token.title": "Empty API Token"
 }

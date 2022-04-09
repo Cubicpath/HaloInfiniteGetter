@@ -51,8 +51,8 @@ class SettingsWindow(QWidget):
 
         # Create a app().translator DeferredCallable with every tuple acting as arguments.
         EventBus['settings'].subscribe(DeferredCallable(
-            QMessageBox.warning, self, *(DeferredCallable(app().translator, *key) for key in (
-                ('warnings.settings.import_failure.title',), ('warnings.settings.import_failure.description', app().settings.path)))),
+            QMessageBox.critical, self, *(DeferredCallable(app().translator, *key) for key in (
+                ('errors.settings.import_failure.title',), ('errors.settings.import_failure.description', app().settings.path)))),
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
 
         self.theme_dropdown:          QComboBox
