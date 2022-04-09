@@ -4,6 +4,7 @@
 """Module containing utils for GUI elements."""
 
 __all__ = (
+    'delete_layout_widgets',
     'init_objects',
     'scroll_to_top',
 )
@@ -19,7 +20,7 @@ from ..lang import Translator
 
 
 def _return_arg(__arg: ..., /) -> ...:
-    """Return the singular argument unchanged."""
+    """Return the singular positional argument unchanged."""
     return __arg
 
 

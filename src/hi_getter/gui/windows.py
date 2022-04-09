@@ -24,6 +24,7 @@ from ..client import *
 from ..client import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
+from ..exceptions import ExceptionEvent
 from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..tomlfile import TomlEvents
@@ -361,14 +362,19 @@ class AppWindow(QMainWindow):
             menu.show()
 
         (
-            toolbar,
-            file, settings, tools, help_
+            menu_bar, status_bar,
+            file, settings, tools, help_,
+            logger, logger_label
         ) = (
-            QToolBar('Toolbar', self),
-            QAction(self), QAction(self), QAction(self), QAction(self)
+            QToolBar('Toolbar', self), QToolBar('Exception Bar', self),
+            QAction(self), QAction(self), QAction(self), QAction(self),
+            ExceptionLogger(self), QLabel(self)
         )
 
         init_objects({
+            status_bar: {
+                'movable': False,
+            },
             file: {
                 'text': 'gui.menus.file',
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
@@ -393,12 +399,25 @@ class AppWindow(QMainWindow):
                 'menuRole': QAction.MenuRole.AboutRole,
                 'triggered': DeferredCallable(context_menu_handler, HelpContextMenu)
             },
+            logger: {
+                'size': {'fixed': (None, 20)},
+                'clicked': logger.reporter.show
+            },
+            logger_label: {
+                'text': 'gui.status.default'
+            }
         }, translator=app().translator)
 
-        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
+        self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
+
+        EventBus['exceptions'].subscribe(lambda e: logger_label.setText(f'{e.exception}...'), ExceptionEvent)
         for action in (file, settings, tools, help_):
-            toolbar.addSeparator()
-            toolbar.addAction(action)
+            menu_bar.addSeparator()
+            menu_bar.addAction(action)
+        status_bar.addWidget(logger)
+        status_bar.addSeparator()
+        status_bar.addWidget(logger_label)
 
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""

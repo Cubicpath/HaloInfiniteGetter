@@ -5,6 +5,8 @@
 
 __all__ = (
     'AppWindow',
+    'ExceptionLogger',
+    'ExceptionReporter',
     'FileContextMenu',
     'GetterApp',
     'HelpContextMenu',

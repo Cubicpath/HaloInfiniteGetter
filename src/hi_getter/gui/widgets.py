@@ -4,17 +4,21 @@
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
 
 __all__ = (
-    'PasteLineEdit',
-    'RequestsTextBrowser',
+    'ExceptionReporter',
+    'ExceptionLogger',
     'HistoryComboBox',
     'LicenseViewer',
+    'PasteLineEdit',
     'ReadmeViewer',
+    'RequestsTextBrowser',
 )
 
 from collections import defaultdict
+from collections import namedtuple
 from collections.abc import Callable
 from collections.abc import Sequence
 from importlib.metadata import metadata
+from types import TracebackType
 from typing import Any
 from typing import Optional
 
@@ -24,12 +28,170 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..constants import *
+from ..events import EventBus
+from ..exceptions import ExceptionEvent
 from ..models import DeferredCallable
 from ..utils import current_requirement_licenses
 from .app import app
-from .utils import scroll_to_top
+from .utils import scroll_to_top, delete_layout_widgets
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
+
+
+class ExceptionReporter(QWidget):
+    """A :py:class:`QWidget` that displays logged exceptions and their traceback."""
+
+    def __init__(self, logger: 'ExceptionLogger') -> None:
+        super().__init__()
+        EventBus['exceptions'].subscribe(DeferredCallable(self.reload_exceptions), ExceptionEvent)
+
+        self.selected: int = 0
+        self.logger: ExceptionLogger = logger
+        self.setWindowTitle(app().translator('gui.exception_reporter.title'))
+        self.setWindowIcon(self.logger.icon())
+        self.resize(QSize(750, 400))
+        self._init_ui()
+
+    def _init_ui(self) -> None:
+        layout = QHBoxLayout(self)
+        self.left_panel = QFrame(self)
+        self.right_panel = QFrame(self)
+
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+
+        self.scroll_widget = QWidget(self.scroll_area)
+        self.scroll_widget.setLayout(QVBoxLayout())
+        self.scroll_widget.layout().setAlignment(Qt.AlignTop)
+
+        self.scroll_area.setWidget(self.scroll_widget)
+
+        self.left_panel.setLayout(QVBoxLayout())
+        self.right_panel.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.left_panel)
+        layout.addWidget(self.right_panel)
+        left_label = QLabel(app().translator('gui.exception_reporter.exception_list'))
+        right_label = QLabel(app().translator('gui.exception_reporter.traceback_label'))
+        clear_all_button = QPushButton(app().translator('gui.exception_reporter.clear_all'), self)
+        clear_button = QPushButton(app().translator('gui.exception_reporter.clear'), self)
+        self.trace_back_viewer = RequestsTextBrowser(self)
+        self.trace_back_viewer.setFont(QFont('consolas', 10))
+
+        self.left_panel.layout().addWidget(left_label)
+        self.left_panel.layout().addWidget(self.scroll_area)
+        self.left_panel.layout().addWidget(clear_all_button)
+
+        self.right_panel.layout().addWidget(right_label)
+        self.right_panel.layout().addWidget(self.trace_back_viewer)
+        self.right_panel.layout().addWidget(clear_button)
+
+        clear_all_button.clicked.connect(self.logger.clear_exceptions)
+        clear_all_button.clicked.connect(self.trace_back_viewer.clear)
+        clear_all_button.clicked.connect(DeferredCallable(delete_layout_widgets, self.scroll_widget.layout))
+        clear_button.clicked.connect(self.clear_current_exception)
+        clear_button.clicked.connect(self.reload_exceptions)
+
+    def clear_current_exception(self) -> None:
+        """Clears the currently selected exception and removes it from the log."""
+        self.trace_back_viewer.clear()
+        self.logger.remove_exception(self.selected)
+        if (item := self.scroll_widget.layout().takeAt(self.selected)) is not None:
+            item.widget().deleteLater()
+
+    def reload_exceptions(self) -> None:
+        """Load the exceptions from the logger."""
+        delete_layout_widgets(self.scroll_widget.layout())
+        for i, error in enumerate(self.logger.exception_log):
+            button = QPushButton(type(error.exception).__name__, self.scroll_widget)
+            button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
+            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
+                app().translator, 'gui.exception_reporter.traceback_view', type(error.exception).__name__, *error
+            )))
+
+            self.scroll_widget.layout().addWidget(button)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Resizes the left panel to better fit the window."""
+        self.left_panel.setMaximumWidth(event.size().width() / 3)
+
+
+class ExceptionLogger(QPushButton):
+    """A :py:class:`QPushButton` that logs exceptions to the event bus."""
+    # TODO: Add date to the exception log
+    LoggedException: tuple[int, Exception, TracebackType] = namedtuple('LoggedException', ['severity', 'exception', 'traceback'], defaults=[None])
+    """A named tuple that contains the severity of the exception, the exception itself, and an optional traceback."""
+
+    level_icon_list: list = [
+        QStyle.SP_MessageBoxInformation,
+        QStyle.SP_MessageBoxWarning,
+        QStyle.SP_MessageBoxCritical
+    ]
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize the ExceptionLogger."""
+        super().__init__(*args, **kwargs)
+        EventBus['exceptions'].subscribe(self.on_exception, ExceptionEvent)
+
+        self.exception_log:   list[ExceptionLogger.LoggedException] = []
+        self.reporter:        ExceptionReporter = ExceptionReporter(self)
+        self.reporter.setMinimumWidth(300)
+
+        self.severity = 0
+
+    def clear_exceptions(self) -> None:
+        """Clear the exception log and disable the button."""
+        self.exception_log.clear()
+        self.severity = 0
+        self.setText('')
+
+    def remove_exception(self, index: int) -> None:
+        """Remove an exception from the log and update the current severity."""
+        if self.exception_log:
+            self.exception_log.pop(index)
+
+        if len(self.exception_log) == 0:
+            self.setText('')
+            self.severity = 0
+        else:
+            logged = len(self.exception_log)
+            self.setText(f'({logged})' if logged < 10 else '(9+)')
+            self.severity = self.exception_log[0].severity
+
+    def on_exception(self, event: ExceptionEvent) -> None:
+        """Update the exception log and change set the max level."""
+        if isinstance(event.exception, Warning) and self.severity < 1:
+            level = 1
+        else:
+            level = 2
+        if self.severity < level:
+            self.severity = level
+
+        self.exception_log.append(ExceptionLogger.LoggedException(level, event.exception, event.traceback))
+        self.sort_exceptions()
+
+        logged = len(self.exception_log)
+        self.setText(f'({logged})' if logged < 10 else '(9+)')
+
+    def sort_exceptions(self) -> None:
+        """Sort the exception log by severity."""
+        if self.exception_log:
+            self.exception_log = list(reversed(sorted(self.exception_log, key=lambda x: x.severity)))
+            self.severity = self.exception_log[0].severity
+        else:
+            self.severity = 0
+
+    @property
+    def severity(self) -> int:
+        """Get the max level of the exception log."""
+        return self._severity
+
+    @severity.setter
+    def severity(self, value: int) -> None:
+        """Set the max level of the exception log and update the icon."""
+        self._severity = value
+        self.setIcon(self.style().standardIcon(self.level_icon_list[self.severity]))
+        self.reporter.setWindowIcon(self.icon())
 
 
 class PasteLineEdit(QLineEdit):
@@ -164,9 +326,8 @@ class LicenseViewer(QWidget):
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
         self.view_package(_PARENT_PACKAGE)
 
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
         top = QHBoxLayout()
-        self.setLayout(layout)
 
         layout.addLayout(top)
         top.addWidget(self.license_label)
