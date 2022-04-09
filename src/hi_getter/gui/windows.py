@@ -448,7 +448,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = DeferredCallable(self.resize_image)
+                window.resizeEvent = self.resize_image
                 window.show()
             else:
                 window = self.detached['media']

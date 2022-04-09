@@ -75,8 +75,10 @@ class ExceptionReporter(QWidget):
         right_label = QLabel(app().translator('gui.exception_reporter.traceback_label'))
         clear_all_button = QPushButton(app().translator('gui.exception_reporter.clear_all'), self)
         clear_button = QPushButton(app().translator('gui.exception_reporter.clear'), self)
+        report_button = QPushButton(app().translator('gui.exception_reporter.report_clear'), self)
         self.trace_back_viewer = RequestsTextBrowser(self)
         self.trace_back_viewer.setFont(QFont('consolas', 10))
+        self.trace_back_viewer.setDisabled(True)
 
         self.left_panel.layout().addWidget(left_label)
         self.left_panel.layout().addWidget(self.scroll_area)
@@ -84,20 +86,35 @@ class ExceptionReporter(QWidget):
 
         self.right_panel.layout().addWidget(right_label)
         self.right_panel.layout().addWidget(self.trace_back_viewer)
-        self.right_panel.layout().addWidget(clear_button)
+
+        buttons = QHBoxLayout()
+        self.right_panel.layout().addLayout(buttons)
+
+        buttons.addWidget(report_button)
+        buttons.addWidget(clear_button)
+
+        clear_button.setMaximumWidth(report_button.width() // 1)
 
         clear_all_button.clicked.connect(self.logger.clear_exceptions)
         clear_all_button.clicked.connect(self.trace_back_viewer.clear)
+        clear_all_button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, True))
         clear_all_button.clicked.connect(DeferredCallable(delete_layout_widgets, self.scroll_widget.layout))
+        report_button.clicked.connect(self.report_current_exception)
+        report_button.clicked.connect(self.clear_current_exception)
         clear_button.clicked.connect(self.clear_current_exception)
-        clear_button.clicked.connect(self.reload_exceptions)
+
+    def report_current_exception(self) -> None:
+        """Report the current exception to the exception logger."""
+        ...
 
     def clear_current_exception(self) -> None:
         """Clears the currently selected exception and removes it from the log."""
         self.trace_back_viewer.clear()
-        self.logger.remove_exception(self.selected)
+        self.trace_back_viewer.setDisabled(True)
         if (item := self.scroll_widget.layout().takeAt(self.selected)) is not None:
+            self.logger.remove_exception(self.selected)
             item.widget().deleteLater()
+        self.reload_exceptions()
 
     def reload_exceptions(self) -> None:
         """Load the exceptions from the logger."""
@@ -105,6 +122,7 @@ class ExceptionReporter(QWidget):
         for i, error in enumerate(self.logger.exception_log):
             button = QPushButton(type(error.exception).__name__, self.scroll_widget)
             button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
+            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
                 app().translator, 'gui.exception_reporter.traceback_view', type(error.exception).__name__, *error
             )))
@@ -151,8 +169,7 @@ class ExceptionLogger(QPushButton):
             self.exception_log.pop(index)
 
         if len(self.exception_log) == 0:
-            self.setText('')
-            self.severity = 0
+            self.clear_exceptions()
         else:
             logged = len(self.exception_log)
             self.setText(f'({logged})' if logged < 10 else '(9+)')
