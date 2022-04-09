@@ -18,7 +18,7 @@ disable = [
     # These do not work with custom bitshifts that return None
     "pointless-statement",      # W0104
     "expression-not-assigned",  # W0106
-    # These don't work the general design choices of the project
+    # These don't work with the general design choices of the project
     "unnecessary-lambda",       # W0108
     "protected-access",         # W0212
     "wildcard-import",          # W0401

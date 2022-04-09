@@ -37,7 +37,7 @@ class Event:
         __bus.fire(event=self)
 
     def __rlshift__(self, __bus: 'EventBus', /) -> None:
-        """Right shift is the EventBus.__lshift__ dunder is not working."""
+        """Right shift if the EventBus.__lshift__ dunder is not working."""
         self >> __bus
 
     @property
