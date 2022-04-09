@@ -275,7 +275,7 @@ def format_value(value: str, *args, _language: Language = None) -> str:
     """
     list_args: list = list(args)
 
-    pos_param_ref: re.Pattern = re.compile(r'{([+-]?[1-9]\d*|0)}')
+    pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
     key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
     replaced: set[str] = set()
 

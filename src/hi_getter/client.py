@@ -203,7 +203,7 @@ class Client:
         self.web_session.cookies.update(response.cookies)
 
         wpauth: str = decode_escapes(self.web_session.cookies.get('wpauth') or '')
-        token: str = decode_escapes(self.web_session.cookies.get('343-spartan-token') or '')
+        token:  str = decode_escapes(self.web_session.cookies.get('343-spartan-token') or '')
 
         if wpauth and self.wpauth != wpauth:
             self.wpauth = wpauth
