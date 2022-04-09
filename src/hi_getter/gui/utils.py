@@ -23,6 +23,12 @@ def _return_arg(__arg: ..., /) -> ...:
     return __arg
 
 
+def delete_layout_widgets(layout: QLayout) -> None:
+    """Delete all widgets in a layout."""
+    while (item := layout.takeAt(0)) is not None:
+        item.widget().deleteLater()
+
+
 # noinspection PyUnresolvedReferences
 def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Translator | None = None) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
