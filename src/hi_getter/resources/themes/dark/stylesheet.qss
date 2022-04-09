@@ -738,6 +738,13 @@ QToolBar QToolButton:pressed
     padding-right: 0.3em;
 }
 
+QToolBar ExceptionLogger
+{
+    background-color: #31363b;
+    border: 0.04em transparent black;
+    padding: 0.0em;
+}
+
 QPushButton
 {
     color: #BFC1C3;
