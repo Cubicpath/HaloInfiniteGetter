@@ -4,7 +4,6 @@
 """Entrypoint that is called when using Python's -m switch."""
 import sys
 
-from .run import run
+from .run import main
 
-if __name__ == '__main__':
-    exit_code = run(*sys.argv)
+exit_code = main(*sys.argv)
