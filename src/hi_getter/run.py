@@ -1,10 +1,10 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Initialize values and runs the application."""
+"""Initialize values and runs the application. :py:func:`main` acts as an entry-point."""
 
 __all__ = (
-    'run',
+    'main',
 )
 
 import os
@@ -52,7 +52,7 @@ def _create_paths() -> None:
             toml.dump(default_settings, file, encoder=PathTomlEncoder())
 
 
-def run(*args, **kwargs) -> int:
+def main(*args, **kwargs) -> int:
     """Run the program. GUI script entrypoint.
 
     Args are passed to a QApplication instance.
@@ -80,4 +80,4 @@ def run(*args, **kwargs) -> int:
 
 
 if __name__ == '__main__':
-    run(sys.argv)
+    main(sys.argv)
