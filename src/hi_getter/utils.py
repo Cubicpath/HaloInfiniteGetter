@@ -15,9 +15,6 @@ __all__ = (
     'unique_values',
 )
 
-import json
-import os
-import sys
 from collections.abc import Iterable
 from collections.abc import Mapping
 from pathlib import Path
@@ -31,6 +28,7 @@ def current_requirement_versions(package: str, include_extras: bool = False) -> 
     :return: dict mapping package names to their version string.
     """
     from importlib.metadata import version
+
     return {name: version(name) for name in current_requirement_names(package, include_extras)}
 
 
@@ -70,6 +68,9 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
 
 def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
     """Dump data to path as a file."""
+    import json
+    import os
+
     default_encoding = 'utf8'
     path = Path(path)
     if not path.parent.exists():
@@ -114,42 +115,53 @@ def has_package(package: str) -> bool:
     return False
 
 
-def hide_windows_file(path: str | Path, *, unhide: bool = False) -> None:
+def hide_windows_file(file_path: str | Path, *, unhide: bool = False) -> None:
     """Hide an existing Windows file. If not running windows, do nothing.
 
     Use unhide kwarg to reverse the operation
 
-    :param path: Absolute or relative path to hide.
+    :param file_path: Absolute or relative path to hide.
     :param unhide: Unhide a hidden file in Windows.
     """
+    import sys
+
     # Resolve string path to use with kernel32
-    path = str(Path(path).resolve())
+    file_path = str(Path(file_path).resolve())
     if sys.platform == 'win32':
         import win32con
         from ctypes import windll
 
         # bitarray for boolean flags representing file attributes
-        current_attributes: int = windll.kernel32.GetFileAttributesW(path)
+        current_attributes: int = windll.kernel32.GetFileAttributesW(file_path)
         if not unhide:
             # Add hide attribute to bitarray using bitwise OR
-            # 0b000000 -> 0b000010 ---- 0b000110 -> 0b000110
+            # 0b00000000 -> 0b00000010 ---- 0b00000110 -> 0b00000110
             merged_attributes: int = current_attributes | win32con.FILE_ATTRIBUTE_HIDDEN
-            windll.kernel32.SetFileAttributesW(path, merged_attributes)
+            return windll.kernel32.SetFileAttributesW(file_path, merged_attributes)
         else:
             # Remove hide attribute from bitarray if it exists
             # Check with bitwise AND; Remove with bitwise XOR
-            # 0b000100 -> 0b000100 ---- 0b000110 -> 0b000100
+            # 0b00000100 -> 0b00000100 ---- 0b00000110 -> 0b00000100
             # Only Truthy returns (which contain the hidden attribute) will subtract from the bitarray
             is_hidden = bool(current_attributes & win32con.FILE_ATTRIBUTE_HIDDEN)
             if is_hidden:
-                windll.kernel32.SetFileAttributesW(path, current_attributes ^ win32con.FILE_ATTRIBUTE_HIDDEN)
+                subtracted_attributes: int = current_attributes ^ win32con.FILE_ATTRIBUTE_HIDDEN
+                return windll.kernel32.SetFileAttributesW(file_path, subtracted_attributes)
 
 
-def patch_windows_taskbar_icon(app_id: str = '') -> None:
-    """Override Python's default Windows taskbar icon with the custom one set by the app window."""
+def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
+    """Override Python's default Windows taskbar icon with the custom one set by the app window.
+
+    See https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid for more information.
+
+    :param app_id: Pointer to the AppUserModelID to assign to the current process.
+    :returns: None if not on Windows, S_OK if this function succeeds. Otherwise, it returns an HRESULT error code.
+    """
+    import sys
+
     if sys.platform == 'win32':
         from ctypes import windll
-        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        return windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 
 
 def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
