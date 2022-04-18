@@ -19,7 +19,7 @@ from typing import Final
 
 # Mappings
 
-BYTE_UNITS = {'Bytes': 1, 'KiB': 1024, 'MiB': 1048576, 'GiB': 1073741824, 'TiB': 1099511627776}
+BYTE_UNITS = {'Bytes': 1024**0, 'KiB': 1024**1, 'MiB': 1024**2, 'GiB': 1024**3, 'TiB': 1024**4}
 
 # Strings
 

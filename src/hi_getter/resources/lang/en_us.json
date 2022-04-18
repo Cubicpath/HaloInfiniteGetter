@@ -73,7 +73,7 @@
   "gui.settings.text.line_wrap.widget": "Widget",
   "gui.settings.title": "Settings",
   "information.about.description": "{app.description}\n\nVersion Info: major:%i, minor:%i, micro:%i, releaselevel:%s, serial:%i\n\nRunning On:\n\t%s\n\t%s %s\n\n%s\n\n{app.copyright}",
-  "information.about.title": "About",
+  "information.about.title": "About {app.name}",
   "information.first_launch.description": "Welcome! Make sure to read the README to understand how to use this application. You can re-read it at anytime by navigating to \"Help\" in the toolbar and pressing \"README\".\n\nIf you prefer Dark Mode, you can change the current theme to \"Breeze Dark\" in Settings.",
   "information.first_launch.title": "First Launch Dialog",
   "warnings.delete_cache.description": "Are you sure you want to delete the contents of the cache? This action cannot be undone.",
