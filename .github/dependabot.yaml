@@ -1,12 +1,10 @@
 version: 2
 updates:
-  # Enable version updates for pip
+  # Enable version updates for pip dependencies every day (weekdays)
+  # Check pyproject.toml, requirements.txt, requirements_dev.txt
   - package-ecosystem: "pip"
-    # Check pyproject.toml, requirements.txt, requirements_dev.txt,
     directory: "/"
-    # Check PyPI for updates every day (weekdays)
     schedule:
       interval: "daily"
-    # Label pull request
     labels:
       - "pip requirements"
