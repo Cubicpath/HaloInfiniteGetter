@@ -55,7 +55,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
         translator = _return_arg
 
     # Initialize widget attributes
-    for widget, data in object_data.items():
+    for obj, data in object_data.items():
         special_keys = ('items', 'size', 'text',)
         items, size, text = (data.get(key) for key in special_keys)
 
@@ -66,8 +66,8 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
 
             # Check if key is a signal on widget
             # If so, connect it to the given function
-            if hasattr(widget, key):
-                attribute = getattr(widget, key)
+            if hasattr(obj, key):
+                attribute = getattr(obj, key)
                 if isinstance(attribute, SignalInstance):
                     if isinstance(val, Iterable):
                         for slot in val:
@@ -79,11 +79,11 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
             # Else call setter to update value
             # Capitalize first character of key
             setter_name: str = f'set{key[0].upper()}{key[1:]}'
-            getattr(widget, setter_name)(val)
+            getattr(obj, setter_name)(val)
 
         # Translate dropdown items
         if items is not None:
-            widget.addItems(translator(key) for key in items)
+            obj.addItems(translator(key) for key in items)
 
         # Set size
         if size is not None:
@@ -91,18 +91,18 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
                 if size.get(s_type) is not None:
                     if isinstance(size.get(s_type), QSize):
                         # For PySide6.QtCore.QSize objects
-                        getattr(widget, f'set{s_type.title()}Size')(size[s_type])
+                        getattr(obj, f'set{s_type.title()}Size')(size[s_type])
                     elif isinstance(size.get(s_type), Sequence):
                         # For lists, tuples, etc. Set width and height separately.
                         # None can be used rather than int to skip a dimension.
                         if size.get(s_type)[0]:
-                            getattr(widget, f'set{s_type.title()}Width')(size[s_type][0])
+                            getattr(obj, f'set{s_type.title()}Width')(size[s_type][0])
                         if size.get(s_type)[1]:
-                            getattr(widget, f'set{s_type.title()}Height')(size[s_type][1])
+                            getattr(obj, f'set{s_type.title()}Height')(size[s_type][1])
 
         # Translate widget texts
         if text is not None:
-            widget.setText(translator(text))
+            obj.setText(text)
 
 
 def scroll_to_top(widget: QTextEdit) -> None:

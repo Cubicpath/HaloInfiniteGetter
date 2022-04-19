@@ -60,6 +60,7 @@ class GetterApp(QApplication):
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
+        self._registered_translation_objects: set[QObject] = set()
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
@@ -74,10 +75,29 @@ class GetterApp(QApplication):
             raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
         return o
 
+    # pylint: disable=cell-var-from-loop
+    def init_translations(self, object_data: dict[QObject, dict[str, str]]) -> None:
+        """Initialize the translation of all objects.
+
+        List all QObjects with their instance method names mapped to their corresponding translation key.
+        This is used to translate all QObjects in the GUI.
+        """
+        for obj, data in object_data.items():
+
+            def _translate() -> None:
+                for method_name, key in data.items():
+                    getattr(obj, method_name)(self.translator(key))
+
+            obj._translate_self = _translate
+            self._registered_translation_objects.add(obj)
+            obj._translate_self()
+
+    # noinspection PyUnresolvedReferences, PyProtectedMember
     def update_language(self) -> None:
         """Set the application language to the one currently selected in settings."""
         self.translator = Translator(self.settings['language'])
-        # TODO: Update all text in application to new language data
+        for obj in self._registered_translation_objects:
+            obj._translate_self()
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""

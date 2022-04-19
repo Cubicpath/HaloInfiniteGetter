@@ -183,12 +183,11 @@ class SettingsWindow(QWidget):
                 'clicked': DeferredCallable(app().clipboard().setText, lambda: self.client.wpauth)
             },
             self.key_set_button: {
-                'text': 'gui.settings.auth.set',
                 'size': {'minimum': (40, None)},
                 'clicked': set_key
             },
             self.token_clear_button: {
-                'text': 'gui.settings.auth.clear_token', 'disabled': not self.client.token,
+                'disabled': not self.client.token,
                 'clicked': clear_token
             },
 
@@ -245,6 +244,11 @@ class SettingsWindow(QWidget):
                 )
             }
         }, translator=app().translator)
+
+        app().init_translations({
+            self.key_set_button: {'setText': 'gui.settings.auth.set'},
+            self.token_clear_button: {'setText': 'gui.settings.auth.clear_token'}
+        })
 
         # Define layouts
         layout = QGridLayout(self)  # Main layout
@@ -448,7 +452,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = self.resize_image
+                window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
                 window = self.detached['media']
