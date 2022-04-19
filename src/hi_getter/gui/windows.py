@@ -212,7 +212,7 @@ class SettingsWindow(QWidget):
                 'activated': DeferredCallable(
                     app().settings.__setitem__,
                     'gui/media_output/aspect_ratio_mode',
-                    lambda: self.aspect_ratio_dropdown.currentIndex
+                    self.aspect_ratio_dropdown.currentIndex
                 ),
                 'items': (
                     'gui.settings.media.aspect_ratio.ignore',
@@ -224,7 +224,7 @@ class SettingsWindow(QWidget):
                 'activated': DeferredCallable(
                     app().settings.__setitem__,
                     'gui/media_output/transformation_mode',
-                    lambda: self.transformation_dropdown.currentIndex
+                    self.transformation_dropdown.currentIndex
                 ),
                 'items': (
                     'gui.settings.media.image_transform.fast',
@@ -235,7 +235,7 @@ class SettingsWindow(QWidget):
                 'activated': DeferredCallable(
                     app().settings.__setitem__,
                     'gui/text_output/line_wrap_mode',
-                    lambda: self.line_wrap_dropdown.currentIndex
+                    self.line_wrap_dropdown.currentIndex
                 ),
                 'items': (
                     'gui.settings.text.line_wrap.no_wrap',
@@ -448,7 +448,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = self.resize_image
+                window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
                 window = self.detached['media']
