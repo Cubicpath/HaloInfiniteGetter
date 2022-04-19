@@ -20,8 +20,8 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from .._version import __version__
-from ..client import *
-from ..client import HTTP_CODE_MAP
+from ..network import *
+from ..network import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
 from ..exceptions import ExceptionEvent
@@ -448,7 +448,7 @@ class AppWindow(QMainWindow):
                     app().translator('gui.outputs.image.detached')
                 )
                 self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
-                window.resizeEvent = DeferredCallable(self.resize_image)
+                window.resizeEvent = self.resize_image
                 window.show()
             else:
                 window = self.detached['media']

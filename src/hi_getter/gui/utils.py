@@ -62,7 +62,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
         # Find setter method for all non specially-handled keys
         for key, val in data.items():
             if key in special_keys:
-                continue
+                continue  # Skip special keys
 
             # Check if key is a signal on widget
             # If so, connect it to the given function
@@ -78,8 +78,8 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
 
             # Else call setter to update value
             # Capitalize first character of key
-            setter = f'set{key[0].upper()}{key[1:]}'
-            getattr(widget, setter)(val)
+            setter_name: str = f'set{key[0].upper()}{key[1:]}'
+            getattr(widget, setter_name)(val)
 
         # Translate dropdown items
         if items is not None:

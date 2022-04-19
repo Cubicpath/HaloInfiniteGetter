@@ -1,54 +1,33 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Loads data and defines the HTTP Client."""
+"""Defines the HaloInfiniteGetter HTTP Client."""
 
 __all__ = (
     'Client',
-    'decode_escapes',
-    'HTTP_CODE_MAP',
 )
 
 import json
 import os
 import random
 import time
-from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 from typing import Final
-from urllib.parse import unquote as decode_escapes
 
-from dotenv import load_dotenv
 from requests import Response
 from requests import Session
 from requests.models import CaseInsensitiveDict
 from requests.utils import guess_json_utf
 
-from .constants import *
-from .utils import dump_data
-from .utils import hide_windows_file
-from .utils import unique_values
-
-load_dotenv(verbose=True)
+from .utils import decode_escapes
+from ..constants import *
+from ..utils import dump_data
+from ..utils import hide_windows_file
+from ..utils import unique_values
 
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
-
-# TODO: Move this to another module
-# pylint: disable=not-an-iterable
-HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
-for _description in (
-        (400, 'Your search path has malformed syntax or bad characters.'),
-        (401, 'No permission -- Your API token is most likely invalid.'),
-        (403, 'Request forbidden -- You cannot get this resource with or without an API token.'),
-        (404, 'No resource found at the given location.'),
-        (405, 'Invalid method -- GET requests are not accepted for this resource.'),
-        (406, 'Client does not support the given resource format.'),
-):
-    code = _description[0]
-    HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], _description[1])
-del _description
 
 
 class Client:

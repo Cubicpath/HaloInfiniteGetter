@@ -1,15 +1,16 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Package initialization module. Import the Client and version info from here."""
+"""Utils for the HaloInfiniteGetter client."""
 
 __all__ = (
     'Client',
+    'decode_escapes',
+    'HTTP_CODE_MAP',
+    'NetworkWrapper',
 )
 
-from ._version import __version__
-from ._version import __version_info__
-from .network import Client
-
-__author__ = 'Cubicpath@Github <cubicpath@pm.me>'
-"""Author's information."""
+from .client import Client
+from .manager import NetworkWrapper
+from .utils import decode_escapes
+from .utils import HTTP_CODE_MAP

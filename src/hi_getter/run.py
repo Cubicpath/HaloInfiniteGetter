@@ -13,10 +13,11 @@ from pathlib import Path
 from typing import Final
 
 import toml
+from dotenv import load_dotenv
 from PySide6.QtCore import *
 
 from ._version import __version__
-from .client import Client
+from .network import Client
 from .constants import *
 from .exceptions import ExceptionHook
 from .gui import *
@@ -58,6 +59,9 @@ def main(*args, **kwargs) -> int:
     Args are passed to a QApplication instance.
     Kwargs are handled here.
     """
+    # Load environment variables from .env file
+    load_dotenv(verbose=True)
+
     # Check if launched marker exists
     first_launch = not LAUNCHED_FILE.is_file()
 
