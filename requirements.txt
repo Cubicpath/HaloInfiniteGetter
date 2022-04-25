@@ -1,5 +1,5 @@
-PySide6_Essentials==6.3.0
 pyshortcuts==1.8.2
+PySide6_Essentials==6.3.0
 python-dotenv==0.20.0
 requests==2.27.1
 toml==0.10.2
