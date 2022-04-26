@@ -20,18 +20,6 @@ from collections.abc import Mapping
 from pathlib import Path
 
 
-def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
-    """Return the current versions for the requirements of the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping package names to their version string.
-    """
-    from importlib.metadata import version
-
-    return {name: version(name) for name in current_requirement_names(package, include_extras)}
-
-
 def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
     """Return the current licenses for the requirements of the given package.
 
@@ -64,6 +52,43 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
         result[name] = (metadata(name).get('License', 'UNKNOWN'), license_text)
 
     return result
+
+
+def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
+    """Return the current requirement names for the given package.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: list of package names.
+    """
+    from importlib.metadata import requires
+
+    req_names = []
+    for requirement in requires(package):
+        if not include_extras and '; extra' in requirement:
+            continue
+
+        split_char = 0
+        for char in requirement:
+            if not char.isalnum() and char not in ('-', '_'):
+                break
+            split_char += 1
+
+        req_names.append(requirement[:split_char])
+
+    return req_names
+
+
+def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
+    """Return the current versions for the requirements of the given package.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: dict mapping package names to their version string.
+    """
+    from importlib.metadata import version
+
+    return {name: version(name) for name in current_requirement_names(package, include_extras)}
 
 
 def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
@@ -166,31 +191,6 @@ def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
     if sys.platform == 'win32':
         from ctypes import windll
         return windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-
-
-def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
-    """Return the current requirement names for the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: list of package names.
-    """
-    from importlib.metadata import requires
-
-    req_names = []
-    for requirement in requires(package):
-        if not include_extras and '; extra' in requirement:
-            continue
-
-        split_char = 0
-        for char in requirement:
-            if not char.isalnum() and char not in ('-', '_'):
-                break
-            split_char += 1
-
-        req_names.append(requirement[:split_char])
-
-    return req_names
 
 
 def unique_values(data: Iterable) -> set:
