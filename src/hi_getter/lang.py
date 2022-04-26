@@ -267,11 +267,13 @@ def format_value(value: str, *args, _language: Language = None) -> str:
     You can use {0} notation to refer to a specific positional argument.
     If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
 
-    ex::
+    JSON strings ex::
 
-        "{0} is the same as {0} using only one argument."
-        "{0} %s will not work and require 2 arguments"
-        "{%s {0} is the same thing, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\"}"
+        {
+            "a": "{0} is the same as {0} using only one argument.",
+            "b": "{0} %s will not work and require 2 arguments",
+            "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
+        }
     """
     list_args: list = list(args)
 

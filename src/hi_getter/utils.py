@@ -93,7 +93,10 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
 
 
 def get_parent_doc(__type: type, /) -> str | None:
-    """Get the nearest parent documentation using the given :py:class:`type`'s mro."""
+    """Get the nearest parent documentation using the given :py:class:`type`'s mro.
+
+    :return The closest docstring for an object's class, None if not found.
+    """
     doc = None
     for parent in __type.__mro__:
         doc = parent.__doc__
@@ -103,9 +106,10 @@ def get_parent_doc(__type: type, /) -> str | None:
 
 
 def has_package(package: str) -> bool:
-    """Returns whether the given package name is installed in the current environment.
+    """Check if the given package is available.
 
     :param package: Package name to search; hyphen-insensitive
+    :return: Whether the given package name is installed to the current environment.
     """
     from pkg_resources import WorkingSet
 
@@ -155,7 +159,7 @@ def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
     See https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid for more information.
 
     :param app_id: Pointer to the AppUserModelID to assign to the current process.
-    :returns: None if not on Windows, S_OK if this function succeeds. Otherwise, it returns an HRESULT error code.
+    :return: None if not on Windows, S_OK if this function succeeds. Otherwise, it returns an HRESULT error code.
     """
     import sys
 
@@ -190,7 +194,10 @@ def current_requirement_names(package: str, include_extras: bool = False) -> lis
 
 
 def unique_values(data: Iterable) -> set:
-    """Recursively get all values in any Iterables. For Mappings, ignore keys and only remember values."""
+    """Recursively get all values in any Iterables. For Mappings, ignore keys and only remember values.
+
+    :return Set containing all unique non-iterable values.
+    """
     new: set = set()
     if isinstance(data, Mapping):
         # Loop through Mapping values

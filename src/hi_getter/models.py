@@ -124,14 +124,14 @@ class DistributedCallable(_AbstractCallable):
     def run(self, *args, **kwargs) -> tuple[Any]:
         """Run all stored :py:class:`Callable`'s with the given extra arguments.
 
-        :returns: The results of each callable, packaged in a tuple.
+        :return: The results of each callable, packaged in a tuple.
         """
         return tuple(func(*self.args, **self.kwargs) for func in self.callables)
 
     def generate(self, *args, **kwargs) -> Generator[Any]:
         """Run all stored :py:class:`Callable`'s with the given extra arguments. Yielding every result.
 
-        :returns: A generator yielding the results of each callable.
+        :return: A generator yielding the results of each callable.
         """
         for func in self.callables:
             yield func(*args, **kwargs)
