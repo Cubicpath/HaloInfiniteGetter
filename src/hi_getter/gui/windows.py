@@ -105,7 +105,7 @@ class SettingsWindow(QWidget):
             toggle_key_visibility()
 
         def clear_token() -> None:
-            self.client.token = None
+            del self.client.token
             self.token_clear_button.setDisabled(True)
 
         # Define base widgets

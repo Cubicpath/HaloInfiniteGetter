@@ -148,7 +148,7 @@ class Client:
         return 'None'
 
     def os_path(self, path, parent: Path = HI_CACHE_PATH) -> Path:
-        """Translate a given GET path to the equivalent cache location is."""
+        """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
 
     def recursive_search(self, search_path: str) -> None:
@@ -206,12 +206,7 @@ class Client:
     @token.setter
     def token(self, value: str | None) -> None:
         if value is None:
-            self._token = None
-            self.delete_cookie('343-spartan-token')
-            if 'x-343-authorization-spartan' in self.session.headers:
-                self.session.headers.pop('x-343-authorization-spartan')
-            if TOKEN_PATH.is_file():
-                TOKEN_PATH.unlink()
+            del self.token
         else:
             value = decode_escapes(value)
             key_start_index = value.find('v4=')
@@ -225,6 +220,15 @@ class Client:
             TOKEN_PATH.write_text(self._token, encoding='utf8')
             hide_windows_file(TOKEN_PATH)
 
+    @token.deleter
+    def token(self) -> None:
+        self._token = None
+        self.delete_cookie('343-spartan-token')
+        if 'x-343-authorization-spartan' in self.session.headers:
+            self.session.headers.pop('x-343-authorization-spartan')
+        if TOKEN_PATH.is_file():
+            TOKEN_PATH.unlink()
+
     @property
     def wpauth(self) -> str | None:
         """Halo Waypoint auth key to create 343 spartan tokens."""
@@ -233,10 +237,7 @@ class Client:
     @wpauth.setter
     def wpauth(self, value: str | None) -> None:
         if value is None:
-            self._wpauth = None
-            self.delete_cookie('wpauth')
-            if WPAUTH_PATH.is_file():
-                WPAUTH_PATH.unlink()
+            del self.wpauth
         else:
             value = decode_escapes(value)
             self._wpauth = value.split(':')[-1].strip()
@@ -244,6 +245,13 @@ class Client:
             hide_windows_file(WPAUTH_PATH, unhide=True)
             WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
             hide_windows_file(WPAUTH_PATH)
+
+    @wpauth.deleter
+    def wpauth(self) -> None:
+        self._wpauth = None
+        self.delete_cookie('wpauth')
+        if WPAUTH_PATH.is_file():
+            WPAUTH_PATH.unlink()
 
     @property
     def api_root(self) -> str:
