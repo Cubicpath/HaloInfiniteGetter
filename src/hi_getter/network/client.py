@@ -204,21 +204,18 @@ class Client:
         return self._token
 
     @token.setter
-    def token(self, value: str | None) -> None:
-        if value is None:
-            del self.token
-        else:
-            value = decode_escapes(value)
-            key_start_index = value.find('v4=')
-            if key_start_index == -1:
-                raise ValueError('token value is missing version identifier ("v4=") to signify start.')
+    def token(self, value: str) -> None:
+        value = decode_escapes(value)
+        key_start_index = value.find('v4=')
+        if key_start_index == -1:
+            raise ValueError('token value is missing version identifier ("v4=") to signify start.')
 
-            self._token = value[key_start_index:].rstrip()
-            self.set_cookie('343-spartan-token', self._token)
-            self.session.headers['x-343-authorization-spartan'] = self._token
-            hide_windows_file(TOKEN_PATH, unhide=True)
-            TOKEN_PATH.write_text(self._token, encoding='utf8')
-            hide_windows_file(TOKEN_PATH)
+        self._token = value[key_start_index:].rstrip()
+        self.set_cookie('343-spartan-token', self._token)
+        self.session.headers['x-343-authorization-spartan'] = self._token
+        hide_windows_file(TOKEN_PATH, unhide=True)
+        TOKEN_PATH.write_text(self._token, encoding='utf8')
+        hide_windows_file(TOKEN_PATH)
 
     @token.deleter
     def token(self) -> None:
@@ -235,16 +232,13 @@ class Client:
         return self._wpauth
 
     @wpauth.setter
-    def wpauth(self, value: str | None) -> None:
-        if value is None:
-            del self.wpauth
-        else:
-            value = decode_escapes(value)
-            self._wpauth = value.split(':')[-1].strip()
-            self.set_cookie('wpauth', self._wpauth)
-            hide_windows_file(WPAUTH_PATH, unhide=True)
-            WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
-            hide_windows_file(WPAUTH_PATH)
+    def wpauth(self, value: str) -> None:
+        value = decode_escapes(value)
+        self._wpauth = value.split(':')[-1].strip()
+        self.set_cookie('wpauth', self._wpauth)
+        hide_windows_file(WPAUTH_PATH, unhide=True)
+        WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
+        hide_windows_file(WPAUTH_PATH)
 
     @wpauth.deleter
     def wpauth(self) -> None:

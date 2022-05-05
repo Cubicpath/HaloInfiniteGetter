@@ -101,7 +101,11 @@ class SettingsWindow(QWidget):
 
         def set_key() -> None:
             """Set the client's auth_key to the current text in the key field."""
-            self.client.wpauth = self.key_field.text().strip() or None
+            text = self.key_field.text().strip()
+            if text:
+                self.client.wpauth = text
+            else:
+                del self.client.wpauth
             toggle_key_visibility()
 
         def clear_token() -> None:
