@@ -17,7 +17,10 @@ from typing import Any
 
 
 class _AbstractCallable(ABC):
-    """Abstract callable object."""
+    """Abstract callable object.
+
+    Child objects are callable as a shortcut to their `run` method.
+    """
 
     def __call__(self, *args, **kwargs) -> Any:
         """Syntax sugar for self.run()"""

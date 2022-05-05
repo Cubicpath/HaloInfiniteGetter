@@ -79,7 +79,7 @@ class GetterApp(QApplication):
     def init_translations(self, object_data: dict[QObject, dict[str, str]]) -> None:
         """Initialize the translation of all objects.
 
-        List all QObjects with their instance method names mapped to their corresponding translation key.
+        QObjects with their method names are mapped to their corresponding translation key.
         This is used to translate all QObjects in the GUI.
         """
         for obj, data in object_data.items():
