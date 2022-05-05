@@ -56,12 +56,13 @@ class GetterApp(QApplication):
     def __init__(self, argv: Sequence[str], settings: TomlFile, first_launch: bool = False) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
-        self.first_launch:    bool = first_launch
+        self._first_launch:    bool = first_launch
+        self._registered_translation_objects: set[QObject] = set()
+
         self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self._registered_translation_objects: set[QObject] = set()
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
@@ -75,6 +76,14 @@ class GetterApp(QApplication):
         if o is None:
             raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
         return o
+
+    @property
+    def first_launch(self) -> bool:
+        """Return whether this is the first launch of the application.
+
+        This is determined by checking if the .LAUNCHED file exists in the user's config folder.
+        """
+        return self._first_launch
 
     def init_translations(self, object_data: dict[QObject, dict[str, str]]) -> None:
         """Initialize the translation of all objects.
