@@ -13,6 +13,7 @@ __all__ = (
     'RequestsTextBrowser',
 )
 
+import traceback
 from collections import defaultdict
 from collections import namedtuple
 from collections.abc import Callable
@@ -124,7 +125,8 @@ class ExceptionReporter(QWidget):
             button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
-                app().translator, 'gui.exception_reporter.traceback_view', type(error.exception).__name__, *error
+                app().translator, 'gui.exception_reporter.traceback_view', type(error.exception).__name__,
+                error[1], traceback.format_tb(error[2])[0]
             )))
 
             self.scroll_widget.layout().addWidget(button)

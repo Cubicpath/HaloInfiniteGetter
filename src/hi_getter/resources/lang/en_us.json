@@ -12,7 +12,7 @@
   "gui.exception_reporter.report_clear": "Report and Clear",
   "gui.exception_reporter.title": "Exception Reporter",
   "gui.exception_reporter.traceback_label": "Traceback viewer for selected exception:",
-  "gui.exception_reporter.traceback_view": "Traceback for %s\n-----------------------------------\nSeverity: %i\nSummary: %s\n\n%s",
+  "gui.exception_reporter.traceback_view": "Traceback for %s\n-----------------------------------\n%s\n\n%s",
   "gui.input_field.get": "GET",
   "gui.input_field.scan": "SCAN",
   "gui.license_viewer.next": "Next",
