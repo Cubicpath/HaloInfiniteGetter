@@ -430,6 +430,14 @@ class AppWindow(QMainWindow):
             }
         }, translator=app().translator)
 
+        app().init_translations({
+            file: {'setText': 'gui.menus.file'},
+            settings: {'setText': 'gui.menus.settings'},
+            tools: {'setText': 'gui.menus.tools'},
+            help_: {'setText': 'gui.menus.help'},
+            logger_label: {'setText': 'gui.status.default'}
+        })
+
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
 
@@ -626,6 +634,22 @@ class AppWindow(QMainWindow):
                 'openLinks': False, 'anchorClicked': self.navigate_to
             }
         }, translator=app().translator)
+
+        app().init_translations({
+            # Labels
+            self.image_size_label: {'setText': 'gui.settings.gui.theme'},
+            self.text_size_label: {'setText': 'gui.settings.media.aspect_ratio'},
+
+            # Buttons
+            self.image_detach_button: {'setText': 'gui.outputs.detach'},
+            self.text_detach_button: {'setText': 'gui.outputs.detach'},
+            self.clear_picture: {'setText': 'gui.outputs.clear'},
+            self.copy_picture: {'setText': 'gui.outputs.image.copy'},
+            self.clear_text: {'setText': 'gui.outputs.clear'},
+            self.copy_text: {'setText': 'gui.outputs.text.copy'},
+            get_button: {'setText': 'gui.input_field.get'},
+            scan_button: {'setText': 'gui.input_field.scan'}
+        })
 
         self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
         self.text_output.connect_key_to(Qt.Key_Right, next_in_history)
