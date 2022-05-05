@@ -250,6 +250,20 @@ class SettingsWindow(QWidget):
         }, translator=app().translator)
 
         app().init_translations({
+            # Labels
+            theme_label: {'setText': 'gui.settings.gui.theme'},
+            aspect_ratio_label: {'setText': 'gui.settings.media.aspect_ratio'},
+            transformation_label: {'setText': 'gui.settings.media.image_transform'},
+            line_wrap_label: {'setText': 'gui.settings.text.line_wrap'},
+
+            # Buttons
+            save_button: {'setText': 'gui.settings.save'},
+            reload_button: {'setText': 'gui.settings.reload'},
+            import_button: {'setText': 'gui.settings.import'},
+            export_button: {'setText': 'gui.settings.export'},
+            open_editor_button: {'setText': 'gui.settings.open_editor'},
+            key_show_button: {'setText': 'gui.settings.auth.edit'},
+            key_copy_button: {'setText': 'gui.settings.auth.copy'},
             self.key_set_button: {'setText': 'gui.settings.auth.set'},
             self.token_clear_button: {'setText': 'gui.settings.auth.clear_token'}
         })

@@ -76,7 +76,6 @@ class GetterApp(QApplication):
             raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
         return o
 
-    # pylint: disable=cell-var-from-loop
     def init_translations(self, object_data: dict[QObject, dict[str, str]]) -> None:
         """Initialize the translation of all objects.
 
