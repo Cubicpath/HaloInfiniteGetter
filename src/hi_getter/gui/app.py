@@ -9,6 +9,7 @@ __all__ = (
     'Theme',
 )
 
+import types
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -82,19 +83,32 @@ class GetterApp(QApplication):
         QObjects with their method names are mapped to their corresponding translation key.
         This is used to translate all QObjects in the GUI.
         """
+        # We bind the data and the translation function to the QObject instances
+        # so nothing is overwritten by this loop. If we still used local references,
+        # the data would not be accessible in the update_language function.
         for obj, data in object_data.items():
+            # Bind the data to the object
+            obj._translate_data = data.copy()
 
-            def _translate() -> None:
-                for method_name, key in data.items():
-                    getattr(obj, method_name)(self.translator(key))
+            # noinspection PyUnresolvedReferences, PyProtectedMember
+            def _translate(q_obj) -> None:
+                for method_name, key in q_obj._translate_data.items():
+                    getattr(q_obj, method_name)(self.translator(key))
 
-            obj._translate_self = _translate
+            # Bind the translation method to the object
+            bound_translate = types.MethodType(_translate, obj)
+            obj._translate_self = bound_translate
+
+            # Register the object for dynamic translation
             self._registered_translation_objects.add(obj)
             obj._translate_self()
 
     # noinspection PyUnresolvedReferences, PyProtectedMember
     def update_language(self) -> None:
-        """Set the application language to the one currently selected in settings."""
+        """Set the application language to the one currently selected in settings.
+
+        This method dynamically translates all registered QObjects in the GUI to the given language using translation keys.
+        """
         self.translator = Translator(self.settings['language'])
         for obj in self._registered_translation_objects:
             obj._translate_self()
