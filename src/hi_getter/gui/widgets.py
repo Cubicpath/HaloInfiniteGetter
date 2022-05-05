@@ -34,7 +34,7 @@ from ..exceptions import ExceptionEvent
 from ..models import DeferredCallable
 from ..utils import current_requirement_licenses
 from .app import app
-from .utils import scroll_to_top, delete_layout_widgets
+from .utils import scroll_to_top, delete_layout_widgets, init_objects
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
@@ -58,28 +58,62 @@ class ExceptionReporter(QWidget):
         self.left_panel = QFrame(self)
         self.right_panel = QFrame(self)
 
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
+        left_label = QLabel(self.left_panel)
+        right_label = QLabel(self.right_panel)
+        clear_all_button = QPushButton(self.left_panel)
+        self.trace_back_viewer = RequestsTextBrowser(self)
+        self.clear_button = QPushButton(self.right_panel)
+        self.report_button = QPushButton(self.right_panel)
 
+        # Define the scroll area/widget for the left panel
+        self.scroll_area = QScrollArea(self)
         self.scroll_widget = QWidget(self.scroll_area)
         self.scroll_widget.setLayout(QVBoxLayout())
         self.scroll_widget.layout().setAlignment(Qt.AlignTop)
-
         self.scroll_area.setWidget(self.scroll_widget)
 
-        self.left_panel.setLayout(QVBoxLayout())
-        self.right_panel.setLayout(QVBoxLayout())
+        init_objects({
+            self.scroll_area: {
+                'widgetResizable': True
+            },
+            clear_all_button: {
+                'clicked': self.clear_all_exceptions
+            },
+            self.trace_back_viewer: {
+                'disabled': True,
+                'font': QFont('consolas', 10)
+            },
+            self.clear_button: {
+                'disabled': True,
+                'size': {'maximum': (self.report_button.width() // 1, None)},
+                'clicked': self.clear_current_exception
+            },
+            self.report_button: {
+                'disabled': True,
+                'clicked': (
+                    self.report_current_exception, self.clear_current_exception
+                )
+            }
+        })
+
+        app().init_translations({
+            self: {'setWindowTitle': 'gui.exception_reporter.title'},
+
+            # Labels
+            left_label: {'setText': 'gui.exception_reporter.exception_list'},
+            right_label: {'setText': 'gui.exception_reporter.traceback_label'},
+
+            # Buttons
+            clear_all_button: {'setText': 'gui.exception_reporter.clear_all'},
+            self.clear_button: {'setText': 'gui.exception_reporter.clear'},
+            self.report_button: {'setText': 'gui.exception_reporter.report_clear'}
+        })
 
         layout.addWidget(self.left_panel)
         layout.addWidget(self.right_panel)
-        left_label = QLabel(app().translator('gui.exception_reporter.exception_list'))
-        right_label = QLabel(app().translator('gui.exception_reporter.traceback_label'))
-        clear_all_button = QPushButton(app().translator('gui.exception_reporter.clear_all'), self)
-        clear_button = QPushButton(app().translator('gui.exception_reporter.clear'), self)
-        report_button = QPushButton(app().translator('gui.exception_reporter.report_clear'), self)
-        self.trace_back_viewer = RequestsTextBrowser(self)
-        self.trace_back_viewer.setFont(QFont('consolas', 10))
-        self.trace_back_viewer.setDisabled(True)
+        self.left_panel.setLayout(QVBoxLayout())
+        self.right_panel.setLayout(QVBoxLayout())
+        buttons = QHBoxLayout()
 
         self.left_panel.layout().addWidget(left_label)
         self.left_panel.layout().addWidget(self.scroll_area)
@@ -87,35 +121,34 @@ class ExceptionReporter(QWidget):
 
         self.right_panel.layout().addWidget(right_label)
         self.right_panel.layout().addWidget(self.trace_back_viewer)
-
-        buttons = QHBoxLayout()
         self.right_panel.layout().addLayout(buttons)
-
-        buttons.addWidget(report_button)
-        buttons.addWidget(clear_button)
-
-        clear_button.setMaximumWidth(report_button.width() // 1)
-
-        clear_all_button.clicked.connect(self.logger.clear_exceptions)
-        clear_all_button.clicked.connect(self.trace_back_viewer.clear)
-        clear_all_button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, True))
-        clear_all_button.clicked.connect(DeferredCallable(delete_layout_widgets, self.scroll_widget.layout))
-        report_button.clicked.connect(self.report_current_exception)
-        report_button.clicked.connect(self.clear_current_exception)
-        clear_button.clicked.connect(self.clear_current_exception)
+        buttons.addWidget(self.report_button)
+        buttons.addWidget(self.clear_button)
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
         ...
 
-    def clear_current_exception(self) -> None:
-        """Clears the currently selected exception and removes it from the log."""
+    def disable_exception_widgets(self) -> None:
+        """Disables the widgets on the right pane."""
         self.trace_back_viewer.clear()
         self.trace_back_viewer.setDisabled(True)
+        self.report_button.setDisabled(True)
+        self.clear_button.setDisabled(True)
+
+    def clear_all_exceptions(self) -> None:
+        """Clear all exceptions from the list."""
+        self.logger.clear_exceptions()
+        self.disable_exception_widgets()
+        delete_layout_widgets(self.scroll_widget.layout())
+
+    def clear_current_exception(self) -> None:
+        """Clears the currently selected exception and removes it from the log."""
         if (item := self.scroll_widget.layout().takeAt(self.selected)) is not None:
             self.logger.remove_exception(self.selected)
             item.widget().deleteLater()
         self.reload_exceptions()
+        self.disable_exception_widgets()
 
     def reload_exceptions(self) -> None:
         """Load the exceptions from the logger."""
@@ -123,10 +156,12 @@ class ExceptionReporter(QWidget):
         for i, error in enumerate(self.logger.exception_log):
             button = QPushButton(type(error.exception).__name__, self.scroll_widget)
             button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
+            button.clicked.connect(DeferredCallable(self.clear_button.setDisabled, False))
+            button.clicked.connect(DeferredCallable(self.report_button.setDisabled, False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
-                app().translator, 'gui.exception_reporter.traceback_view', type(error.exception).__name__,
-                error[1], traceback.format_tb(error[2])[0]
+                app().translator, 'gui.exception_reporter.traceback_view',
+                type(error.exception).__name__, error[1], traceback.format_tb(error[2])[0]
             )))
 
             self.scroll_widget.layout().addWidget(button)
@@ -143,9 +178,9 @@ class ExceptionLogger(QPushButton):
     """A named tuple that contains the severity of the exception, the exception itself, and an optional traceback."""
 
     level_icon_list: list = [
-        QStyle.SP_MessageBoxInformation,
-        QStyle.SP_MessageBoxWarning,
-        QStyle.SP_MessageBoxCritical
+        QStyle.SP_MessageBoxInformation,  # 0, Not a concern
+        QStyle.SP_MessageBoxWarning,      # 1, Warning
+        QStyle.SP_MessageBoxCritical      # 2, Error
     ]
 
     def __init__(self, *args, **kwargs) -> None:
