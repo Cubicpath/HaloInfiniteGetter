@@ -81,7 +81,7 @@ class FileContextMenu(QMenu):
         response: int = QMessageBox.warning(
             self, app().translator('warnings.delete_cache.title'),
             app().translator('warnings.delete_cache.description'),
-            QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel, defaultButton=QMessageBox.StandardButton.Cancel
+            QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel
         )
 
         if response == QMessageBox.StandardButton.Ok:

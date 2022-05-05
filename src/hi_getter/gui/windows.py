@@ -139,51 +139,41 @@ class SettingsWindow(QWidget):
         init_objects({
             # Labels
             theme_label: {
-                'text': 'gui.settings.gui.theme',
                 'size': {'maximum': (85, None)}
             },
             aspect_ratio_label: {
-                'text': 'gui.settings.media.aspect_ratio',
                 'size': {'maximum': (90, None)}
             },
             transformation_label: {
-                'text': 'gui.settings.media.image_transform',
                 'size': {'maximum': (90, None)}
             },
             line_wrap_label: {
-                'text': 'gui.settings.text.line_wrap',
                 'size': {'maximum': (90, None)}
             },
 
             # Buttons
             save_button: {
-                'text': 'gui.settings.save', 'disabled': True,
+                'disabled': True,
                 'size': {'maximum': (50, None)},
                 'clicked': app().settings.save
             },
             reload_button: {
-                'text': 'gui.settings.reload',
                 'size': {'maximum': (60, None)},
                 'clicked': app().settings.reload
             },
             import_button: {
-                'text': 'gui.settings.import',
                 'clicked': import_settings
             },
             export_button: {
-                'text': 'gui.settings.export',
                 'clicked': export_settings
             },
             open_editor_button: {
-                'text': 'gui.settings.open_editor',
                 'clicked': DeferredCallable(webbrowser.open, lambda: app().settings.path)
             },
             key_show_button: {
-                'text': 'gui.settings.auth.edit',
                 'clicked': toggle_key_visibility
             },
             key_copy_button: {
-                'text': 'gui.settings.auth.copy',
                 'clicked': DeferredCallable(app().clipboard().setText, lambda: self.client.wpauth)
             },
             self.key_set_button: {
@@ -250,6 +240,8 @@ class SettingsWindow(QWidget):
         }, translator=app().translator)
 
         app().init_translations({
+            self: {'setWindowTitle': 'gui.settings.title'},
+
             # Labels
             theme_label: {'setText': 'gui.settings.gui.theme'},
             aspect_ratio_label: {'setText': 'gui.settings.media.aspect_ratio'},
@@ -346,7 +338,7 @@ class AppWindow(QMainWindow):
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.setWindowTitle(app().translator('app.name') + f' v{__version__}')
+        self.change_title(app().translator('app.name') + f' v{__version__}')
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
         self.resize(size)
 
@@ -398,12 +390,10 @@ class AppWindow(QMainWindow):
                 'movable': False,
             },
             file: {
-                'text': 'gui.menus.file',
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, FileContextMenu)
             },
             settings: {
-                'text': 'gui.menus.settings',
                 'menuRole': QAction.MenuRole.PreferencesRole,
                 'triggered': DistributedCallable((
                     self.settings_window.show,
@@ -412,21 +402,16 @@ class AppWindow(QMainWindow):
                 ))
             },
             tools: {
-                'text': 'gui.menus.tools',
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, ToolsContextMenu)
             },
             help_: {
-                'text': 'gui.menus.help',
                 'menuRole': QAction.MenuRole.AboutRole,
                 'triggered': DeferredCallable(context_menu_handler, HelpContextMenu)
             },
             logger: {
                 'size': {'fixed': (None, 20)},
                 'clicked': logger.reporter.show
-            },
-            logger_label: {
-                'text': 'gui.status.default'
             }
         }, translator=app().translator)
 
@@ -636,6 +621,8 @@ class AppWindow(QMainWindow):
         }, translator=app().translator)
 
         app().init_translations({
+            self: {'change_title': 'app.name'},
+
             # Labels
             self.image_size_label: {'setText': 'gui.settings.gui.theme'},
             self.text_size_label: {'setText': 'gui.settings.media.aspect_ratio'},
@@ -703,6 +690,10 @@ class AppWindow(QMainWindow):
         text_bottom.setSpacing(5)
 
         bottom.addLayout(statuses, 10, 0)
+
+    def change_title(self, name: str) -> None:
+        """Change the window title, includes the version number."""
+        self.setWindowTitle(f'{name} v{__version__}')
 
     def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""
@@ -849,7 +840,10 @@ class AppWindow(QMainWindow):
                 app().translator('information.first_launch.description')
             )
         elif not self.shown_key_warning and self.client.token is None:
-            QMessageBox.warning(self, *(app().translator(key) for key in ('warnings.empty_token.title', 'warnings.empty_token.description')))
+            QMessageBox.warning(
+                self, app().translator('warnings.empty_token.title'),
+                app().translator('warnings.empty_token.description')
+            )
             self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:
