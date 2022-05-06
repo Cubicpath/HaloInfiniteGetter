@@ -126,16 +126,18 @@ class GetterApp(QApplication):
                 continue
 
             theme: dict = theme.copy()
-            path = theme.pop('path')
+            path: CommentValue | Path = theme.pop('path')
             if isinstance(path, CommentValue):
                 path = Path(path.val)
             if path.is_dir():
-                QDir.addSearchPath(path.name, str(path))
+                search_path = f'hi_theme_{id_}'
 
-                file = QFile(f'{path.name}:stylesheet.qss')
+                QDir.addSearchPath(search_path, str(path))
+                file = QFile(f'{search_path}:stylesheet.qss')
                 file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text)
                 theme['id'] = id_
                 theme['style'] = QTextStream(file).readAll()
+
                 self.themes[id_] = Theme(**theme)
                 file.close()
 
