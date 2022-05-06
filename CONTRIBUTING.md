@@ -4,7 +4,13 @@ Please read these guidelines before contributing to the project.
 
 ------------------------------
 
-Formatting
+### Table of Contents
+- [Styleguide](#styleguide)
+     - [Naming Conventions](#naming-conventions)
+     - [Modules](#modules)
+     - [Imports](#imports)
+
+Styleguide
 ---------------
 
 ### Naming Conventions

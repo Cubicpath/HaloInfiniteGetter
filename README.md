@@ -19,6 +19,23 @@ _**HaloInfiniteGetter is in no way associated with, endorsed by, or otherwise af
 Microsoft Corporation, Xbox Game Studios, or 343 Industries. Depending on how you use it, use of this app
 may or may not be considered abuse by the aforementioned parties.**_
 
+### Table of Contents
+- [Disclaimer](#disclaimer)
+- [About](#about)
+- [How to Use](#how-to-use)
+     - [Installation](#installation)
+     - [Authentication](#authentication)
+     - [Searching](#searching)
+          - [Knowing Where to Search](#knowing-where-to-search)
+          - [GET](#get)
+          - [SCAN](#scan)
+     - [Outputs](#outputs)
+          - [Media Output](#media-output)
+          - [Text Output](#text-output)
+     - [Themes](#themes)
+          - [Theme File Structure](#theme-file-structure)
+
+
 About:
 ---------------
 HaloInfiniteGetter is a GUI application written using [Qt for Python][PySide] that allows you to easily view data
@@ -27,7 +44,7 @@ hosted on [HaloWaypoint] API endpoints.
 You can view both Image and Text output, with these results being cached in the user's `.cache/hi_data` directory,
 to eliminate unnecessary API calls.
 
-How to use:
+How to Use:
 ---------------
 
 ### Installation:
@@ -58,7 +75,7 @@ Guide:
 
 ### Searching:
 
-#### Knowing where to search:
+#### Knowing Where to Search:
 
 ![Input Section](https://i.imgur.com/8JPsG5y.png)
 
@@ -113,7 +130,7 @@ It has one setting:
 Themes are a way to style already-existing elements (Think CSS). They are held in a directory with their resources
 and stylesheet in the same folder level.
 
-#### Theme file structure:
+#### Theme File Structure:
     ../
     │
     ├───[theme_id]/
