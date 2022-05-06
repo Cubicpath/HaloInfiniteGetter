@@ -14,27 +14,20 @@ Styleguide
 ---------------
 
 ### Naming Conventions
-Python:
-   - **camelCase** Qt slots and signals
 
-   - **PascalCase** Classes
-   - **PascalCase** MetaClasses
-   - **PascalCase** Type Aliases
-
-   - **snake_case** Functions
-   - **snake_case** Methods
-   - **snake_case** Modules
-   - **snake_case** Packages
-   - **snake_case** Properties
-   - **snake_case** Variables
-
-   - **SCREAMING_SNAKE_CASE** Constants
-
-Markdown:
-   - `=` for h1
-   - `-` for h2
-   - `**` for bold
-   - `_` for italic
+| Attribute Type       | Casing (Python)      |
+|----------------------|----------------------|
+| Qt slots and signals | camelCase            |
+| Classes              | PascalCase           |
+| MetaClasses          | PascalCase           |
+| Type Aliases         | PascalCase           |
+| Functions            | snake_case           |
+| Methods              | snake_case           |
+| Modules              | snake_case           |
+| Packages             | snake_case           |
+| Properties           | snake_case           |
+| Variables            | snake_case           |
+| Constants            | SCREAMING_SNAKE_CASE |
 
 
 ### Modules
