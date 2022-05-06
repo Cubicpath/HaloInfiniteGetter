@@ -15,11 +15,14 @@ from collections.abc import Collection
 from collections.abc import Generator
 from typing import Any
 from typing import Generic
+from typing import TypeAlias
 from typing import TypeVar
 
-
-_CallableCollection = TypeVar('_CallableCollection', bound=Collection[Callable])
-"""Generic for a :py:class:`Collection` of callables, used in :py:class:`DistributedCallable`."""
+_CT = TypeVar('_CT', bound=Collection[Callable])  # Bound to Collection of Callables
+_PT = TypeVar('_PT')  # Positional Arguments
+_KT = TypeVar('_KT')  # Keyword Arguments
+_PTCallable: TypeAlias = Callable[[], _PT]  # Which returns _PT
+_KTCallable: TypeAlias = Callable[[], _KT]  # Which returns _KT
 
 
 class _AbstractCallable(ABC):
@@ -42,7 +45,7 @@ class _AbstractCallable(ABC):
         raise NotImplementedError
 
 
-class DeferredCallable(_AbstractCallable):
+class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
     """A :py:class:`Callable` with args and kwargs stored for further execution.
 
     Supports deferred argument evaluation when using :py:class:`Callable`'s as arguments.
@@ -51,11 +54,11 @@ class DeferredCallable(_AbstractCallable):
     """
     __slots__ = ('_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
 
-    def __init__(self, __callable: Callable = lambda: None, /, *args: Any | Callable[[], Any],
+    def __init__(self, __callable: Callable = lambda: None, /, *args: _PT | _PTCallable,
                  _extra_pos_args: int = 0,
                  _call_funcs: bool = True,
                  _call_types: bool = False,
-                 **kwargs: Any | Callable[[], Any]) -> None:
+                 **kwargs: _KT | _KTCallable) -> None:
         """Creates a new :py:class:`DeferredCallable`.
 
         When called, any additional arguments must be expected with _extra_pos_args.
@@ -72,8 +75,8 @@ class DeferredCallable(_AbstractCallable):
         self.call_funcs:        bool = _call_funcs
         self.call_types:        bool = _call_types
         self.callable:          Callable = __callable
-        self.args:              tuple[Any | Callable[[], Any], ...] = args
-        self.kwargs:            dict[str, Any | Callable[[], Any]] = kwargs
+        self.args:              tuple[_PT | _PTCallable, ...] = args
+        self.kwargs:            dict[str, _KT | _KTCallable] = kwargs
 
     def __repr__(self) -> str:
         """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
@@ -91,7 +94,7 @@ class DeferredCallable(_AbstractCallable):
                 (not isinstance(val, type) and self.call_funcs)
         ) else val
 
-    def run(self, *args: Any | Callable[[], Any], **kwargs: Any | Callable[[], Any]) -> Any:
+    def run(self, *args: Any, **kwargs: Any) -> Any:
         """Run the stored :py:class:`Callable`.
 
         Takes any additional arguments and temporarily adds to the stored arguments before execution.
@@ -116,10 +119,10 @@ class DeferredCallable(_AbstractCallable):
                                    f'{type(self).__name__}._extra_call_args may not be set correctly.') from e
 
 
-class DistributedCallable(_AbstractCallable, Generic[_CallableCollection]):
+class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
     """A :py:class:`Callable` that distributes arguments to all specified callables.
 
-    Supports generic type hinting for the callable collection. Ex::
+    Supports generic type hinting for the callable collections and arguments. Ex::
 
         foo: DistributedCallable[set] = DistributedCallable({bar}, 1, 2, 3, four=4)
         foo2: DistributedCallable[list] = DistributedCallable([bar], 1, 2, 3, four=4)
@@ -130,15 +133,16 @@ class DistributedCallable(_AbstractCallable, Generic[_CallableCollection]):
         # And
         foo2.callables.append(baz)
     """
+    __slots__ = ('callables', 'args', 'kwargs')
 
-    def __init__(self, __callables: _CallableCollection = (), *args: Any, **kwargs: Any) -> None:
+    def __init__(self, __callables: _CT = (), *args: _PT, **kwargs: _KT) -> None:
         """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs.
 
-        _CallableCollection is a Type Generic containing a :py:class:`Collection` of callables.
+        _CT is a Type Generic containing a :py:class:`Collection` of callables.
         """
-        self.callables: _CallableCollection = __callables
-        self.args:      tuple[Any] = args
-        self.kwargs:    dict[str, Any] = kwargs
+        self.callables: _CT = __callables
+        self.args:      tuple[_PT, ...] = args
+        self.kwargs:    dict[str, _KT] = kwargs
 
     def __repr__(self) -> str:
         """Represents the :py:class:`DistributedCallable` with the stored callable, args, and kwargs."""

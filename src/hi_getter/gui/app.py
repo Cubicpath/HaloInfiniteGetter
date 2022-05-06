@@ -58,7 +58,7 @@ class GetterApp(QApplication):
         super().__init__(argv)
         self._first_launch: bool = first_launch
         self._legacy_style: str = self.styleSheet()
-        self._registered_translations: DistributedCallable[set[DeferredCallable]] = DistributedCallable(set())
+        self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
         self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
@@ -86,14 +86,14 @@ class GetterApp(QApplication):
         """
         return self._first_launch
 
-    def init_translations(self, object_data: dict[Callable, str]) -> None:
+    def init_translations(self, translation_calls: dict[Callable, str]) -> None:
         """Initialize the translation of all objects.
 
         Register functions to call with their respective translation keys.
         This is used to translate everything in the GUI.
         """
 
-        for func, key in object_data.items():
+        for func, key in translation_calls.items():
             # Call the function with the deferred translation of the given key.
             translate = DeferredCallable(func, DeferredCallable(self.translator, key))
 

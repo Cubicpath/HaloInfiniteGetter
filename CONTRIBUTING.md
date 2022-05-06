@@ -28,6 +28,15 @@ Styleguide
 | Properties           | snake_case           |
 | Variables            | snake_case           |
 | Constants            | SCREAMING_SNAKE_CASE |
+| Generics             | SCREAMING_lower_co   |
+
+| Casing Type          | Examples                  |
+|----------------------|---------------------------|
+| camelCase            | foo, fooBar, fooBarBiz    |
+| PascalCase           | Foo, FooBar, FooBarBiz    |
+| snake_case           | foo, foo_bar, foo_bar_biz |
+| SCREAMING_SNAKE_CASE | FOO, FOO_BAR, FOO_BAR_BIZ |
+| SCREAMING_lower_co   | FOO, FOO_co, FOO_covar    |
 
 
 ### Modules
