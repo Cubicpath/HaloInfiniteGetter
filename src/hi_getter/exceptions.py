@@ -37,8 +37,8 @@ class ExceptionHook:
 
     def __call__(self, type_: type[BaseException], exception: BaseException, traceback: TracebackType) -> None:
         """Called when an exception is raised."""
+        # Don't handle BaseExceptions
         if not issubclass(type_, Exception):
-            # Don't handle BaseException's
             return self.__old_hook(type_, exception, traceback)
 
         EventBus['exceptions'] << ExceptionEvent(exception, traceback)
