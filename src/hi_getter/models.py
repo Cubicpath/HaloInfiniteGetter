@@ -13,7 +13,9 @@ from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Generator
-from typing import Any, TypeVar, Generic
+from typing import Any
+from typing import Generic
+from typing import TypeVar
 
 
 _CallableCollection = TypeVar('_CallableCollection', bound=Collection[Callable])

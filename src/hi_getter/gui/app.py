@@ -19,6 +19,7 @@ from PySide6.QtWidgets import *
 from ..events import *
 from ..lang import Translator
 from ..models import DeferredCallable
+from ..models import DistributedCallable
 from ..tomlfile import *
 
 
@@ -47,17 +48,17 @@ class Theme:
 class GetterApp(QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
 
-    :py:class:`GetterApp` is a singleton and can be accessed via the class using GetterApp.instance()
+    :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() method or the app() function.
     """
-    _legacy_style: str | None = None
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus], for no explicable reason.
     # noinspection PyTypeChecker
     def __init__(self, argv: Sequence[str], settings: TomlFile, first_launch: bool = False) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
-        self._first_launch:    bool = first_launch
-        self._registered_translations: set[Callable] = set()
+        self._first_launch: bool = first_launch
+        self._legacy_style: str = self.styleSheet()
+        self._registered_translations: DistributedCallable[set[DeferredCallable]] = DistributedCallable(set())
 
         self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
@@ -97,7 +98,7 @@ class GetterApp(QApplication):
             translate = DeferredCallable(func, DeferredCallable(self.translator, key))
 
             # Register the object for dynamic translation
-            self._registered_translations.add(translate)
+            self._registered_translations.callables.add(translate)
             translate()
 
     # noinspection PyUnresolvedReferences, PyProtectedMember
@@ -107,8 +108,7 @@ class GetterApp(QApplication):
         This method dynamically translates all registered text in the GUI to the given language using translation keys.
         """
         self.translator.language = self.settings['language']
-        for translation in self._registered_translations:
-            translation()
+        self._registered_translations()
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
@@ -119,8 +119,6 @@ class GetterApp(QApplication):
 
         Also set current theme from settings.
         """
-        if self._legacy_style is None:
-            self.__class__._legacy_style = self.styleSheet()
         self.themes['legacy'] = Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
 
         for id_, theme in self.settings['gui/themes'].items():
