@@ -22,7 +22,7 @@ EventRunnable:  TypeAlias = Callable[['Event'], None]
 class Event:
     """Normal event with no special abilities.
 
-    You can also use the >> operator to fire an :py:class:`Event` on an :py:class:`EventBus`. ex::
+    You can also use the >> operator to fire an :py:class:`Event` on an :py:class:`EventBus`. Ex::
 
         Event() >> EventBus['foo']
     """

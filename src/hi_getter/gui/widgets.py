@@ -81,7 +81,8 @@ class ExceptionReporter(QWidget):
             },
             self.trace_back_viewer: {
                 'disabled': True,
-                'font': QFont('consolas', 10)
+                'font': QFont('consolas', 10),
+                'lineWrapMode': QTextEdit.NoWrap
             },
             self.clear_button: {
                 'disabled': True,

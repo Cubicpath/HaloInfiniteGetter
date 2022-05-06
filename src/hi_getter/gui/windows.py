@@ -411,7 +411,11 @@ class AppWindow(QMainWindow):
             },
             logger: {
                 'size': {'fixed': (None, 20)},
-                'clicked': logger.reporter.show
+                'clicked': DistributedCallable((
+                    logger.reporter.show,
+                    logger.reporter.activateWindow,
+                    logger.reporter.raise_
+                ))
             }
         }, translator=app().translator)
 
