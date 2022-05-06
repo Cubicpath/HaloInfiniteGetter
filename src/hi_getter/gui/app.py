@@ -20,6 +20,7 @@ from ..events import *
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
+from ..network.utils import HTTP_CODE_MAP
 from ..tomlfile import *
 
 
@@ -86,6 +87,11 @@ class GetterApp(QApplication):
         """
         return self._first_launch
 
+    def _translate_http_code_map(self) -> None:
+        """Translate the HTTP code map to the current language."""
+        for code in (400, 401, 403, 404, 405, 406):
+            HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], self.translator(f'network.http.codes.{code}.description'))
+
     def init_translations(self, translation_calls: dict[Callable, str]) -> None:
         """Initialize the translation of all objects.
 
@@ -108,6 +114,7 @@ class GetterApp(QApplication):
         This method dynamically translates all registered text in the GUI to the given language using translation keys.
         """
         self.translator.language = self.settings['language']
+        self._translate_http_code_map()
         self._registered_translations()
 
     def update_stylesheet(self) -> None:
