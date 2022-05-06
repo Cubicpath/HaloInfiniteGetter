@@ -100,7 +100,6 @@ class FileContextMenu(QMenu):
 # noinspection PyArgumentList
 class HelpContextMenu(QMenu):
     """Context menu that shows actions to help the user."""
-    _about: tuple[str, str] | None = None
     _github_icon: bytes = requests.get('https://github.githubassets.com/favicons/favicon.png').content
 
     def __init__(self, parent) -> None:
@@ -161,18 +160,20 @@ class HelpContextMenu(QMenu):
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')))
         QMessageBox.information(self, *self.about_message())
 
-    def about_message(self) -> tuple[str, str]:
+    @staticmethod
+    def about_message() -> tuple[str, str]:
         """Generate the 'About' information regarding the application's environment.
-        Since this takes a while the first time, the result is cached as a class value.
 
         :return: Tuple containing the title and the message
         """
-        if self._about is None:
-            package_versions = '\n'.join(
-                f'Using package {package}: {version}' for package, version in current_requirement_versions(_PARENT_PACKAGE).items() if has_package(package)
-            )
+        package_versions = '\n'.join(
+            app().translator(
+                'information.about.package_version',
+                package, version
+            ) for package, version in current_requirement_versions(_PARENT_PACKAGE).items() if has_package(package)
+        )
 
-            self.__class__._about = (
+        return (
                 app().translator('information.about.title'),
                 app().translator(
                     'information.about.description',
@@ -181,7 +182,6 @@ class HelpContextMenu(QMenu):
                     package_versions
                 )
             )
-        return self._about
 
 
 # noinspection PyArgumentList
