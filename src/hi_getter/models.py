@@ -13,7 +13,11 @@ from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Generator
-from typing import Any
+from typing import Any, TypeVar, Generic
+
+
+_CallableCollection = TypeVar('_CallableCollection', bound=Collection[Callable])
+"""Generic for a :py:class:`Collection` of callables, used in :py:class:`DistributedCallable`."""
 
 
 class _AbstractCallable(ABC):
@@ -110,12 +114,27 @@ class DeferredCallable(_AbstractCallable):
                                    f'{type(self).__name__}._extra_call_args may not be set correctly.') from e
 
 
-class DistributedCallable(_AbstractCallable):
-    """A :py:class:`Callable` that distributes arguments to all specified callables."""
+class DistributedCallable(_AbstractCallable, Generic[_CallableCollection]):
+    """A :py:class:`Callable` that distributes arguments to all specified callables.
 
-    def __init__(self, __callables: Collection[Callable], *args: Any, **kwargs: Any) -> None:
-        """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs."""
-        self.callables: Collection[Callable] = __callables
+    Supports generic type hinting for the callable collection. Ex::
+
+        foo: DistributedCallable[set] = DistributedCallable({bar}, 1, 2, 3, four=4)
+        foo2: DistributedCallable[list] = DistributedCallable([bar], 1, 2, 3, four=4)
+
+        # Now there's no error when doing
+
+        foo.callables.add(baz)
+        # And
+        foo2.callables.append(baz)
+    """
+
+    def __init__(self, __callables: _CallableCollection = (), *args: Any, **kwargs: Any) -> None:
+        """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs.
+
+        _CallableCollection is a Type Generic containing a :py:class:`Collection` of callables.
+        """
+        self.callables: _CallableCollection = __callables
         self.args:      tuple[Any] = args
         self.kwargs:    dict[str, Any] = kwargs
 
