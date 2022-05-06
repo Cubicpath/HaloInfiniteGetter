@@ -40,24 +40,24 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
-        open_explorer:     QAction = QAction(
+        open_explorer: QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
             app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
-        flush_cache: QAction = QAction(
+        flush_cache:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
             app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
-        import_from: QAction = QAction(
+        import_from:   QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')),
             app().translator('gui.menus.file.import'), self, triggered=self.import_data
         )
 
-        export_to:   QAction = QAction(
+        export_to:     QAction = QAction(
             QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')),
             app().translator('gui.menus.file.export'), self, triggered=self.export_data
         )

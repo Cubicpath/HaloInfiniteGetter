@@ -243,7 +243,7 @@ class SettingsWindow(QWidget):
             self.setWindowTitle: 'gui.settings.title',
 
             # Labels
-            theme_label.setText: 'gui.settings.gui.theme',
+            theme_label.setText: 'gui.settings.theme',
             aspect_ratio_label.setText: 'gui.settings.media.aspect_ratio',
             transformation_label.setText: 'gui.settings.media.image_transform',
             line_wrap_label.setText: 'gui.settings.text.line_wrap',
