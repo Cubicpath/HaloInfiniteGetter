@@ -20,11 +20,11 @@ from requests import Session
 from requests.models import CaseInsensitiveDict
 from requests.utils import guess_json_utf
 
-from .utils import decode_escapes
 from ..constants import *
 from ..utils import dump_data
 from ..utils import hide_windows_file
 from ..utils import unique_values
+from .utils import decode_url
 
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
@@ -181,8 +181,8 @@ class Client:
         response: Response = self.web_session.get('https://www.halowaypoint.com/')
         self.web_session.cookies.update(response.cookies)
 
-        wpauth: str = decode_escapes(self.web_session.cookies.get('wpauth') or '')
-        token:  str = decode_escapes(self.web_session.cookies.get('343-spartan-token') or '')
+        wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
+        token:  str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
 
         if wpauth and self.wpauth != wpauth:
             self.wpauth = wpauth
@@ -205,7 +205,7 @@ class Client:
 
     @token.setter
     def token(self, value: str) -> None:
-        value = decode_escapes(value)
+        value = decode_url(value)
         key_start_index = value.find('v4=')
         if key_start_index == -1:
             raise ValueError('token value is missing version identifier ("v4=") to signify start.')
@@ -233,7 +233,7 @@ class Client:
 
     @wpauth.setter
     def wpauth(self, value: str) -> None:
-        value = decode_escapes(value)
+        value = decode_url(value)
         self._wpauth = value.split(':')[-1].strip()
         self.set_cookie('wpauth', self._wpauth)
         hide_windows_file(WPAUTH_PATH, unhide=True)

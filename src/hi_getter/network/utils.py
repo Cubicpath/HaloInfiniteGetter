@@ -4,12 +4,12 @@
 """Utils for the HaloInfiniteGetter networking."""
 
 __all__ = (
-    'decode_escapes',
+    'decode_url',
     'HTTP_CODE_MAP',
 )
 
 from http import HTTPStatus
-from urllib.parse import unquote as decode_escapes
+from urllib.parse import unquote as decode_url
 
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}
