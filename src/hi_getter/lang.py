@@ -214,7 +214,8 @@ class Translator:
     Usage::
         translate = Translator('en-US')
         translate('a.translation.key') -> american value
-        translate.language = 'de-GER' -> german value
+        translate.language = 'de-GER'
+        translate('a.translation.key') -> german value
     """
 
     def __init__(self, language: Language | str) -> None:

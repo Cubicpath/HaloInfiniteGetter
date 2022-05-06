@@ -97,16 +97,16 @@ class ExceptionReporter(QWidget):
         })
 
         app().init_translations({
-            self: {'setWindowTitle': 'gui.exception_reporter.title'},
+            self.setWindowTitle: 'gui.exception_reporter.title',
 
             # Labels
-            left_label: {'setText': 'gui.exception_reporter.exception_list'},
-            right_label: {'setText': 'gui.exception_reporter.traceback_label'},
+            left_label.setText: 'gui.exception_reporter.exception_list',
+            right_label.setText: 'gui.exception_reporter.traceback_label',
 
             # Buttons
-            clear_all_button: {'setText': 'gui.exception_reporter.clear_all'},
-            self.clear_button: {'setText': 'gui.exception_reporter.clear'},
-            self.report_button: {'setText': 'gui.exception_reporter.report_clear'}
+            clear_all_button.setText: 'gui.exception_reporter.clear_all',
+            self.clear_button.setText: 'gui.exception_reporter.clear',
+            self.report_button.setText: 'gui.exception_reporter.report_clear'
         })
 
         layout.addWidget(self.left_panel)

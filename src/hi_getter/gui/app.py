@@ -9,7 +9,7 @@ __all__ = (
     'Theme',
 )
 
-import types
+from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -49,7 +49,7 @@ class GetterApp(QApplication):
 
     :py:class:`GetterApp` is a singleton and can be accessed via the class using GetterApp.instance()
     """
-    _legacy_style: str = None
+    _legacy_style: str | None = None
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus], for no explicable reason.
     # noinspection PyTypeChecker
@@ -57,7 +57,7 @@ class GetterApp(QApplication):
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self._first_launch:    bool = first_launch
-        self._registered_translation_objects: set[QObject] = set()
+        self._registered_translations: set[Callable] = set()
 
         self.translator:      Translator = Translator(settings['language'])
         self.settings:        TomlFile = settings
@@ -85,41 +85,30 @@ class GetterApp(QApplication):
         """
         return self._first_launch
 
-    def init_translations(self, object_data: dict[QObject, dict[str, str]]) -> None:
+    def init_translations(self, object_data: dict[Callable, str]) -> None:
         """Initialize the translation of all objects.
 
-        QObjects with their method names are mapped to their corresponding translation key.
-        This is used to translate all QObjects in the GUI.
+        Register functions to call with their respective translation keys.
+        This is used to translate everything in the GUI.
         """
-        # We bind the data and the translation function to the QObject instances
-        # so nothing is overwritten by this loop. If we still used local references,
-        # the data would not be accessible in the update_language function.
-        for obj, data in object_data.items():
-            # Bind the data to the object
-            obj._translate_data = data.copy()
 
-            # noinspection PyUnresolvedReferences, PyProtectedMember
-            def _translate(q_obj) -> None:
-                for method_name, key in q_obj._translate_data.items():
-                    getattr(q_obj, method_name)(self.translator(key))
-
-            # Bind the translation method to the object
-            bound_translate = types.MethodType(_translate, obj)
-            obj._translate_self = bound_translate
+        for func, key in object_data.items():
+            # Call the function with the deferred translation of the given key.
+            translate = DeferredCallable(func, DeferredCallable(self.translator, key))
 
             # Register the object for dynamic translation
-            self._registered_translation_objects.add(obj)
-            obj._translate_self()
+            self._registered_translations.add(translate)
+            translate()
 
     # noinspection PyUnresolvedReferences, PyProtectedMember
     def update_language(self) -> None:
         """Set the application language to the one currently selected in settings.
 
-        This method dynamically translates all registered QObjects in the GUI to the given language using translation keys.
+        This method dynamically translates all registered text in the GUI to the given language using translation keys.
         """
-        self.translator = Translator(self.settings['language'])
-        for obj in self._registered_translation_objects:
-            obj._translate_self()
+        self.translator.language = self.settings['language']
+        for translation in self._registered_translations:
+            translation()
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""

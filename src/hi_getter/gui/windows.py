@@ -240,24 +240,24 @@ class SettingsWindow(QWidget):
         }, translator=app().translator)
 
         app().init_translations({
-            self: {'setWindowTitle': 'gui.settings.title'},
+            self.setWindowTitle: 'gui.settings.title',
 
             # Labels
-            theme_label: {'setText': 'gui.settings.gui.theme'},
-            aspect_ratio_label: {'setText': 'gui.settings.media.aspect_ratio'},
-            transformation_label: {'setText': 'gui.settings.media.image_transform'},
-            line_wrap_label: {'setText': 'gui.settings.text.line_wrap'},
+            theme_label.setText: 'gui.settings.gui.theme',
+            aspect_ratio_label.setText: 'gui.settings.media.aspect_ratio',
+            transformation_label.setText: 'gui.settings.media.image_transform',
+            line_wrap_label.setText: 'gui.settings.text.line_wrap',
 
             # Buttons
-            save_button: {'setText': 'gui.settings.save'},
-            reload_button: {'setText': 'gui.settings.reload'},
-            import_button: {'setText': 'gui.settings.import'},
-            export_button: {'setText': 'gui.settings.export'},
-            open_editor_button: {'setText': 'gui.settings.open_editor'},
-            key_show_button: {'setText': 'gui.settings.auth.edit'},
-            key_copy_button: {'setText': 'gui.settings.auth.copy'},
-            self.key_set_button: {'setText': 'gui.settings.auth.set'},
-            self.token_clear_button: {'setText': 'gui.settings.auth.clear_token'}
+            save_button.setText: 'gui.settings.save',
+            reload_button.setText: 'gui.settings.reload',
+            import_button.setText: 'gui.settings.import',
+            export_button.setText: 'gui.settings.export',
+            open_editor_button.setText: 'gui.settings.open_editor',
+            key_show_button.setText: 'gui.settings.auth.edit',
+            key_copy_button.setText: 'gui.settings.auth.copy',
+            self.key_set_button.setText: 'gui.settings.auth.set',
+            self.token_clear_button.setText: 'gui.settings.auth.clear_token'
         })
 
         # Define layouts
@@ -416,11 +416,11 @@ class AppWindow(QMainWindow):
         }, translator=app().translator)
 
         app().init_translations({
-            file: {'setText': 'gui.menus.file'},
-            settings: {'setText': 'gui.menus.settings'},
-            tools: {'setText': 'gui.menus.tools'},
-            help_: {'setText': 'gui.menus.help'},
-            logger_label: {'setText': 'gui.status.default'}
+            file.setText: 'gui.menus.file',
+            settings.setText: 'gui.menus.settings',
+            tools.setText: 'gui.menus.tools',
+            help_.setText: 'gui.menus.help',
+            logger_label.setText: 'gui.status.default'
         })
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
@@ -540,52 +540,46 @@ class AppWindow(QMainWindow):
         init_objects({
             # Labels
             self.image_size_label: {
-                'text': 'gui.outputs.image.label_empty',
                 'size': {'minimum': (50, None)}
             },
             self.text_size_label: {
-                'text': 'gui.outputs.text.label_empty',
                 'size': {'minimum': (50, None)}
             },
 
             # Buttons
             self.image_detach_button: {
-                'text': 'gui.outputs.detach',
                 'size': {'maximum': (80, None)},
                 'clicked': toggle_media_detach
             },
             self.text_detach_button: {
-                'text': 'gui.outputs.detach',
                 'size': {'maximum': (80, None)},
                 'clicked': toggle_text_detach
             },
             self.clear_picture: {
-                'text': 'gui.outputs.clear', 'disabled': True,
+                'disabled': True,
                 'size': {'maximum': (80, None), 'minimum': (40, None)},
                 'clicked': clear_current_pixmap
             },
             self.copy_picture: {
-                'text': 'gui.outputs.image.copy', 'disabled': True,
+                'disabled': True,
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
                 'clicked': DeferredCallable(app().clipboard().setPixmap, lambda: self.current_image)
             },
             self.clear_text: {
-                'text': 'gui.outputs.clear', 'disabled': True,
+                'disabled': True,
                 'size': {'maximum': (80, None), 'minimum': (40, None)},
                 'clicked': clear_current_text
             },
             self.copy_text: {
-                'text': 'gui.outputs.text.copy', 'disabled': True,
+                'disabled': True,
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
                 'clicked':  DeferredCallable(app().clipboard().setText, self.text_output.toPlainText)
             },
             get_button: {
-                'text': 'gui.input_field.get',
                 'size': {'maximum': (40, None)},
                 'clicked': self.use_input
             },
             scan_button: {
-                'text': 'gui.input_field.scan',
                 'size': {'maximum': (55, None)},
                 'clicked': DeferredCallable(self.use_input, scan=True)
             },
@@ -621,21 +615,21 @@ class AppWindow(QMainWindow):
         }, translator=app().translator)
 
         app().init_translations({
-            self: {'change_title': 'app.name'},
+            self.change_title: 'app.name',
 
             # Labels
-            self.image_size_label: {'setText': 'gui.settings.gui.theme'},
-            self.text_size_label: {'setText': 'gui.settings.media.aspect_ratio'},
+            self.image_size_label.setText: 'gui.outputs.image.label_empty',
+            self.text_size_label.setText: 'gui.outputs.text.label_empty',
 
             # Buttons
-            self.image_detach_button: {'setText': 'gui.outputs.detach'},
-            self.text_detach_button: {'setText': 'gui.outputs.detach'},
-            self.clear_picture: {'setText': 'gui.outputs.clear'},
-            self.copy_picture: {'setText': 'gui.outputs.image.copy'},
-            self.clear_text: {'setText': 'gui.outputs.clear'},
-            self.copy_text: {'setText': 'gui.outputs.text.copy'},
-            get_button: {'setText': 'gui.input_field.get'},
-            scan_button: {'setText': 'gui.input_field.scan'}
+            self.image_detach_button.setText: 'gui.outputs.detach',
+            self.text_detach_button.setText: 'gui.outputs.detach',
+            self.clear_picture.setText: 'gui.outputs.clear',
+            self.copy_picture.setText: 'gui.outputs.image.copy',
+            self.clear_text.setText: 'gui.outputs.clear',
+            self.copy_text.setText: 'gui.outputs.text.copy',
+            get_button.setText: 'gui.input_field.get',
+            scan_button.setText: 'gui.input_field.scan'
         })
 
         self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
@@ -697,7 +691,7 @@ class AppWindow(QMainWindow):
 
     def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""
-        str_path = decode_escapes(path.toDisplayString())
+        str_path = decode_url(path.toDisplayString())
         if (  # Open local absolute resource locations
                 sys.platform.startswith('win') and (str_path[0] in string.ascii_letters and str_path[1:].startswith(':\\'))
                 or
