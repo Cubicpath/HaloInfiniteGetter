@@ -6,19 +6,19 @@
 __all__ = (
     'Event',
     'EventBus',
-    'EventPredicate',
-    'EventRunnable',
 )
 
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Optional
 from typing import TypeAlias
+from typing import TypeVar
 
 from . import utils
 
-EventPredicate: TypeAlias = Callable[['Event'], bool]
-EventRunnable:  TypeAlias = Callable[['Event'], None]
+_ET_co = TypeVar('_ET_co', bound='Event', covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
+_EventPredicate: TypeAlias = Callable[[_ET_co], bool]
+_EventRunnable:  TypeAlias = Callable[[_ET_co], None]
 
 
 class Event:
@@ -63,8 +63,8 @@ class Event:
 
 
 class _Subscribers(defaultdict[type[Event], list[tuple[
-    EventRunnable,  # Callable to run
-    EventPredicate | None   # Optional predicate to run callable
+    _EventRunnable,          # Callable to run
+    _EventPredicate | None   # Optional predicate to run callable
 ]]]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
@@ -78,7 +78,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             repr_ += f'{event.__name__}[{len(self[event])}], '
         return f'({repr_.rstrip()})'
 
-    def add(self, event: type[Event], callable_pair: tuple[EventRunnable, EventPredicate | None]) -> None:
+    def add(self, event: type[_ET_co], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list."""
         if not issubclass(event, Event):
             raise TypeError(f'event is not subclass to {Event}.')
@@ -162,14 +162,14 @@ class EventBus(metaclass=_EventBusMeta):
         else:
             raise KeyError(f'EventBus id "{__id}" is already registered in {type(type(self)).__name__}')
 
-    def __lshift__(self, __event: Event | type[Event], /) -> None:
+    def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
         """Syntax sugar for self.fire(event)"""
         self.fire(__event)
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'
 
-    def clear(self, event: type[Event] | None = None) -> None:
+    def clear(self, event: type[_ET_co] | None = None) -> None:
         """Clear event _subscribers of a given type.
 
         None is treated as a wildcard and deletes ALL event _subscribers.
@@ -181,7 +181,7 @@ class EventBus(metaclass=_EventBusMeta):
         else:
             self._subscribers.pop(event)
 
-    def fire(self, event: Event | type[Event]) -> None:
+    def fire(self, event: _ET_co | type[_ET_co]) -> None:
         """Fire all :py:class:`Callables` subscribed to the :py:class:`Event`'s :py:class:`type`.
 
         :py:class:`Event` subclasses call their parent's callables as well.
@@ -205,7 +205,7 @@ class EventBus(metaclass=_EventBusMeta):
                         # Finally, call
                         e_callable_pair[0](event)
 
-    def subscribe(self, __callable: EventRunnable, /, event: type[Event], event_predicate: EventPredicate | None = None) -> None:
+    def subscribe(self, __callable: _EventRunnable, /, event: type[_ET_co], event_predicate: _EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.
