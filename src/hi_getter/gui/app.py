@@ -20,7 +20,7 @@ from ..events import *
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
-from ..network.utils import HTTP_CODE_MAP
+from ..network import HTTP_CODE_MAP
 from ..tomlfile import *
 
 

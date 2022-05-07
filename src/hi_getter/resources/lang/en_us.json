@@ -9,7 +9,7 @@
   "gui.exception_reporter.clear": "Clear",
   "gui.exception_reporter.clear_all": "Clear All",
   "gui.exception_reporter.exception_list": "List of all currently logged exceptions:",
-  "gui.exception_reporter.report_clear": "Report and Clear",
+  "gui.exception_reporter.report_clear": "Report",
   "gui.exception_reporter.title": "Exception Reporter",
   "gui.exception_reporter.traceback_label": "Traceback viewer for selected exception:",
   "gui.exception_reporter.traceback_view": "Traceback for %s\n-----------------------------------\n%s\n\n%s",

@@ -14,6 +14,7 @@ __all__ = (
 )
 
 import traceback
+import webbrowser
 from collections import defaultdict
 from collections import namedtuple
 from collections.abc import Callable
@@ -28,13 +29,18 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from .._version import __version__
 from ..constants import *
 from ..events import EventBus
 from ..exceptions import ExceptionEvent
 from ..models import DeferredCallable
+from ..models import DistributedCallable
+from ..network import encode_url_params
 from ..utils import current_requirement_licenses
 from .app import app
-from .utils import scroll_to_top, delete_layout_widgets, init_objects
+from .utils import delete_layout_widgets
+from .utils import init_objects
+from .utils import scroll_to_top
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
@@ -91,9 +97,7 @@ class ExceptionReporter(QWidget):
             },
             self.report_button: {
                 'disabled': True,
-                'clicked': (
-                    self.report_current_exception, self.clear_current_exception
-                )
+                'clicked': self.report_current_exception
             }
         })
 
@@ -128,7 +132,19 @@ class ExceptionReporter(QWidget):
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
-        ...
+        base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
+        params = {
+            'template': 'bug-report.yaml',
+            'assignees': 'Cubicpath',
+            'labels': 'bug',
+            'projects': 'Cubicpath/HaloInfiniteGetter/2',
+            'title': f'[Bug]: '  # Standard bug report title prefix
+                     f'({self.logger.exception_log[self.selected][1].__class__.__name__}) '  # Exception Type
+                     f'{str(self.logger.exception_log[self.selected][1]).rstrip(".")}',      # Exception Message
+            'version': f'v{__version__}',
+            'logs': traceback.format_tb(self.logger.exception_log[self.selected][2])[0].strip()
+        }
+        webbrowser.open(f'{base}?{encode_url_params(params)}')
 
     def disable_exception_widgets(self) -> None:
         """Disables the widgets on the right pane."""
@@ -157,9 +173,11 @@ class ExceptionReporter(QWidget):
         for i, error in enumerate(self.logger.exception_log):
             button = QPushButton(type(error.exception).__name__, self.scroll_widget)
             button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
-            button.clicked.connect(DeferredCallable(self.clear_button.setDisabled, False))
-            button.clicked.connect(DeferredCallable(self.report_button.setDisabled, False))
-            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setDisabled, False))
+            button.clicked.connect(DistributedCallable((
+                self.clear_button.setDisabled,
+                self.report_button.setDisabled,
+                self.trace_back_viewer.setDisabled
+            ), False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
                 app().translator, 'gui.exception_reporter.traceback_view',
                 type(error.exception).__name__, error[1], traceback.format_tb(error[2])[0]

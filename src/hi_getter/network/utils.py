@@ -5,11 +5,13 @@
 
 __all__ = (
     'decode_url',
+    'encode_url_params',
     'HTTP_CODE_MAP',
 )
 
 from http import HTTPStatus
 from urllib.parse import unquote as decode_url
+from urllib.parse import urlencode as encode_url_params
 
 # pylint: disable=not-an-iterable
 HTTP_CODE_MAP = {status.value: (status.phrase, status.description) for status in HTTPStatus}

@@ -21,7 +21,6 @@ from PySide6.QtWidgets import *
 
 from .._version import __version__
 from ..network import *
-from ..network import HTTP_CODE_MAP
 from ..constants import *
 from ..events import *
 from ..exceptions import ExceptionEvent
