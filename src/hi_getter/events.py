@@ -6,6 +6,8 @@
 __all__ = (
     'Event',
     'EventBus',
+    'EventPredicate',
+    'EventRunnable',
 )
 
 from collections import defaultdict

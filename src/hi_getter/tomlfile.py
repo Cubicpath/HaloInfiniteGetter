@@ -27,12 +27,22 @@ from toml.decoder import CommentValue
 
 from .events import *
 
-COMMENT_PREFIX:      Final[str] = '# '
-SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
+_COMMENT_PREFIX:      Final[str] = '# '
+_SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
 TomlTable: TypeAlias = dict[str, 'TomlValue']
 TomlValue: TypeAlias = TomlTable | list | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
+
+
+def make_comment_val(val: TomlValue, comment: str | None = None, new_line=False) -> CommentValue:
+    """Build and return :py:class:`CommentValue`."""
+    return CommentValue(
+        val=val,
+        comment=f'{_COMMENT_PREFIX}{comment}' if comment is not None else None,
+        beginline=new_line,
+        _dict=dict
+    )
 
 
 class TomlEvents:
@@ -101,8 +111,8 @@ class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
     """
     def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str]:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
-        if v[1:].startswith(SPECIAL_PATH_PREFIX):
-            v_path = Path(v[1:].removeprefix(SPECIAL_PATH_PREFIX)[:-1])
+        if v[1:].startswith(_SPECIAL_PATH_PREFIX):
+            v_path = Path(v[1:].removeprefix(_SPECIAL_PATH_PREFIX)[:-1])
             return v_path, 'path'
         return super().load_value(v=v, strictly_valid=strictly_valid)
 
@@ -128,7 +138,7 @@ class PathTomlEncoder(toml.TomlEncoder):
         if isinstance(v, PurePath):
             if isinstance(v, Path):
                 v = v.resolve()
-            v = f'{SPECIAL_PATH_PREFIX}{v}'
+            v = f'{_SPECIAL_PATH_PREFIX}{v}'
         return super().dump_value(v=v)
 
 
@@ -225,7 +235,7 @@ class TomlFile:
         # Preserve comments, or edit them if comment argument was filled
         prev_val = scope.get(path)
         if isinstance(prev_val, CommentValue):
-            value = make_comment_val(value, prev_val.comment.lstrip().removeprefix(COMMENT_PREFIX), new_line=prev_val.comment.startswith('\n'))
+            value = make_comment_val(value, prev_val.comment.lstrip().removeprefix(_COMMENT_PREFIX), new_line=prev_val.comment.startswith('\n'))
             if comment is not None:
                 value.comment = comment
         if not isinstance(value, CommentValue) and comment is not None:
@@ -288,13 +298,3 @@ class TomlFile:
         # If failed:
         self.event_bus << TomlEvents.Fail(self, 'import')
         return False
-
-
-def make_comment_val(val: TomlValue, comment: str | None = None, new_line=False) -> CommentValue:
-    """Build and return :py:class:`CommentValue`."""
-    return CommentValue(
-        val=val,
-        comment=f'{COMMENT_PREFIX}{comment}' if comment is not None else None,
-        beginline=new_line,
-        _dict=dict
-    )

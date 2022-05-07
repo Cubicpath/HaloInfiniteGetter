@@ -4,6 +4,8 @@
 """Module containing code related to translation and language files."""
 
 __all__ = (
+    'format_value',
+    'LANG_PATH',
     'Language',
     'Translator',
 )
@@ -22,6 +24,47 @@ from .constants import *
 
 LANG_PATH: Path = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
+
+
+def format_value(value: str, *args, _language: 'Language' = None) -> str:
+    """Format a str with positional arguments.
+
+    You can use {0} notation to refer to a specific positional argument.
+    If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
+
+    JSON strings ex::
+
+        {
+            "a": "{0} is the same as {0} using only one argument.",
+            "b": "{0} %s will not work and require 2 arguments",
+            "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
+        }
+    """
+    list_args: list = list(args)
+
+    pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
+    key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
+    replaced: set[str] = set()
+
+    for match in pos_param_ref.finditer(value):
+        match = match[0]
+        arg_val = args[int(match.strip('{}'))]
+        if match not in replaced:
+            replaced.add(match)
+            value = value.replace(match, arg_val)
+            list_args.remove(arg_val)
+
+    value = value % tuple(list_args)
+
+    replaced.clear()
+    if _language is not None:
+        for match in key_ref.finditer(value):
+            match = match[0]
+            if match not in replaced:
+                replaced.add(match)
+                value = value.replace(match, _language.get_raw(match.strip('{}')))
+
+    return value
 
 
 class Language:
@@ -264,44 +307,3 @@ class Translator:
             language = language.replace(' ', '-').replace('_', '-').strip()
             language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
         return language
-
-
-def format_value(value: str, *args, _language: Language = None) -> str:
-    """Format a str with positional arguments.
-
-    You can use {0} notation to refer to a specific positional argument.
-    If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
-
-    JSON strings ex::
-
-        {
-            "a": "{0} is the same as {0} using only one argument.",
-            "b": "{0} %s will not work and require 2 arguments",
-            "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
-        }
-    """
-    list_args: list = list(args)
-
-    pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
-    key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
-    replaced: set[str] = set()
-
-    for match in pos_param_ref.finditer(value):
-        match = match[0]
-        arg_val = args[int(match.strip('{}'))]
-        if match not in replaced:
-            replaced.add(match)
-            value = value.replace(match, arg_val)
-            list_args.remove(arg_val)
-
-    value = value % tuple(list_args)
-
-    replaced.clear()
-    if _language is not None:
-        for match in key_ref.finditer(value):
-            match = match[0]
-            if match not in replaced:
-                replaced.add(match)
-                value = value.replace(match, _language.get_raw(match.strip('{}')))
-
-    return value

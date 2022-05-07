@@ -4,6 +4,7 @@
 """Custom :py:class:`Exception`'s and excepthook implementation."""
 
 __all__ = (
+    'ExceptHookCallable',
     'ExceptionEvent',
     'ExceptionHook',
 )

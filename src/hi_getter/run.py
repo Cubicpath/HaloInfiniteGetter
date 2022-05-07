@@ -24,13 +24,13 @@ from .gui import *
 from .tomlfile import *
 from .utils import *
 
-DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
-LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
-SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
+_DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
+_LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
+_SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
 # Read default settings file
 default_settings: TomlTable = toml.loads(
-    DEFAULTS_FILE.read_text(encoding='utf8').replace(
+    _DEFAULTS_FILE.read_text(encoding='utf8').replace(
         '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
     ), decoder=PathTomlDecoder()
 )
@@ -38,18 +38,18 @@ default_settings: TomlTable = toml.loads(
 
 def _create_paths() -> None:
     """Create files and directories if they do not exist."""
-    if not LAUNCHED_FILE.is_file():
+    if not _LAUNCHED_FILE.is_file():
         # Create first-launch marker
-        LAUNCHED_FILE.touch()
-        hide_windows_file(LAUNCHED_FILE)
+        _LAUNCHED_FILE.touch()
+        hide_windows_file(_LAUNCHED_FILE)
 
     for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
         if not dir_path.is_dir():
             os.makedirs(dir_path)
 
-    if not SETTINGS_FILE.is_file():
+    if not _SETTINGS_FILE.is_file():
         # Write default_settings to user's SETTINGS_FILE
-        with SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
+        with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
             toml.dump(default_settings, file, encoder=PathTomlEncoder())
 
 
@@ -63,13 +63,13 @@ def main(*args, **kwargs) -> int:
     load_dotenv(verbose=True)
 
     # Check if launched marker exists
-    first_launch = not LAUNCHED_FILE.is_file()
+    first_launch = not _LAUNCHED_FILE.is_file()
 
     _create_paths()
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
 
     with ExceptionHook():
-        APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_FILE, default=default_settings), first_launch=first_launch)
+        APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=default_settings), first_launch=first_launch)
         APP.load_themes()
 
         CLIENT:     Final[Client] = kwargs.pop('client', Client())

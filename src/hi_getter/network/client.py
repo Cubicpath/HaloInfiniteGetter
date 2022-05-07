@@ -5,6 +5,8 @@
 
 __all__ = (
     'Client',
+    'TOKEN_PATH',
+    'WPAUTH_PATH',
 )
 
 import json
