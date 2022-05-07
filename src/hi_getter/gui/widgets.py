@@ -383,7 +383,7 @@ class LicenseViewer(QWidget):
         super().__init__(*args, **kwargs)
         self.setWindowTitle(app().translator('gui.license_viewer.title'))
         self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
-        self.resize(QSize(750, 380))
+        self.resize(QSize(750, 550))
         self.current_license_index = 0
 
         self.license_label:       QLabel
@@ -445,8 +445,7 @@ class LicenseViewer(QWidget):
         """Views the license data of the given package name."""
         license_text = self.LICENSE_DATA[package][1] or app().translator('gui.license_viewer.not_found')
         self.current_license_index = tuple(self.LICENSE_DATA).index(package)
-        # TODO: Add translations
-        self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" License')
+        self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" {app().translator("gui.license_viewer.license")}')
         self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')
 
         output = license_text

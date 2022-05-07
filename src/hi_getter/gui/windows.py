@@ -323,7 +323,6 @@ class SettingsWindow(QWidget):
         self.token_clear_button.setDisabled(not self.client.token)
 
 
-# TODO: Add exception logger
 # noinspection PyArgumentList
 class AppWindow(QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
