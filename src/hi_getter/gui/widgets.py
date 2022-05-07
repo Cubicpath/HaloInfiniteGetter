@@ -171,7 +171,7 @@ class ExceptionReporter(QWidget):
         """Load the exceptions from the logger."""
         delete_layout_widgets(self.scroll_widget.layout())
         for i, error in enumerate(self.logger.exception_log):
-            button = QPushButton(type(error.exception).__name__, self.scroll_widget)
+            button = QPushButton(f'{type(error.exception).__name__}: {error.exception}', self.scroll_widget)
             button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
             button.clicked.connect(DistributedCallable((
                 self.clear_button.setDisabled,
@@ -183,11 +183,16 @@ class ExceptionReporter(QWidget):
                 type(error.exception).__name__, error[1], traceback.format_tb(error[2])[0]
             )))
 
+            button.setStyleSheet("text-align:left;")
+            button.setMaximumWidth((self.size().width() // 3) - 50)
+
             self.scroll_widget.layout().addWidget(button)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resizes the left panel to better fit the window."""
-        self.left_panel.setMaximumWidth(event.size().width() / 3)
+        self.left_panel.setMaximumWidth(event.size().width() // 3)
+        for i in range(self.scroll_widget.layout().count()):
+            self.scroll_widget.layout().itemAt(i).widget().setMaximumWidth((event.size().width() // 3) - 50)
 
 
 class ExceptionLogger(QPushButton):
@@ -207,11 +212,11 @@ class ExceptionLogger(QPushButton):
         super().__init__(*args, **kwargs)
         EventBus['exceptions'].subscribe(self.on_exception, ExceptionEvent)
 
-        self.exception_log:   list[ExceptionLogger.LoggedException] = []
-        self.reporter:        ExceptionReporter = ExceptionReporter(self)
-        self.reporter.setMinimumWidth(300)
+        self.exception_log:    list[ExceptionLogger.LoggedException] = []
+        self.reporter:         ExceptionReporter = ExceptionReporter(self)
+        self.severity:         int = 0
 
-        self.severity = 0
+        self.reporter.setMinimumWidth(300)
 
     def clear_exceptions(self) -> None:
         """Clear the exception log and disable the button."""
