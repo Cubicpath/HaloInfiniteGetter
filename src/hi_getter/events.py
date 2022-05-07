@@ -10,15 +10,13 @@ __all__ = (
 
 from collections import defaultdict
 from collections.abc import Callable
+from typing import Generic
 from typing import Optional
+from typing import overload
 from typing import TypeAlias
 from typing import TypeVar
 
 from . import utils
-
-_ET_co = TypeVar('_ET_co', bound='Event', covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
-_EventPredicate: TypeAlias = Callable[[_ET_co], bool]
-_EventRunnable:  TypeAlias = Callable[[_ET_co], None]
 
 
 class Event:
@@ -62,10 +60,15 @@ class Event:
         return doc.splitlines()[0]
 
 
+_ET_co = TypeVar('_ET_co', bound=Event, covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
+_EventPredicate: TypeAlias = Callable[[_ET_co], bool]
+_EventRunnable:  TypeAlias = Callable[[_ET_co], None]
+
+
 class _Subscribers(defaultdict[type[Event], list[tuple[
     _EventRunnable,          # Callable to run
     _EventPredicate | None   # Optional predicate to run callable
-]]]):
+]]], Generic[_ET_co]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
     def __init__(self) -> None:
@@ -99,6 +102,11 @@ class _EventBusMeta(type):
     _id_bus_map: dict[str, 'EventBus'] = {}
 
     @classmethod
+    @overload
+    def __getitem__(mcs, _: type[Event] | str, /) -> Optional['EventBus']:
+        """Exist to support Generic Typing on :py:class:`EventBus`."""
+
+    @classmethod
     def __getitem__(mcs, id: str) -> Optional['EventBus']:
         return mcs._id_bus_map.get(id.lower())
 
@@ -118,7 +126,7 @@ class _EventBusMeta(type):
 
 
 # pylint: disable=deprecated-typing-alias
-class EventBus(metaclass=_EventBusMeta):
+class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
     """Object that keeps track of all :py:class:`Callable` subscriptions to :py:class:`Event`'s.
 
     An Event Bus is an event-driven structure that stores both events and functions. When an

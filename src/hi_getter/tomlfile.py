@@ -152,7 +152,7 @@ class TomlFile:
         self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
         self._data: dict[str, TomlValue | CommentValue] = default if default is not None else {}
-        self.event_bus: EventBus = EventBus()
+        self.event_bus: EventBus[TomlEvents.TomlEvent] = EventBus()
         if self.reload() is False:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
