@@ -138,7 +138,7 @@ class GetterApp(QApplication):
             if isinstance(path, CommentValue):
                 path = Path(path.val)
             if path.is_dir():
-                search_path = f'hi_theme_{id_}'
+                search_path = f'hi_theme+{id_}'
 
                 QDir.addSearchPath(search_path, str(path))
                 file = QFile(f'{search_path}:stylesheet.qss')
