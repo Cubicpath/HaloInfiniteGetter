@@ -288,6 +288,11 @@ class ExternalTextBrowser(QTextBrowser):
 
     def hot_reload(self) -> None:
         """Reload cached text using the cached type's function."""
+        # Remember scroll position
+        scroll = self.verticalScrollBar().sliderPosition()
+
+        # Reload all resources and replace text with cached text
+        self.clear()
         match self.cached_type:
             case 'markdown':
                 self.setMarkdown(self.cached_text)
@@ -295,6 +300,7 @@ class ExternalTextBrowser(QTextBrowser):
                 self.setHtml(self.cached_text)
             case 'text':
                 self.setPlainText(self.cached_text)
+        self.verticalScrollBar().setSliderPosition(scroll)
 
     def set_hot_reloadable_text(self, text: str, text_type: str) -> None:
         """Set text that is designated to be hot-reloadable."""
@@ -318,7 +324,6 @@ class ExternalTextBrowser(QTextBrowser):
                     self.remote_image_cache[url.toDisplayString()] = data
 
                     if self.cached_type:
-                        self.clear()
                         self.hot_reload()
 
                 reply.finished.connect(handle_reply)

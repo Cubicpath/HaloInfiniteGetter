@@ -67,7 +67,6 @@ class GetterApp(QApplication):
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self.session.manager.finished.connect(lambda a: print(a.readAll()))
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
