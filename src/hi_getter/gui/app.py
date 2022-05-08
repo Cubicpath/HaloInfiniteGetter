@@ -67,7 +67,7 @@ class GetterApp(QApplication):
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        # app().session.manager.finished.connect(lambda a: print(a.readAll()))
+        self.session.manager.finished.connect(lambda a: print(a.readAll()))
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
@@ -110,7 +110,6 @@ class GetterApp(QApplication):
             self._registered_translations.callables.add(translate)
             translate()
 
-    # noinspection PyUnresolvedReferences, PyProtectedMember
     def update_language(self) -> None:
         """Set the application language to the one currently selected in settings.
 

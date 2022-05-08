@@ -31,6 +31,8 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="PySide6.QtGui.triggered.connect" />
+          <option value="PySide6.QtNetwork.QNetworkAccessManager.finished" />
+          <option value="PySide6.QtNetwork.QNetworkReply.finished" />
           <option value="PySide6.QtWidgets.activated.connect" />
           <option value="PySide6.QtWidgets.returnPressed.connect" />
           <option value="PySide6.QtWidgets.QTextBrowser.anchorClicked" />

@@ -40,11 +40,10 @@ def format_value(value: str, *args, _language: 'Language' = None) -> str:
             "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
         }
     """
-    list_args: list = list(args)
-
+    list_args:     list = list(args)
+    replaced:      set[str] = set()
     pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
     key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
-    replaced: set[str] = set()
 
     for match in pos_param_ref.finditer(value):
         match = match[0]
