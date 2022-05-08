@@ -350,7 +350,7 @@ class AppWindow(QMainWindow):
         self.text_frame:          QFrame
         self.text_size_label:     QLabel
         self.text_detach_button:  QPushButton
-        self.text_output:         RequestsTextBrowser
+        self.text_output:         ExternalTextBrowser
         self.clear_picture:       QPushButton
         self.copy_picture:        QPushButton
         self.clear_text:          QPushButton
@@ -535,7 +535,7 @@ class AppWindow(QMainWindow):
             HistoryComboBox(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QFrame(self), QFrame(self), QGraphicsView(self), RequestsTextBrowser(self),
+            QFrame(self), QFrame(self), QGraphicsView(self), ExternalTextBrowser(self),
             PasteLineEdit(self), PasteLineEdit(self)
         )
 

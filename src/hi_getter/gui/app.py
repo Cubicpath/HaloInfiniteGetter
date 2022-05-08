@@ -21,6 +21,7 @@ from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..network import HTTP_CODE_MAP
+from ..network import NetworkWrapper
 from ..tomlfile import *
 
 
@@ -62,9 +63,11 @@ class GetterApp(QApplication):
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
         self.translator:      Translator = Translator(settings['language'])
+        self.session = NetworkWrapper()
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
+        # app().session.manager.finished.connect(lambda a: print(a.readAll()))
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)

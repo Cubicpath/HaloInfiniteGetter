@@ -6,11 +6,11 @@
 __all__ = (
     'ExceptionReporter',
     'ExceptionLogger',
+    'ExternalTextBrowser',
     'HistoryComboBox',
     'LicenseViewer',
     'PasteLineEdit',
     'ReadmeViewer',
-    'RequestsTextBrowser',
 )
 
 import traceback
@@ -24,7 +24,6 @@ from types import TracebackType
 from typing import Any
 from typing import Optional
 
-import requests
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -67,7 +66,7 @@ class ExceptionReporter(QWidget):
         left_label = QLabel(self.left_panel)
         right_label = QLabel(self.right_panel)
         clear_all_button = QPushButton(self.left_panel)
-        self.trace_back_viewer = RequestsTextBrowser(self)
+        self.trace_back_viewer = ExternalTextBrowser(self)
         self.clear_button = QPushButton(self.right_panel)
         self.report_button = QPushButton(self.right_panel)
 
@@ -272,23 +271,7 @@ class ExceptionLogger(QPushButton):
         self.reporter.setWindowIcon(self.icon())
 
 
-class PasteLineEdit(QLineEdit):
-    """A :py:class:`QLineEdit` with an added paste listener."""
-    pasted = Signal(name='pasted')
-
-    def __init__(self, *args, pasted: Optional[Callable] = None, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        if pasted is not None:
-            self.pasted.connect(pasted)
-
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        """Call self.pasted on paste."""
-        super().keyPressEvent(event)
-        if event.matches(QKeySequence.Paste):
-            self.pasted.emit()
-
-
-class RequestsTextBrowser(QTextBrowser):
+class ExternalTextBrowser(QTextBrowser):
     """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s.
 
     Also supports external image loading and caching.
@@ -300,8 +283,25 @@ class RequestsTextBrowser(QTextBrowser):
 
         # default factory producing empty DeferredCallables
         self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
+        self.cached_text: str = ''
+        self.cached_type: str = ''
 
-    # TODO: Make multiple requests asynchronous
+    def hot_reload(self) -> None:
+        """Reload cached text using the cached type's function."""
+        match self.cached_type:
+            case 'markdown':
+                self.setMarkdown(self.cached_text)
+            case 'html':
+                self.setHtml(self.cached_text)
+            case 'text':
+                self.setPlainText(self.cached_text)
+
+    def set_hot_reloadable_text(self, text: str, text_type: str) -> None:
+        """Set text that is designated to be hot-reloadable."""
+        self.cached_text = text
+        self.cached_type = text_type
+        self.hot_reload()
+
     def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl) -> Any:
         """Load a resource from an url.
 
@@ -310,9 +310,18 @@ class RequestsTextBrowser(QTextBrowser):
         if resource_type == QTextDocument.ResourceType.ImageResource and not url.isLocalFile():
             image: QImage = QImage()
             if url.toDisplayString() not in self.remote_image_cache:
-                img_data: bytes = requests.get(url.toDisplayString()).content
-                image.loadFromData(img_data)
-                self.remote_image_cache[url.toDisplayString()] = img_data
+                reply = app().session.get(url)
+
+                def handle_reply():
+                    data: bytes = reply.readAll()
+                    image.loadFromData(data)
+                    self.remote_image_cache[url.toDisplayString()] = data
+
+                    if self.cached_type:
+                        self.clear()
+                        self.hot_reload()
+
+                reply.finished.connect(handle_reply)
             else:
                 image.loadFromData(self.remote_image_cache[url.toDisplayString()])
             return image
@@ -332,6 +341,22 @@ class RequestsTextBrowser(QTextBrowser):
         """Execute :py:class:`Callable` mapped to the key press."""
         super().keyPressEvent(event)
         self.key_callable_map[event.key()]()
+
+
+class PasteLineEdit(QLineEdit):
+    """A :py:class:`QLineEdit` with an added paste listener."""
+    pasted = Signal(name='pasted')
+
+    def __init__(self, *args, pasted: Optional[Callable] = None, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if pasted is not None:
+            self.pasted.connect(pasted)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Call self.pasted on paste."""
+        super().keyPressEvent(event)
+        if event.matches(QKeySequence.Paste):
+            self.pasted.emit()
 
 
 class HistoryComboBox(QComboBox):
@@ -388,7 +413,7 @@ class LicenseViewer(QWidget):
 
         self.license_label:       QLabel
         self.license_index_label: QLabel
-        self.license_text_edit:   RequestsTextBrowser
+        self.license_text_edit:   ExternalTextBrowser
         self.next_license_button: QPushButton
         self.prev_license_button: QPushButton
         self._init_ui()
@@ -396,7 +421,7 @@ class LicenseViewer(QWidget):
     def _init_ui(self) -> None:
         self.license_label:       QLabel = QLabel(self)
         self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}', self)
-        self.license_text_edit:   RequestsTextBrowser = RequestsTextBrowser(self)
+        self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
         self.next_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.next'), clicked=self.next_license)
         self.prev_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.previous'), clicked=self.prev_license)
 
@@ -485,7 +510,7 @@ class ReadmeViewer(QWidget):
         """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
 
     def _init_ui(self) -> None:
-        readme_viewer = RequestsTextBrowser(self)
+        readme_viewer = ExternalTextBrowser(self)
         close_button = QPushButton("Close", self, clicked=self.close)
 
         readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func.__doc__
@@ -497,7 +522,7 @@ class ReadmeViewer(QWidget):
         layout.addWidget(close_button)
 
         readme_viewer.setOpenExternalLinks(True)
-        readme_viewer.setMarkdown(self.README_TEXT)
+        readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')
         readme_viewer.setFont(QFont(readme_viewer.font().family(), 10))
         close_button.setMinimumHeight(40)
         close_button.setFont(QFont(close_button.font().family(), 16))
