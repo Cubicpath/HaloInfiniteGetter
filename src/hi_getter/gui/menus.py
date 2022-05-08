@@ -31,6 +31,8 @@ from .widgets import *
 
 _PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
+# TODO: Add fading in/out animations to menus
+
 
 # noinspection PyArgumentList
 class FileContextMenu(QMenu):
@@ -41,24 +43,24 @@ class FileContextMenu(QMenu):
         super().__init__(parent)
 
         open_explorer: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.png')),
             app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
         flush_cache:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.png')),
             app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
         import_from:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/import.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/import.png')),
             app().translator('gui.menus.file.import'), self, triggered=self.import_data
         )
 
         export_to:     QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/export.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/export.png')),
             app().translator('gui.menus.file.export'), self, triggered=self.export_data
         )
 
@@ -129,12 +131,12 @@ class HelpContextMenu(QMenu):
         )
 
         about_view:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/about.png')),
             app().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         license_view: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')),
+            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.png')),
             app().translator('gui.menus.help.license'), self, triggered=self.license_window.show
         )
 
@@ -148,8 +150,6 @@ class HelpContextMenu(QMenu):
             'Information': (about_view, license_view, readme)
         }
 
-        # print({k: v for k, v in locals().items() if isinstance(v, QObject)})
-
         for section, actions in section_map.items():
             self.addSection(section)
             self.addActions(actions)
@@ -157,7 +157,7 @@ class HelpContextMenu(QMenu):
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         """Open the application's about section."""
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.png')))
         QMessageBox.information(self, *self.about_message())
 
     @staticmethod

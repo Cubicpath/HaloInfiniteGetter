@@ -407,7 +407,7 @@ class LicenseViewer(QWidget):
         """
         super().__init__(*args, **kwargs)
         self.setWindowTitle(app().translator('gui.license_viewer.title'))
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.png')))
         self.resize(QSize(750, 550))
         self.current_license_index = 0
 

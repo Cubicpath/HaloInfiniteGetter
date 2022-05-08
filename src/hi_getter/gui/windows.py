@@ -45,7 +45,7 @@ class SettingsWindow(QWidget):
         self.app_window = parent
 
         self.setWindowTitle(app().translator('gui.settings.title'))
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.ico')))
+        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.png')))
         self.resize(size)
         self.setFixedWidth(self.width())
 
