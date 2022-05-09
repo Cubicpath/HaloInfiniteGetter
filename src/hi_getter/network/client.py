@@ -38,8 +38,8 @@ class Client:
     def __init__(self, **kwargs) -> None:
         """Initializes Halo Waypoint Client
 
-        token is first taken from token kwarg, then SPARTAN_AUTH environment variable, then from user's .token file.
-        wpauth is first taken from wpauth kwarg, then WAYPOINT_AUTH environment variable, then from the user's .wpauth file.
+        token is first taken from token kwarg, then HI_SPARTAN_AUTH environment variable, then from user's .token file.
+        wpauth is first taken from wpauth kwarg, then HI_WAYPOINT_AUTH environment variable, then from the user's .wpauth file.
 
         :keyword token: Token to authenticate self to 343 API.
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
@@ -50,11 +50,11 @@ class Client:
         self.sub_host:       str = 'gamecms-hacs-origin'  # Must be defined before session headers
         self.searched_paths: dict = {}
 
-        self._token: str | None = kwargs.pop('token', os.getenv('SPARTAN_AUTH', None))
+        self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
         if self._token is None and TOKEN_PATH.is_file():
             self._token = TOKEN_PATH.read_text(encoding='utf8').strip()
 
-        self._wpauth: str | None = kwargs.pop('wpauth', os.getenv('WAYPOINT_AUTH', None))
+        self._wpauth: str | None = kwargs.pop('wpauth', os.getenv('HI_WAYPOINT_AUTH', None))
         if self._wpauth is None and WPAUTH_PATH.is_file():
             self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
 
