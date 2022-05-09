@@ -70,7 +70,6 @@ def main(*args, **kwargs) -> int:
 
     with ExceptionHook():
         APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=default_settings), first_launch=first_launch)
-        APP.load_themes()
 
         CLIENT:     Final[Client] = kwargs.pop('client', Client())
         SIZE:       Final[QSize] = QSize(

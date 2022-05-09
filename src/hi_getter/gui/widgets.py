@@ -325,6 +325,7 @@ class ExternalTextBrowser(QTextBrowser):
 
                     if self.cached_type:
                         self.hot_reload()
+                    reply.deleteLater()
 
                 reply.finished.connect(handle_reply)
             else:
@@ -412,7 +413,7 @@ class LicenseViewer(QWidget):
         """
         super().__init__(*args, **kwargs)
         self.setWindowTitle(app().translator('gui.license_viewer.title'))
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.png')))
+        self.setWindowIcon(app().icon_store['copyright'])
         self.resize(QSize(750, 550))
         self.current_license_index = 0
 

@@ -5,8 +5,10 @@
 
 __all__ = (
     'delete_layout_widgets',
+    'icon_from_bytes',
     'init_objects',
     'scroll_to_top',
+    'set_or_swap_icon',
 )
 
 from collections.abc import Iterable
@@ -14,6 +16,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from PySide6.QtCore import *
+from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..lang import Translator
@@ -28,6 +31,14 @@ def delete_layout_widgets(layout: QLayout) -> None:
     """Delete all widgets in a layout."""
     while (item := layout.takeAt(0)) is not None:
         item.widget().deleteLater()
+
+
+def icon_from_bytes(data: bytes) -> QIcon:
+    """Create a :py:class:`QIcon` from bytes using a :py:class:`QPixmap` as a proxy."""
+    pixmap = QPixmap()
+    pixmap.loadFromData(data)
+    icon = QIcon(pixmap)
+    return icon
 
 
 # noinspection PyUnresolvedReferences
@@ -110,3 +121,11 @@ def scroll_to_top(widget: QTextEdit) -> None:
     cursor = widget.textCursor()
     cursor.setPosition(0)
     widget.setTextCursor(cursor)
+
+
+def set_or_swap_icon(mapping: dict[str, QIcon], key: str, value: QIcon):
+    """Given a mapping, replace a QIcon value mapped to the given key with data from another, while keeping the same object references."""
+    if key in mapping:
+        mapping[key].swap(value)
+    else:
+        mapping[key] = value

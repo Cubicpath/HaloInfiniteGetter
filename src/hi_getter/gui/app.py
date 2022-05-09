@@ -9,20 +9,24 @@ __all__ = (
     'Theme',
 )
 
+import json
 from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
 
 from PySide6.QtCore import *
+from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from ..constants import *
 from ..events import *
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
-from ..network import HTTP_CODE_MAP
-from ..network import NetworkWrapper
+from ..network import *
 from ..tomlfile import *
+from .utils import icon_from_bytes
+from .utils import set_or_swap_icon
 
 
 def app() -> 'GetterApp':
@@ -62,16 +66,20 @@ class GetterApp(QApplication):
         self._legacy_style: str = self.styleSheet()
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
-        self.translator:      Translator = Translator(settings['language'])
-        self.session = NetworkWrapper()
+        self.icon_store:      dict[str, QIcon] = {}
+        self.session:         NetworkWrapper = NetworkWrapper()
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
+        self.translator: Translator = Translator(settings['language'])
 
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+        self.load_icons()
+        self.load_themes()
 
     @classmethod
     def instance(cls) -> 'GetterApp':
@@ -121,6 +129,32 @@ class GetterApp(QApplication):
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
         self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
+
+    def load_icons(self) -> None:
+        """Load all icons needed for the application.
+
+        Fetch locally stored icons from the HI_RESOURCE_PATH/icons directory
+
+        Asynchronously fetch externally stored icons from urls defined in HI_RESOURCE_PATH/external_icons.json
+        """
+        # Load locally stored icons
+        self.icon_store.update({
+            filename.with_suffix('').name: QIcon(str(filename)) for filename in (HI_RESOURCE_PATH / 'icons').iterdir() if filename.is_file()
+        })
+
+        # Load externally stored icons
+        external_icon_links: dict[str, str] = json.loads((HI_RESOURCE_PATH / 'external_icons.json').read_text(encoding='utf8'))
+
+        # pylint: disable=cell-var-from-loop
+        for key, url in external_icon_links.items():
+            reply = app().session.get(url)
+
+            def handle_reply():
+                icon = icon_from_bytes(reply.readAll())
+                set_or_swap_icon(self.icon_store, key, icon)
+                reply.deleteLater()
+
+            reply.finished.connect(handle_reply)
 
     def load_themes(self) -> None:
         """Load all theme locations from settings and store them in self.themes.

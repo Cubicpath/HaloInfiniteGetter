@@ -125,7 +125,6 @@ class _EventBusMeta(type):
         del mcs._id_bus_map[id.lower()]
 
 
-# pylint: disable=deprecated-typing-alias
 class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
     """Object that keeps track of all :py:class:`Callable` subscriptions to :py:class:`Event`'s.
 
