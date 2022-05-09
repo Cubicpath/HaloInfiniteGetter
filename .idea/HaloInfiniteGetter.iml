@@ -11,6 +11,8 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
     </content>
+    <content url="file://$USER_HOME$/.cache/hi_getter" />
+    <content url="file://$USER_HOME$/.config/hi_getter" />
     <orderEntry type="jdk" jdkName="Python 3.10 (HaloInfiniteGetter)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
