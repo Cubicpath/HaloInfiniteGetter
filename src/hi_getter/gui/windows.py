@@ -769,8 +769,8 @@ class AppWindow(QMainWindow):
                         data = app().translator(
                             'gui.outputs.text.errors.http',
                             self.client.api_root + search_path,  # Search path
-                            data, HTTP_CODE_MAP[data][0],        # Error code and phrase
-                            HTTP_CODE_MAP[data][1]               # Error description
+                            data, http_code_map[data][0],        # Error code and phrase
+                            http_code_map[data][1]               # Error description
                         )
                         self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
                         self.text_output.setPlainText(data)

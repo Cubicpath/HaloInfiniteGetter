@@ -22,6 +22,7 @@ from collections.abc import Sequence
 from importlib.metadata import metadata
 from types import TracebackType
 from typing import Any
+from typing import Final
 from typing import Optional
 
 from PySide6.QtCore import *
@@ -39,9 +40,8 @@ from ..utils import current_requirement_licenses
 from .app import app
 from .utils import delete_layout_widgets
 from .utils import init_objects
+from .utils import PARENT_PACKAGE
 from .utils import scroll_to_top
-
-_PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
 
 class ExceptionReporter(QWidget):
@@ -404,7 +404,7 @@ class HistoryComboBox(QComboBox):
 # TODO: Move to windows.py
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
-    LICENSE_DATA = current_requirement_licenses(_PARENT_PACKAGE)
+    LICENSE_DATA: Final[dict[str, tuple[str, str]]] = current_requirement_licenses(PARENT_PACKAGE)
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
@@ -433,7 +433,7 @@ class LicenseViewer(QWidget):
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
-        self.view_package(_PARENT_PACKAGE)
+        self.view_package(PARENT_PACKAGE)
 
         layout = QVBoxLayout(self)
         top = QHBoxLayout()
@@ -503,7 +503,7 @@ class LicenseViewer(QWidget):
 # TODO: Move to windows.py
 class ReadmeViewer(QWidget):
     """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
-    README_TEXT = metadata(_PARENT_PACKAGE)['Description']
+    README_TEXT: Final[str] = metadata(PARENT_PACKAGE)['Description']
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

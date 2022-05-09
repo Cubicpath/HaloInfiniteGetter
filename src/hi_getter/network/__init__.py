@@ -7,7 +7,7 @@ __all__ = (
     'Client',
     'decode_url',
     'encode_url_params',
-    'HTTP_CODE_MAP',
+    'http_code_map',
     'NetworkWrapper',
 )
 
@@ -15,4 +15,4 @@ from .client import Client
 from .manager import NetworkWrapper
 from .utils import decode_url
 from .utils import encode_url_params
-from .utils import HTTP_CODE_MAP
+from .utils import http_code_map

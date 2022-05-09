@@ -7,6 +7,7 @@ __all__ = (
     'delete_layout_widgets',
     'icon_from_bytes',
     'init_objects',
+    'PARENT_PACKAGE',
     'scroll_to_top',
     'set_or_swap_icon',
 )
@@ -14,12 +15,15 @@ __all__ = (
 from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
+from typing import Final
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..lang import Translator
+
+PARENT_PACKAGE: Final[str] = __package__.split('.', maxsplit=1)[0]
 
 
 def _return_arg(__arg: ..., /) -> ...:

@@ -100,7 +100,7 @@ class GetterApp(QApplication):
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""
         for code in (400, 401, 403, 404, 405, 406):
-            HTTP_CODE_MAP[code] = (HTTP_CODE_MAP[code][0], self.translator(f'network.http.codes.{code}.description'))
+            http_code_map[code] = (http_code_map[code][0], self.translator(f'network.http.codes.{code}.description'))
 
     def init_translations(self, translation_calls: dict[Callable, str]) -> None:
         """Initialize the translation of all objects.

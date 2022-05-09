@@ -26,9 +26,8 @@ from ..models import DeferredCallable
 from ..utils import current_requirement_versions
 from ..utils import has_package
 from .app import app
+from .utils import PARENT_PACKAGE
 from .widgets import *
-
-_PARENT_PACKAGE: str = __package__.split('.', maxsplit=1)[0]
 
 # TODO: Add fading in/out animations to menus
 
@@ -165,7 +164,7 @@ class HelpContextMenu(QMenu):
             app().translator(
                 'information.about.package_version',
                 package, version
-            ) for package, version in current_requirement_versions(_PARENT_PACKAGE).items() if has_package(package)
+            ) for package, version in current_requirement_versions(PARENT_PACKAGE).items() if has_package(package)
         )
 
         return (
@@ -215,7 +214,7 @@ class ToolsContextMenu(QMenu):
             name = exec_path.with_suffix('').name
             if not name.endswith('w'):
                 name += 'w'
-            shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {_PARENT_PACKAGE}'
+            shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {PARENT_PACKAGE}'
 
             with redirect_stdout(open(os.devnull, 'w', encoding='utf8')):
                 make_shortcut(script=shortcut_path, name=app().translator('app.name'),
