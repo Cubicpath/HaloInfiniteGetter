@@ -10,6 +10,7 @@ __all__ = (
 )
 
 import json
+import sys
 from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
@@ -25,6 +26,7 @@ from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..network import *
 from ..tomlfile import *
+from ..utils import has_package
 from .utils import icon_from_bytes
 from .utils import set_or_swap_icon
 
@@ -129,6 +131,19 @@ class GetterApp(QApplication):
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
         self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
+
+    def load_env(self, verbose: bool = True) -> None:
+        """Load environment variables from .env file."""
+        if not has_package('python-dotenv'):
+            dummy_widget = QWidget()
+            QMessageBox.critical(
+                dummy_widget, self.translator('errors.missing_package.title'),
+                self.translator('errors.missing_package.description', 'python-dotenv', Path(sys.executable))
+            )
+            dummy_widget.deleteLater()
+        else:
+            from dotenv import load_dotenv
+            load_dotenv(verbose=verbose)
 
     def load_icons(self) -> None:
         """Load all icons needed for the application.

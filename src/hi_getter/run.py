@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Final
 
 import toml
-from dotenv import load_dotenv
 from PySide6.QtCore import *
 
 from ._version import __version__
@@ -60,9 +59,6 @@ def main(*args, **kwargs) -> int:
     Args are passed to a QApplication instance.
     Kwargs are handled here.
     """
-    # Load environment variables from .env file
-    load_dotenv(verbose=True)
-
     # Check if launched marker exists
     first_launch = not _LAUNCHED_FILE.is_file()
 
@@ -71,6 +67,7 @@ def main(*args, **kwargs) -> int:
 
     with ExceptionHook():
         APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS), first_launch=first_launch)
+        APP.load_env(verbose=True)
 
         CLIENT:     Final[Client] = kwargs.pop('client', Client())
         SIZE:       Final[QSize] = QSize(
