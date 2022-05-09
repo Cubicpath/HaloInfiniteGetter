@@ -4,6 +4,7 @@
 """Initialize values and runs the application. :py:func:`main` acts as an entry-point."""
 
 __all__ = (
+    'DEFAULT_SETTINGS',
     'main',
 )
 
@@ -29,7 +30,7 @@ _LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
 _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
 # Read default settings file
-default_settings: TomlTable = toml.loads(
+DEFAULT_SETTINGS: Final[TomlTable] = toml.loads(
     _DEFAULTS_FILE.read_text(encoding='utf8').replace(
         '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
     ), decoder=PathTomlDecoder()
@@ -50,7 +51,7 @@ def _create_paths() -> None:
     if not _SETTINGS_FILE.is_file():
         # Write default_settings to user's SETTINGS_FILE
         with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
-            toml.dump(default_settings, file, encoder=PathTomlEncoder())
+            toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
 
 
 def main(*args, **kwargs) -> int:
@@ -69,7 +70,7 @@ def main(*args, **kwargs) -> int:
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
 
     with ExceptionHook():
-        APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=default_settings), first_launch=first_launch)
+        APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS), first_launch=first_launch)
 
         CLIENT:     Final[Client] = kwargs.pop('client', Client())
         SIZE:       Final[QSize] = QSize(
