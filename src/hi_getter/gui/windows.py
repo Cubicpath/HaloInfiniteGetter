@@ -850,4 +850,11 @@ class AppWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closes all detached/children windows and quit application."""
         super().closeEvent(event)
+
+        # Remember window size
+        app().settings.reload()
+        app().settings['gui/window/x_size'] = self.size().width()
+        app().settings['gui/window/y_size'] = self.size().height()
+        app().settings.save()
+
         app().quit()
