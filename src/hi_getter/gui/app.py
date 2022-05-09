@@ -50,7 +50,7 @@ class Theme:
         self.display_name: str = display_name if display_name is not None else self.id
 
 
-# TODO: Add logging functionality
+
 class GetterApp(QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
 

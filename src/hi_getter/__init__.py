@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Package initialization module. Import the Client and version info from here."""
+# TODO: Add logging functionality
 
 __all__ = (
     'Client',

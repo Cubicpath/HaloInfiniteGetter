@@ -401,7 +401,6 @@ class HistoryComboBox(QComboBox):
 
 
 # TODO: Zoom In/Out Buttons
-# TODO: Move to windows.py
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
     LICENSE_DATA: Final[dict[str, tuple[str, str]]] = current_requirement_licenses(PARENT_PACKAGE)
@@ -500,7 +499,6 @@ class LicenseViewer(QWidget):
         scroll_to_top(self.license_text_edit)
 
 
-# TODO: Move to windows.py
 class ReadmeViewer(QWidget):
     """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
     README_TEXT: Final[str] = metadata(PARENT_PACKAGE)['Description']
