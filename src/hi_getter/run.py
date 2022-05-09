@@ -39,14 +39,14 @@ DEFAULT_SETTINGS: Final[TomlTable] = toml.loads(
 
 def _create_paths() -> None:
     """Create files and directories if they do not exist."""
+    for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
+        if not dir_path.is_dir():
+            os.makedirs(dir_path)
+
     if not _LAUNCHED_FILE.is_file():
         # Create first-launch marker
         _LAUNCHED_FILE.touch()
         hide_windows_file(_LAUNCHED_FILE)
-
-    for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
-        if not dir_path.is_dir():
-            os.makedirs(dir_path)
 
     if not _SETTINGS_FILE.is_file():
         # Write default_settings to user's SETTINGS_FILE
