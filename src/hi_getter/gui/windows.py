@@ -45,7 +45,7 @@ class SettingsWindow(QWidget):
         self.app_window = parent
 
         self.setWindowTitle(app().translator('gui.settings.title'))
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/settings.png')))
+        self.setWindowIcon(app().icon_store['settings'])
         self.resize(size)
         self.setFixedWidth(self.width())
 
@@ -337,7 +337,7 @@ class AppWindow(QMainWindow):
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.change_title(app().translator('app.name') + f' v{__version__}')
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
+        self.setWindowIcon(app().icon_store['hi'])
         self.resize(size)
 
         self.settings_window = SettingsWindow(self, QSize(420, 600))
@@ -449,7 +449,7 @@ class AppWindow(QMainWindow):
             """
             window = QMainWindow()
             window.setWindowTitle(title if title is not None else self.windowTitle())
-            window.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/hi.ico')))
+            window.setWindowIcon(app().icon_store['hi'])
             window.setCentralWidget(frame)
             window.setMinimumHeight(200)
             window.setMinimumWidth(300)

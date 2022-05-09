@@ -8,8 +8,11 @@ __all__ = (
 )
 
 import datetime
-from collections.abc import Callable, Sequence, Mapping
-from typing import TypeAlias, Any
+from collections.abc import Callable
+from collections.abc import Mapping
+from collections.abc import Sequence
+from typing import Any
+from typing import TypeAlias
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
@@ -92,7 +95,7 @@ class NetworkWrapper:
                 data: bytes | None = None,
                 headers: dict | None = None,
                 finished: _NetworkReplyConsumer | None = None):
-        """Get the data from the given URL."""
+        """Send an HTTP request to the given URL with the given data."""
         headers = headers if headers is not None else {}
 
         url = QUrl(url)

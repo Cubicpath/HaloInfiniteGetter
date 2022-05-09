@@ -17,7 +17,6 @@ from pathlib import Path
 from platform import platform
 from shutil import rmtree
 
-import requests
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
@@ -43,24 +42,24 @@ class FileContextMenu(QMenu):
         super().__init__(parent)
 
         open_explorer: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.png')),
+            app().icon_store['folder'],
             app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
-        flush_cache:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/folder.png')),
+        flush_cache: QAction = QAction(
+            app().icon_store['folder'],
             app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
-        import_from:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/import.png')),
+        import_from: QAction = QAction(
+            app().icon_store['import'],
             app().translator('gui.menus.file.import'), self, triggered=self.import_data
         )
 
-        export_to:     QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/export.png')),
+        export_to: QAction = QAction(
+            app().icon_store['export'],
             app().translator('gui.menus.file.export'), self, triggered=self.export_data
         )
 
@@ -102,7 +101,6 @@ class FileContextMenu(QMenu):
 # noinspection PyArgumentList
 class HelpContextMenu(QMenu):
     """Context menu that shows actions to help the user."""
-    _github_icon: bytes = requests.get('https://github.githubassets.com/favicons/favicon.png').content
 
     def __init__(self, parent) -> None:
         """Create a new :py:class:`HelpContextMenu`."""
@@ -113,30 +111,27 @@ class HelpContextMenu(QMenu):
         self.license_window = LicenseViewer()
         self.readme_window = ReadmeViewer()
 
-        github_pixmap = QPixmap()
-        github_pixmap.loadFromData(self._github_icon)
-
-        github_view:  QAction = QAction(
-            QIcon(github_pixmap),
+        github_view: QAction = QAction(
+            app().icon_store['github'],
             app().translator('gui.menus.help.github'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
             )
         )
 
         create_issue: QAction = QAction(
-            QIcon(github_pixmap),
+            app().icon_store['github'],
             app().translator('gui.menus.help.issue'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
             )
         )
 
-        about_view:   QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/about.png')),
+        about_view: QAction = QAction(
+            app().icon_store['about'],
             app().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         license_view: QAction = QAction(
-            QIcon(str(HI_RESOURCE_PATH / 'icons/copyright.png')),
+            app().icon_store['copyright'],
             app().translator('gui.menus.help.license'), self, triggered=self.license_window.show
         )
 
@@ -157,7 +152,7 @@ class HelpContextMenu(QMenu):
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         """Open the application's about section."""
-        self.setWindowIcon(QIcon(str(HI_RESOURCE_PATH / 'icons/about.png')))
+        self.setWindowIcon(app().icon_store['about'])
         QMessageBox.information(self, *self.about_message())
 
     @staticmethod
