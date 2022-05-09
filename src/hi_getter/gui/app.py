@@ -51,6 +51,7 @@ class Theme:
         self.style:        str = style
         self.display_name: str = display_name if display_name is not None else self.id
 
+        app().themes[self.id] = self
 
 
 class GetterApp(QApplication):
@@ -65,7 +66,7 @@ class GetterApp(QApplication):
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
         self._first_launch: bool = first_launch
-        self._legacy_style: str = self.styleSheet()
+        self._legacy_style: str = self.styleSheet()  # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
         self.icon_store:      dict[str, QIcon] = {}
@@ -75,13 +76,18 @@ class GetterApp(QApplication):
         self.theme_index_map: dict[str, int] = {}
         self.translator: Translator = Translator(settings['language'])
 
+        # Register callables to events
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
+        # Load resources from disk
         self.load_icons()
         self.load_themes()
+
+        # Set the default icon for all windows.
+        self.setWindowIcon(self.icon_store['hi'])
 
     @classmethod
     def instance(cls) -> 'GetterApp':
@@ -176,7 +182,7 @@ class GetterApp(QApplication):
 
         Also set current theme from settings.
         """
-        self.themes['legacy'] = Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
+        Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
 
         for id_, theme in self.settings['gui/themes'].items():
             if not isinstance(theme, dict):
@@ -195,7 +201,7 @@ class GetterApp(QApplication):
                 theme['id'] = id_
                 theme['style'] = QTextStream(file).readAll()
 
-                self.themes[id_] = Theme(**theme)
+                Theme(**theme)
                 file.close()
 
         # noinspection PyUnresolvedReferences

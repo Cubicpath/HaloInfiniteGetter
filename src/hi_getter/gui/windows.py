@@ -335,9 +335,8 @@ class AppWindow(QMainWindow):
         self.client:                Client = client
         self.current_image:         QPixmap | None = None
         self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        # self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.change_title(app().translator('app.name') + f' v{__version__}')
-        self.setWindowIcon(app().icon_store['hi'])
         self.resize(size)
 
         self.settings_window = SettingsWindow(self, QSize(420, 600))
@@ -378,7 +377,7 @@ class AppWindow(QMainWindow):
             file, settings, tools, help_,
             logger, logger_label
         ) = (
-            QToolBar('Toolbar', self), QToolBar('Exception Bar', self),
+            QToolBar(self), QToolBar(self),
             QAction(self), QAction(self), QAction(self), QAction(self),
             ExceptionLogger(self), QLabel(self)
         )
@@ -418,6 +417,8 @@ class AppWindow(QMainWindow):
         }, translator=app().translator)
 
         app().init_translations({
+            menu_bar.setWindowTitle: 'gui.menu_bar.title',
+            status_bar.setWindowTitle: 'gui.status_bar.title',
             file.setText: 'gui.menus.file',
             settings.setText: 'gui.menus.settings',
             tools.setText: 'gui.menus.tools',
@@ -449,7 +450,6 @@ class AppWindow(QMainWindow):
             """
             window = QMainWindow()
             window.setWindowTitle(title if title is not None else self.windowTitle())
-            window.setWindowIcon(app().icon_store['hi'])
             window.setCentralWidget(frame)
             window.setMinimumHeight(200)
             window.setMinimumWidth(300)
