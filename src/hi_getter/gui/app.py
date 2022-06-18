@@ -70,7 +70,7 @@ class GetterApp(QApplication):
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
         self.icon_store:      dict[str, QIcon] = {}
-        self.session:         NetworkWrapper = NetworkWrapper()
+        self.session:         NetworkSession = NetworkSession()
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
@@ -160,7 +160,8 @@ class GetterApp(QApplication):
         """
         # Load locally stored icons
         self.icon_store.update({
-            filename.with_suffix('').name: QIcon(str(filename)) for filename in (HI_RESOURCE_PATH / 'icons').iterdir() if filename.is_file()
+            filename.with_suffix('').name: QIcon(str(filename)) for
+            filename in (HI_RESOURCE_PATH / 'icons').iterdir() if filename.is_file()
         })
 
         # Load externally stored icons
@@ -168,14 +169,13 @@ class GetterApp(QApplication):
 
         # pylint: disable=cell-var-from-loop
         for key, url in external_icon_links.items():
-            reply = app().session.get(url)
-
-            def handle_reply():
+            # Create a new handler for every key being requested.
+            def handle_reply(reply):
                 icon = icon_from_bytes(reply.readAll())
                 set_or_swap_icon(self.icon_store, key, icon)
                 reply.deleteLater()
 
-            reply.finished.connect(handle_reply)
+            app().session.get(url, finished=handle_reply)
 
     def load_themes(self) -> None:
         """Load all theme locations from settings and store them in self.themes.

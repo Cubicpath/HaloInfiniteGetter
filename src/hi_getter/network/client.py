@@ -19,13 +19,13 @@ from typing import Final
 
 from requests import Response
 from requests import Session
-from requests.models import CaseInsensitiveDict
 from requests.utils import guess_json_utf
 
 from ..constants import *
 from ..utils import dump_data
 from ..utils import hide_windows_file
 from ..utils import unique_values
+from .structures import CaseInsensitiveDict
 from .utils import decode_url
 
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
