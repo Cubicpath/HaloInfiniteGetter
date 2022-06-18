@@ -68,24 +68,46 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         del self._store[key.lower()]
 
     def __iter__(self) -> Generator[str]:
-        return (casedkey for casedkey, mappedvalue in self._store.values())
+        return (cased_key for cased_key, mapped_value in self._store.values())
 
     def __len__(self) -> int:
         return len(self._store)
 
+    def __or__(self, other: Mapping):
+        if not isinstance(other, Mapping):
+            return NotImplemented
+
+        new = type(self)()
+        new.update(other)
+        return new
+
+    def __ror__(self, other: Mapping):
+        if not isinstance(other, Mapping):
+            return NotImplemented
+
+        new = type(self)(other)
+        new.update(self)
+        return new
+
+    def __ior__(self, other: Mapping):
+        self.update(other)
+
+        return self
+
     def lower_items(self) -> Generator[tuple[str, _VT]]:
         """Like iteritems(), but with all lowercase keys."""
         return (
-            (lowerkey, keyval[1])
-            for (lowerkey, keyval)
+            (lower_key, keyval[1])
+            for (lower_key, keyval)
             in self._store.items()
         )
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Mapping):
-            other = CaseInsensitiveDict(other)
+            other = type(self)(other)
         else:
             return NotImplemented
+
         # Compare insensitively
         return dict(self.lower_items()) == dict(other.lower_items())
 
