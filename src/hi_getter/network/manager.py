@@ -20,6 +20,7 @@ from PySide6.QtNetwork import *
 from ..models import DeferredCallable
 from .structures import CaseInsensitiveDict
 from .utils import dict_to_query
+from .utils import query_to_dict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 
@@ -164,20 +165,24 @@ class NetworkSession:
                 finished: _NetworkReplyConsumer | None = None):
         """Send an HTTP request to the given URL with the given data."""
 
+        url = QUrl(url)
         params = {} if params is None else params
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
 
-        # Override session headers with given headers argument
+        # Override QUrl params with params argument
+        request_params = query_to_dict(url.query())
+        request_params |= params
+
+        # Override session headers with headers argument
         request_headers = self.headers.copy()
         request_headers |= headers
 
-        # Override session cookies with given cookies argument
+        # Override session cookies with cookies argument
         request_cookies = self.cookies
         request_cookies |= cookies
 
-        url = QUrl(url)
-        url.setQuery(dict_to_query(params))
+        url.setQuery(dict_to_query(request_params))
 
         original_cookie_jar: QNetworkCookieJar = self.manager.cookieJar()
         if cookies:

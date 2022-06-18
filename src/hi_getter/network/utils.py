@@ -9,6 +9,7 @@ __all__ = (
     'dict_to_query',
     'encode_url_params',
     'http_code_map',
+    'query_to_dict',
 )
 
 from http import HTTPStatus
@@ -45,3 +46,14 @@ def dict_to_query(params: dict[str, str]) -> QUrlQuery:
     query = QUrlQuery()
     query.setQueryItems([(key, value) for key, value in params.items()])
     return query
+
+
+def query_to_dict(query: str) -> dict[str, str]:
+    """Translate a query string with the format of QUrl.query() to a dictionary representation."""
+    query = query.lstrip('?')
+
+    return {} if not query else {
+        key: value for key, value in (
+            pair.split('=') for pair in query.split('&')
+        )
+    }
