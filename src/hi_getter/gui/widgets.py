@@ -400,7 +400,6 @@ class HistoryComboBox(QComboBox):
             self.addItem(text)
 
 
-# TODO: Zoom In/Out Buttons
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
     LICENSE_DATA: Final[dict[str, tuple[str, str]]] = current_requirement_licenses(PARENT_PACKAGE)

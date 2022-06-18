@@ -4,6 +4,9 @@
 """Relative package containing custom GUI elements."""
 # TODO: Create custom QMessageBox implementation for selectable text
 # TODO: Move each independent widget to its own module, grouping them in packages by functionality
+# TODO: Add relative anchors for ReadmeViewer
+# TODO: Zoom In/Out Buttons for LicenseViewer
+# TODO: Add fading in/out animations to menus
 
 __all__ = (
     'AppWindow',

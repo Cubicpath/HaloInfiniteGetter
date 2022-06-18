@@ -1,7 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Utils for the HaloInfiniteGetter client."""
+"""Main networking package for HaloInfiniteGetter."""
 
 __all__ = (
     'Client',

@@ -29,8 +29,6 @@ from .app import app
 from .utils import PARENT_PACKAGE
 from .widgets import *
 
-# TODO: Add fading in/out animations to menus
-
 
 # noinspection PyArgumentList
 class FileContextMenu(QMenu):
