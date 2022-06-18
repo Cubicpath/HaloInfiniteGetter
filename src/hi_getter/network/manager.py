@@ -45,6 +45,7 @@ class NetworkSession:
     def __init__(self):
         """Initialize the NetworkWrapper."""
         self.manager = QNetworkAccessManager(None)
+        self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
 
     def _translate_header_value(self, header: str, value: Any):
         old_value = value
@@ -93,6 +94,16 @@ class NetworkSession:
                     value = QUrl(str(old_value))
         return value
 
+    @property
+    def cookies(self) -> dict[str, Any]:
+        """Dictionary representation of the internal :py:class:`QNetworkCookieJar`."""
+        return {cookie.name(): cookie.value() for cookie in self.manager.cookieJar().allCookies()}
+
+    @property
+    def headers(self) -> CaseInsensitiveDict[Any]:
+        """Dictionary containing the default session headers."""
+        return self._headers
+
     def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None, /) -> bool:
         """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
 
@@ -102,7 +113,7 @@ class NetworkSession:
         path within that domain are removed.  If given three arguments, then
         the cookie with the specified name, path and domain is removed.
 
-        :return: True if a cookie was deleted, otherwise False.
+        :return: If a cookie was deleted.
         """
 
         def deletion_predicate(cookie: QNetworkCookie):
@@ -126,6 +137,8 @@ class NetworkSession:
         """Create a new cookie with the given date.
 
         Replaces a pre-existing cookie with the same identifier if it exists.
+
+        :return: If the cookie was set.
         """
         cookie = QNetworkCookie(name=name.encode('utf8'), value=value.encode('utf8'))
         cookie.setDomain(domain)
@@ -150,18 +163,27 @@ class NetworkSession:
                 # json: dict[str, Any] | None = None,
                 finished: _NetworkReplyConsumer | None = None):
         """Send an HTTP request to the given URL with the given data."""
+
         params = {} if params is None else params
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
 
+        # Override session headers with given headers argument
+        request_headers = self.headers.copy()
+        request_headers |= headers
+
+        # Override session cookies with given cookies argument
+        request_cookies = self.cookies
+        request_cookies |= cookies
+
         url = QUrl(url)
         url.setQuery(dict_to_query(params))
 
-        original_cookies: QNetworkCookieJar = self.manager.cookieJar()
+        original_cookie_jar: QNetworkCookieJar = self.manager.cookieJar()
         if cookies:
-            self.manager.setCookieJar(QNetworkCookieJar())
+            self.manager.setCookieJar(QNetworkCookieJar(self.manager))
 
-            for name, value in cookies:
+            for name, value in request_cookies:
                 self.set_cookie(name, value, url.host())
 
         request = QNetworkRequest(url)
@@ -188,7 +210,8 @@ class NetworkSession:
         if finished is not None:
             reply.finished.connect(DeferredCallable(finished, reply))
 
-        self.manager.setCookieJar(original_cookies)
+        if self.manager.cookieJar() is not original_cookie_jar:
+            self.manager.setCookieJar(original_cookie_jar)
 
         return reply
 
