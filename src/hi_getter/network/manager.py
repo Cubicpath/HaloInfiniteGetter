@@ -195,3 +195,23 @@ class NetworkSession:
     def get(self, url: QUrl | str, **kwargs):
         """Create and send a request with the GET HTTP method."""
         return self.request(method='GET', url=url, **kwargs)
+
+    def head(self, url: QUrl | str, **kwargs):
+        """Create and send a request with the HEAD HTTP method."""
+        return self.request(method='HEAD', url=url, **kwargs)
+
+    def post(self, url: QUrl | str, **kwargs):
+        """Create and send a request with the POST HTTP method."""
+        return self.request(method='POST', url=url, **kwargs)
+
+    def put(self, url: QUrl | str, **kwargs):
+        """Create and send a request with the PUT HTTP method."""
+        return self.request(method='PUT', url=url, **kwargs)
+
+    def delete(self, url: QUrl | str, **kwargs):
+        """Create and send a request with the DELETE HTTP method."""
+        return self.request(method='DELETE', url=url, **kwargs)
+
+    def patch(self, url: QUrl | str, **kwargs):
+        """Create and send a request with the PATCH HTTP method."""
+        return self.request(method='PATCH', url=url, **kwargs)
