@@ -73,23 +73,23 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     def __len__(self) -> int:
         return len(self._store)
 
-    def __or__(self, other: Mapping):
+    def __or__(self, other: Mapping) -> 'CaseInsensitiveDict':
         if not isinstance(other, Mapping):
             return NotImplemented
 
-        new = type(self)()
+        new = self.__class__()
         new.update(other)
         return new
 
-    def __ror__(self, other: Mapping):
+    def __ror__(self, other: Mapping) -> 'CaseInsensitiveDict':
         if not isinstance(other, Mapping):
             return NotImplemented
 
-        new = type(self)(other)
+        new = self.__class__(other)
         new.update(self)
         return new
 
-    def __ior__(self, other: Mapping):
+    def __ior__(self, other: Mapping) -> 'CaseInsensitiveDict':
         self.update(other)
 
         return self
@@ -104,7 +104,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Mapping):
-            other = type(self)(other)
+            other = self.__class__(other)
         else:
             return NotImplemented
 
