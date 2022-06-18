@@ -4,7 +4,7 @@
 """Package for managing outgoing requests for hi_getter."""
 
 __all__ = (
-    'NetworkWrapper',
+    'NetworkSession',
 )
 
 import datetime
@@ -17,13 +17,14 @@ from typing import TypeAlias
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
 
+from ..models import DeferredCallable
 from .structures import CaseInsensitiveDict
-
+from .utils import dict_to_query
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 
 
-class NetworkWrapper:
+class NetworkSession:
     """Wrapper for the QNetworkAccessManager."""
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
         'Content-Disposition':  (QNetworkRequest.ContentDispositionHeader, str),
@@ -47,6 +48,8 @@ class NetworkWrapper:
 
     def _translate_header_value(self, header: str, value: Any):
         old_value = value
+
+        # Match the known-header's value name and translate value to that type.
         match self.KNOWN_HEADERS[header][1].__name__:
             case 'str':
                 value = str(old_value)
@@ -90,32 +93,103 @@ class NetworkWrapper:
                     value = QUrl(str(old_value))
         return value
 
+    def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None, /) -> bool:
+        """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
+
+        Invoking this method without arguments will clear all cookies.  If
+        given a single argument, only cookies belonging to that domain will be
+        removed.  If given two arguments, cookies belonging to the specified
+        path within that domain are removed.  If given three arguments, then
+        the cookie with the specified name, path and domain is removed.
+
+        :return: True if a cookie was deleted, otherwise False.
+        """
+
+        def deletion_predicate(cookie: QNetworkCookie):
+            if name is not None:  # 3 args
+                return cookie.name().toStdString() == name and cookie.domain() == domain and cookie.path() == path
+            elif path is not None:  # 2 args
+                return cookie.domain() == domain and cookie.path() == path
+            elif domain is not None:  # 1 arg
+                return cookie.domain() == domain
+            else:  # No args
+                return True
+
+        results = []
+        for _cookie in self.manager.cookieJar().allCookies():
+            if deletion_predicate(_cookie):
+                results.append(self.manager.cookieJar().deleteCookie(_cookie))
+
+        return any(results)
+
+    def set_cookie(self, name: str, value: str, domain: str, path: str | None = None) -> bool:
+        """Create a new cookie with the given date.
+
+        Replaces a pre-existing cookie with the same identifier if it exists.
+        """
+        cookie = QNetworkCookie(name=name.encode('utf8'), value=value.encode('utf8'))
+        cookie.setDomain(domain)
+        cookie.setPath(path or '/')
+        return self.manager.cookieJar().insertCookie(cookie)
+
     def request(self, method: str, url: QUrl | str,
-                # params: dict | None = None,
+                params: dict[str, str] | None = None,
                 data: bytes | None = None,
-                headers: dict | None = None,
+                headers: dict[str, Any] | None = None,
+                cookies: dict[str, str] | None = None,
+                # TODO: Finish requests-like implementation
+                # files: dict[str, Any] | None = None,
+                # auth: tuple[str, str] | None = None,
+                # timeout: float | tuple[float, float] | None = None,
+                # allow_redirects: bool = True,
+                # proxies: dict[str, str] | None = None,
+                # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
+                # stream: bool | None = None,
+                # verify: bool | str | None = None,
+                # cert: str | tuple[str, str] | None = None,
+                # json: dict[str, Any] | None = None,
                 finished: _NetworkReplyConsumer | None = None):
         """Send an HTTP request to the given URL with the given data."""
-        headers = headers if headers is not None else {}
+        params = {} if params is None else params
+        headers = {} if headers is None else headers
+        cookies = {} if cookies is None else cookies
 
         url = QUrl(url)
+        url.setQuery(dict_to_query(params))
+
+        original_cookies: QNetworkCookieJar = self.manager.cookieJar()
+        if cookies:
+            self.manager.setCookieJar(QNetworkCookieJar())
+
+            for name, value in cookies:
+                self.set_cookie(name, value, url.host())
+
         request = QNetworkRequest(url)
 
         for name, value in headers.items():
             if name in self.KNOWN_HEADERS:
-                value = self._translate_header_value(name, value)
+                value: Any = self._translate_header_value(name, value)
                 request.setHeader(header=self.KNOWN_HEADERS[name][0], value=value)
                 continue
-            request.setRawHeader(headerName=name, value=value)
+
+            try:
+                encoded_value = bytes(value) if not isinstance(value, str) else value.encode('utf8')
+            except TypeError:
+                encoded_value = str(value).encode('utf8')
+
+            request.setRawHeader(headerName=name.encode('utf8'), value=encoded_value)
 
         io_data = QBuffer(self.manager)
         io_data.open(QBuffer.ReadWrite)
         io_data.write(data)
         io_data.seek(0)
 
-        reply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=io_data)
+        reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=io_data)
         if finished is not None:
-            reply.finished.connect(finished)
+            reply.finished.connect(DeferredCallable(finished, reply))
+
+        self.manager.setCookieJar(original_cookies)
+
         return reply
 
     def get(self, url: QUrl | str, **kwargs):

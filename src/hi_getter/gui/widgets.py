@@ -19,6 +19,7 @@ from collections import defaultdict
 from collections import namedtuple
 from collections.abc import Callable
 from collections.abc import Sequence
+from datetime import datetime
 from importlib.metadata import metadata
 from types import TracebackType
 from typing import Any
@@ -131,17 +132,19 @@ class ExceptionReporter(QWidget):
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
+        exc_name = type(self.logger.exception_log[self.selected].exception).__name__
+        exc_msg = str(self.logger.exception_log[self.selected].exception).rstrip(".")
+        exc_tb = traceback.format_tb(self.logger.exception_log[self.selected].traceback)[0].strip()
+
         base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params = {
             'template': 'bug-report.yaml',
             'assignees': 'Cubicpath',
             'labels': 'bug',
             'projects': 'Cubicpath/HaloInfiniteGetter/2',
-            'title': f'[Bug]: '  # Standard bug report title prefix
-                     f'({self.logger.exception_log[self.selected][1].__class__.__name__}) '  # Exception Type
-                     f'{str(self.logger.exception_log[self.selected][1]).rstrip(".")}',      # Exception Message
+            'title': f'[Bug]: ({exc_name}) {exc_msg}',
             'version': f'v{__version__}',
-            'logs': traceback.format_tb(self.logger.exception_log[self.selected][2])[0].strip()
+            'logs': f'{exc_name}: {exc_msg}\n\n{exc_tb}'
         }
         webbrowser.open(f'{base}?{encode_url_params(params)}')
 
@@ -179,7 +182,7 @@ class ExceptionReporter(QWidget):
             ), False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
                 app().translator, 'gui.exception_reporter.traceback_view',
-                type(error.exception).__name__, error[1], traceback.format_tb(error[2])[0]
+                type(error.exception).__name__, error.exception, traceback.format_tb(error.traceback)[0]
             )))
 
             button.setStyleSheet("text-align:left;")
@@ -196,8 +199,9 @@ class ExceptionReporter(QWidget):
 
 class ExceptionLogger(QPushButton):
     """A :py:class:`QPushButton` that logs exceptions to the event bus."""
-    # TODO: Add date to the exception log
-    LoggedException: tuple[int, Exception, TracebackType] = namedtuple('LoggedException', ['severity', 'exception', 'traceback'], defaults=[None])
+    LoggedException: tuple[int, Exception, TracebackType, datetime] = namedtuple('LoggedException', [
+        'severity', 'exception', 'traceback', 'timestamp'
+    ], defaults=[None])
     """A named tuple that contains the severity of the exception, the exception itself, and an optional traceback."""
 
     level_icon_list: list = [
@@ -244,7 +248,7 @@ class ExceptionLogger(QPushButton):
         if self.severity < level:
             self.severity = level
 
-        self.exception_log.append(ExceptionLogger.LoggedException(level, event.exception, event.traceback))
+        self.exception_log.append(self.LoggedException(level, event.exception, event.traceback, datetime.now()))
         self.sort_exceptions()
 
         logged = len(self.exception_log)
@@ -400,7 +404,6 @@ class HistoryComboBox(QComboBox):
             self.addItem(text)
 
 
-# TODO: Zoom In/Out Buttons
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
     LICENSE_DATA: Final[dict[str, tuple[str, str]]] = current_requirement_licenses(PARENT_PACKAGE)
