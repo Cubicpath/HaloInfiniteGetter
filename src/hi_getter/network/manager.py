@@ -174,7 +174,7 @@ class NetworkSession:
                 # files: dict[str, Any] | None = None,
                 # auth: tuple[str, str] | None = None,
                 # timeout: float | tuple[float, float] | None = None,
-                # allow_redirects: bool = True,
+                allow_redirects: bool = True,
                 # proxies: dict[str, str] | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
                 # stream: bool | None = None,
@@ -188,6 +188,9 @@ class NetworkSession:
         params = {} if params is None else params
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
+
+        if not allow_redirects:
+            self.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
 
         # Override QUrl params with params argument
         request_params = query_to_dict(url.query()) | params
@@ -249,6 +252,8 @@ class NetworkSession:
 
         if self.manager.cookieJar() is not original_cookie_jar:
             self.manager.setCookieJar(original_cookie_jar)
+        if self.manager.redirectPolicy() != QNetworkRequest.NoLessSafeRedirectPolicy:
+            self.manager.setRedirectPolicy(QNetworkRequest.NoLessSafeRedirectPolicy)
 
         return reply
 
