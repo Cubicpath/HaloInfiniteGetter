@@ -11,6 +11,7 @@ import datetime
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 from typing import TypeAlias
 
@@ -29,8 +30,8 @@ class NetworkSession:
     """Wrapper for the QNetworkAccessManager."""
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
         'Content-Disposition':  (QNetworkRequest.ContentDispositionHeader, str),
-        'Content-Length':       (QNetworkRequest.ContentLengthHeader, str),
-        'Content-Type':         (QNetworkRequest.ContentTypeHeader, bytes),
+        'Content-Type':         (QNetworkRequest.ContentTypeHeader, str),
+        'Content-Length':       (QNetworkRequest.ContentLengthHeader, bytes),
         'Cookie':               (QNetworkRequest.CookieHeader, QNetworkCookie),
         'ETag':                 (QNetworkRequest.ETagHeader, str),
         'If-Match':             (QNetworkRequest.IfMatchHeader, QStringListModel),
@@ -177,8 +178,8 @@ class NetworkSession:
                 # proxies: dict[str, str] | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
                 # stream: bool | None = None,
-                # verify: bool | str | None = None,
-                # cert: str | tuple[str, str] | None = None,
+                verify: bool | str | None = None,
+                cert: str | tuple[str, str] | None = None,
                 # json: dict[str, Any] | None = None,
                 finished: _NetworkReplyConsumer | None = None):
         """Send an HTTP request to the given URL with the given data."""
@@ -226,7 +227,23 @@ class NetworkSession:
         io_data.write(data)
         io_data.seek(0)
 
+        ssl_config = QSslConfiguration.defaultConfiguration()
         reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=io_data)
+
+        if verify is False:
+            reply.ignoreSslErrors()
+        elif isinstance(verify, str):
+            ssl_config.setCaCertificates(QSslCertificate.fromPath(verify))
+
+        if isinstance(cert, str):
+            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert))
+        elif isinstance(cert, tuple):
+            # cert is a tuple of (cert_path, key_path)
+            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert[0]))
+            ssl_config.setPrivateKey(QSslKey(Path(cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
+
+        reply.setSslConfiguration(ssl_config)
+
         if finished is not None:
             reply.finished.connect(DeferredCallable(finished, reply))
 
