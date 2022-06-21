@@ -11,6 +11,7 @@ import datetime
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
+from json import dumps as json_dumps
 from pathlib import Path
 from typing import Any
 from typing import TypeAlias
@@ -21,6 +22,7 @@ from PySide6.QtNetwork import *
 from ..models import DeferredCallable
 from .structures import CaseInsensitiveDict
 from .utils import dict_to_query
+from .utils import encode_url_params
 from .utils import query_to_dict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
@@ -166,10 +168,10 @@ class NetworkSession:
         return self.manager.cookieJar().insertCookie(cookie)
 
     def request(self, method: str, url: QUrl | str,
-                params: dict[str, str] | None = None,
-                data: bytes | None = None,
-                headers: dict[str, Any] | None = None,
-                cookies: dict[str, str] | None = None,
+                params: dict[str, str] | list[tuple[str, str]] | None = None,
+                data: bytes | dict[str, str] | list[tuple[str, str]] | None = None,
+                headers: dict[str, Any] | list[tuple[str, Any]] | None = None,
+                cookies: dict[str, str] | list[tuple[str, str]] | None = None,
                 # TODO: Finish requests-like implementation
                 # files: dict[str, Any] | None = None,
                 # auth: tuple[str, str] | None = None,
@@ -180,28 +182,50 @@ class NetworkSession:
                 # stream: bool | None = None,
                 verify: bool | str | None = None,
                 cert: str | tuple[str, str] | None = None,
-                # json: dict[str, Any] | None = None,
+                json: dict[str, Any] | None = None,
                 finished: _NetworkReplyConsumer | None = None):
         """Send an HTTP request to the given URL with the given data."""
+
+        # Setup values for the request
 
         url = QUrl(url)
         params = {} if params is None else params
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
 
-        if not allow_redirects:
-            self.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
+        # Translate tuple pair lists to dictionaries
+        # Ex: [('name', 'value'), ('key': 'value')] -> {'name': 'value', 'key': 'value'}
+        for tuple_list in ('params', 'data', 'headers', 'cookies'):
+            if isinstance(vars()[tuple_list], list):
+                vars()[tuple_list] = {key: value for key, value in vars()[tuple_list]}
 
-        # Override QUrl params with params argument
-        request_params = query_to_dict(url.query()) | params
-
-        # Override session headers with headers argument
-        request_headers = self.headers.copy() | headers
-
-        # Override session cookies with cookies argument
-        request_cookies = self.cookies | cookies
+        request_params = query_to_dict(url.query()) | params  # Override QUrl params with params argument
+        request_headers = self.headers.copy() | headers       # Override session headers with headers argument
+        request_cookies = self.cookies | cookies              # Override session cookies with cookies argument
 
         url.setQuery(dict_to_query(request_params))
+
+        # HTTP Body
+
+        content_type = None
+        body = None
+
+        if data:
+            if isinstance(data, dict):
+                body = encode_url_params(data).encode('utf8')
+                content_type = 'application/x-www-form-urlencoded'
+
+            elif isinstance(data, bytes):
+                body = data
+
+        elif json is not None:
+            body = json_dumps(json, allow_nan=False).encode('utf8')
+            content_type = 'application/json'
+
+        if content_type and 'Content-Type' not in headers:
+            headers['Content-Type'] = content_type
+
+        # Cookies
 
         original_cookie_jar: QNetworkCookieJar = self.manager.cookieJar()
         if cookies:
@@ -212,9 +236,27 @@ class NetworkSession:
 
         request = QNetworkRequest(url)
 
+        # SSL Configuration
+
+        ssl_config = QSslConfiguration.defaultConfiguration()
+
+        if isinstance(verify, str):
+            ssl_config.setCaCertificates(QSslCertificate.fromPath(verify))
+
+        if isinstance(cert, str):
+            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert))
+        elif isinstance(cert, tuple):
+            # cert is a tuple of (cert_path, key_path)
+            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert[0]))
+            ssl_config.setPrivateKey(QSslKey(Path(cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
+
+        request.setSslConfiguration(ssl_config)
+
+        # Headers
+
         for name, value in request_headers.items():
             if name in self.KNOWN_HEADERS:
-                value: Any = self._translate_header_value(name, value)
+                value = self._translate_header_value(name, value)
                 request.setHeader(header=self.KNOWN_HEADERS[name][0], value=value)
                 continue
 
@@ -225,27 +267,17 @@ class NetworkSession:
 
             request.setRawHeader(headerName=name.encode('utf8'), value=encoded_value)
 
-        io_data = QBuffer(self.manager)
-        io_data.open(QBuffer.ReadWrite)
-        io_data.write(data)
-        io_data.seek(0)
+        # Other
 
-        ssl_config = QSslConfiguration.defaultConfiguration()
-        reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=io_data)
+        if not allow_redirects:
+            self.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
+
+        # Handle Reply
+
+        reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
 
         if verify is False:
             reply.ignoreSslErrors()
-        elif isinstance(verify, str):
-            ssl_config.setCaCertificates(QSslCertificate.fromPath(verify))
-
-        if isinstance(cert, str):
-            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert))
-        elif isinstance(cert, tuple):
-            # cert is a tuple of (cert_path, key_path)
-            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert[0]))
-            ssl_config.setPrivateKey(QSslKey(Path(cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
-
-        reply.setSslConfiguration(ssl_config)
 
         if finished is not None:
             reply.finished.connect(DeferredCallable(finished, reply))
