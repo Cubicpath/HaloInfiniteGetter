@@ -19,4 +19,5 @@ from .utils import decode_url
 from .utils import dict_to_cookie_list
 from .utils import dict_to_query
 from .utils import encode_url_params
+from .utils import guess_json_utf
 from .utils import http_code_map

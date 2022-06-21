@@ -8,10 +8,12 @@ __all__ = (
     'dict_to_cookie_list',
     'dict_to_query',
     'encode_url_params',
+    'guess_json_utf',
     'http_code_map',
     'query_to_dict',
 )
 
+import codecs
 from http import HTTPStatus
 from urllib.parse import unquote as decode_url
 from urllib.parse import urlencode as encode_url_params
@@ -48,8 +50,10 @@ def dict_to_query(params: dict[str, str]) -> QUrlQuery:
     return query
 
 
-def query_to_dict(query: str) -> dict[str, str]:
+def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
     """Translate a query string with the format of QUrl.query() to a dictionary representation."""
+    if isinstance(query, QUrlQuery):
+        query = query.query()
     query = query.lstrip('?')
 
     return {} if not query else {
@@ -57,3 +61,48 @@ def query_to_dict(query: str) -> dict[str, str]:
             pair.split('=') for pair in query.split('&')
         )
     }
+
+
+# NOTICE:
+#
+# Requests
+# Copyright 2019 Kenneth Reitz
+# Apache 2.0 License
+
+
+# Null bytes; no need to recreate these on each call to guess_json_utf
+_NULL = "\x00".encode("ascii")  # encoding to ASCII for Python 3
+_NULL2 = _NULL * 2
+_NULL3 = _NULL * 3
+
+
+def guess_json_utf(data):
+    """
+    :rtype: str
+    """
+    # JSON always starts with two ASCII characters, so detection is as
+    # easy as counting the nulls and from their location and count
+    # determine the encoding. Also detect a BOM, if present.
+    sample = data[:4]
+    if sample in (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE):
+        return "utf-32"  # BOM included
+    if sample[:3] == codecs.BOM_UTF8:
+        return "utf-8-sig"  # BOM included, MS style (discouraged)
+    if sample[:2] in (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE):
+        return "utf-16"  # BOM included
+    null_count = sample.count(_NULL)
+    if null_count == 0:
+        return "utf-8"
+    if null_count == 2:
+        if sample[::2] == _NULL2:  # 1st and 3rd are null
+            return "utf-16-be"
+        if sample[1::2] == _NULL2:  # 2nd and 4th are null
+            return "utf-16-le"
+        # Did not detect 2 valid UTF-16 ascii-range characters
+    if null_count == 3:
+        if sample[:3] == _NULL3:
+            return "utf-32-be"
+        if sample[1:] == _NULL3:
+            return "utf-32-le"
+        # Did not detect a valid UTF-32 ascii-range character
+    return None
