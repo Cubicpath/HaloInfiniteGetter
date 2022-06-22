@@ -52,9 +52,9 @@ class NetworkSession:
         self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
 
     @property
-    def cookies(self) -> dict[str, Any]:
+    def cookies(self) -> dict[str, str]:
         """Dictionary representation of the internal :py:class:`QNetworkCookieJar`."""
-        return {cookie.name(): cookie.value() for cookie in self.manager.cookieJar().allCookies()}
+        return {cookie.name().toStdString(): cookie.value().toStdString() for cookie in self.manager.cookieJar().allCookies()}
 
     @cookies.deleter
     def cookies(self) -> None:
@@ -126,7 +126,7 @@ class NetworkSession:
                     value = QUrl(str(old_value))
         return value
 
-    def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None, /) -> bool:
+    def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None) -> bool:
         """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
 
         Invoking this method without arguments will clear all cookies.  If
