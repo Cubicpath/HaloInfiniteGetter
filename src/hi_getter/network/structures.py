@@ -77,7 +77,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         if not isinstance(other, Mapping):
             return NotImplemented
 
-        new = self.__class__()
+        new = self.__class__(self)
         new.update(other)
         return new
 
@@ -103,11 +103,10 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         )
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, Mapping):
-            other = self.__class__(other)
-        else:
+        if not isinstance(other, Mapping):
             return NotImplemented
 
+        other = self.__class__(other)
         # Compare insensitively
         return dict(self.lower_items()) == dict(other.lower_items())
 

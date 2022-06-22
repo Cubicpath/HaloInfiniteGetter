@@ -257,7 +257,7 @@ class NetworkSession:
         for name, value in request_headers.items():
             if name in self.KNOWN_HEADERS:
                 value = self._translate_header_value(name, value)
-                request.setHeader(header=self.KNOWN_HEADERS[name][0], value=value)
+                request.setHeader(self.KNOWN_HEADERS[name][0], value)
                 continue
 
             try:
@@ -265,7 +265,7 @@ class NetworkSession:
             except TypeError:
                 encoded_value = str(value).encode('utf8')
 
-            request.setRawHeader(headerName=name.encode('utf8'), value=encoded_value)
+            request.setRawHeader(name.encode('utf8'), encoded_value)
 
         # Other
 
