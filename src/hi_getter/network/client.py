@@ -128,7 +128,7 @@ class Client:
             reply:        QNetworkReply = self.get(path)
             encoded_data: bytes = reply.readAll().data()
             status_code:  int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-            content_type: str = reply.header(QNetworkRequest.ContentTypeHeader).lower()
+            content_type: str | None = reply.header(QNetworkRequest.ContentTypeHeader)
 
             if is_error_status(status_code):
                 return status_code
@@ -140,6 +140,8 @@ class Client:
 
             print(f"DOWNLOADED {path} >>> {content_type}")
             dump_data(os_path, data)
+
+            reply.deleteLater()
             if micro_sleep:
                 time.sleep(random.randint(100, 200) / 750)
 

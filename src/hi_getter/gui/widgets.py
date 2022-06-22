@@ -195,6 +195,7 @@ class ExceptionReporter(QWidget):
         self.left_panel.setMaximumWidth(event.size().width() // 3)
         for i in range(self.scroll_widget.layout().count()):
             self.scroll_widget.layout().itemAt(i).widget().setMaximumWidth((event.size().width() // 3) - 50)
+        event.accept()
 
 
 class ExceptionLogger(QPushButton):
@@ -318,14 +319,15 @@ class ExternalTextBrowser(QTextBrowser):
         If resource type is an image and the url is external, download it using requests and cache it.
         """
         if resource_type == QTextDocument.ResourceType.ImageResource and not url.isLocalFile():
-            image: QImage = QImage()
-            if url.toDisplayString() not in self.remote_image_cache:
+            image:      QImage = QImage()
+            url_string: str = url.toDisplayString()
+            if url_string not in self.remote_image_cache:
                 reply = app().session.get(url)
 
                 def handle_reply():
                     data: bytes = reply.readAll()
                     image.loadFromData(data)
-                    self.remote_image_cache[url.toDisplayString()] = data
+                    self.remote_image_cache[url_string] = data
 
                     if self.cached_type:
                         self.hot_reload()
@@ -333,7 +335,7 @@ class ExternalTextBrowser(QTextBrowser):
 
                 reply.finished.connect(handle_reply)
             else:
-                image.loadFromData(self.remote_image_cache[url.toDisplayString()])
+                image.loadFromData(self.remote_image_cache[url_string])
             return image
         else:
             return super().loadResource(int(resource_type), url)
@@ -349,8 +351,8 @@ class ExternalTextBrowser(QTextBrowser):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Execute :py:class:`Callable` mapped to the key press."""
-        super().keyPressEvent(event)
         self.key_callable_map[event.key()]()
+        event.accept()
 
 
 class PasteLineEdit(QLineEdit):
@@ -364,9 +366,9 @@ class PasteLineEdit(QLineEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Call self.pasted on paste."""
-        super().keyPressEvent(event)
         if event.matches(QKeySequence.Paste):
             self.pasted.emit()
+        event.accept()
 
 
 class HistoryComboBox(QComboBox):
@@ -511,25 +513,31 @@ class ReadmeViewer(QWidget):
         self.setWindowTitle(app().translator('gui.readme_viewer.title'))
         self.setWindowIcon(self.style().standardIcon(QStyle.SP_DialogApplyButton))
         self.resize(QSize(750, 750))
+        self.readme_viewer: ExternalTextBrowser
         self._init_ui()
 
     def _dummy_func(self) -> None:
         """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
 
     def _init_ui(self) -> None:
-        readme_viewer = ExternalTextBrowser(self)
+        self.readme_viewer = ExternalTextBrowser(self)
         close_button = QPushButton("Close", self, clicked=self.close)
 
-        readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func.__doc__
+        self.readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func
 
         layout = QVBoxLayout(self)
         self.setLayout(layout)
 
-        layout.addWidget(readme_viewer)
+        layout.addWidget(self.readme_viewer)
         layout.addWidget(close_button)
 
-        readme_viewer.setOpenExternalLinks(True)
-        readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')
-        readme_viewer.setFont(QFont(readme_viewer.font().family(), 10))
+        self.readme_viewer.setOpenExternalLinks(True)
+        self.readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')
+        self.readme_viewer.setFont(QFont(self.readme_viewer.font().family(), 10))
         close_button.setMinimumHeight(40)
         close_button.setFont(QFont(close_button.font().family(), 16))
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Manually signal the readme_viewer for garbage collection."""
+        self.readme_viewer.deleteLater()
+        event.accept()

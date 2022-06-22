@@ -144,7 +144,7 @@ def has_package(package: str) -> bool:
     return False
 
 
-def hide_windows_file(file_path: str | Path, *, unhide: bool = False) -> int | None:
+def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | None:
     """Hide an existing Windows file. If not running windows, do nothing.
 
     Use unhide kwarg to reverse the operation

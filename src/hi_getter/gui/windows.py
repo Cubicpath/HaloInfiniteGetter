@@ -315,12 +315,12 @@ class SettingsWindow(QWidget):
 
     def showEvent(self, event: QShowEvent) -> None:
         """Auto hides the key upon un-minimizing."""
-        super().showEvent(event)
         self.key_set_button.setDisabled(True)
         self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setDisabled(True)
         self.key_field.setText(self.client.hidden_key())
         self.token_clear_button.setDisabled(not self.client.token)
+        event.accept()
 
 
 # noinspection PyArgumentList
@@ -844,13 +844,11 @@ class AppWindow(QMainWindow):
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resize image on resize of window."""
-        super().resizeEvent(event)
         self.resize_image()
+        event.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Closes all detached/children windows and quit application."""
-        super().closeEvent(event)
-
         # Remember window size
         app().settings.reload()
         app().settings['gui/window/x_size'] = self.size().width()
@@ -858,3 +856,4 @@ class AppWindow(QMainWindow):
         app().settings.save()
 
         app().quit()
+        event.accept()
