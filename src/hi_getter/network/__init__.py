@@ -21,3 +21,5 @@ from .utils import dict_to_query
 from .utils import encode_url_params
 from .utils import guess_json_utf
 from .utils import http_code_map
+from .utils import is_error_status
+from .utils import query_to_dict

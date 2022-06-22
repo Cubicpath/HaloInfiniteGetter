@@ -10,6 +10,7 @@ __all__ = (
     'encode_url_params',
     'guess_json_utf',
     'http_code_map',
+    'is_error_status',
     'query_to_dict',
 )
 
@@ -61,6 +62,11 @@ def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
             pair.split('=') for pair in query.split('&')
         )
     }
+
+
+def is_error_status(status: int) -> bool:
+    """ Returns True if the HTTP status code is an error status."""
+    return 400 <= status < 600
 
 
 # NOTICE:
