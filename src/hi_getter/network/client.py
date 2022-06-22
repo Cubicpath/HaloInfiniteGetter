@@ -17,16 +17,18 @@ from pathlib import Path
 from typing import Any
 from typing import Final
 
-from requests import Response
-from requests import Session
+from PySide6.QtNetwork import *
+from PySide6.QtWidgets import *
 
 from ..constants import *
 from ..utils import dump_data
 from ..utils import hide_windows_file
 from ..utils import unique_values
+from .manager import NetworkSession
 from .structures import CaseInsensitiveDict
 from .utils import decode_url
 from .utils import guess_json_utf
+from .utils import is_error_status
 
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
@@ -58,10 +60,10 @@ class Client:
         if self._wpauth is None and WPAUTH_PATH.is_file():
             self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
 
-        self.session: Session = Session()
+        self.session: NetworkSession = NetworkSession()
         self.session.headers = CaseInsensitiveDict({
             'Accept': ', '.join(('application/json', 'text/plain', '*/*')),
-            'Accept-Encoding': ', '.join(('gzip', 'deflate', 'br')),
+            # 'Accept-Encoding': ', '.join(('gzip', 'deflate', 'br')),
             'Accept-Language': 'en-US',
             'Connection': 'keep-alive',
             'Cache-Control': 'no-cache',
@@ -77,16 +79,15 @@ class Client:
             'TE': 'trailers',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
         })
-        self.web_session: Session = Session()
-        self.web_session.headers = self.session.headers.copy()
-        self.web_session.headers.update({
+        self.web_session: NetworkSession = NetworkSession()
+        self.web_session.headers = self.session.headers.copy() | {
             'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
             'Host': self.WEB_HOST,
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
-        })
+        }
 
         if self.wpauth:
             self.set_cookie('wpauth', self.wpauth)
@@ -97,19 +98,23 @@ class Client:
             self.session.headers['x-343-authorization-spartan'] = self.token
             self.set_cookie('343-spartan-token', self.token)
 
-    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
+    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> QNetworkReply:
         """Get a :py:class:`Response` from HaloWaypoint.
 
         :param path: path to append to the API root
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
-        response: Response = self.session.get(self.api_root + path.strip(), **kwargs)
-        if not response.ok:
-            if response.status_code == 401 and update_auth_on_401 and self.wpauth is not None:
+        reply: QNetworkReply = self.session.get(self.api_root + path.strip(), **kwargs)
+        while not reply.isFinished():
+            QApplication.processEvents()
+
+        status_code: int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+        if is_error_status(status_code):
+            if status_code == 401 and update_auth_on_401 and self.wpauth is not None:
                 self.refresh_auth()
-                response = self.get(path, False, **kwargs)
-        return response
+                reply = self.get(path, False, **kwargs)
+        return reply
 
     def get_hi_data(self, path: str, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
@@ -120,16 +125,20 @@ class Client:
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
-            response: Response = self.get(path)
-            if not response.ok:
-                return response.status_code
+            reply:        QNetworkReply = self.get(path)
+            encoded_data: bytes = reply.readAll().data()
+            status_code:  int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+            content_type: str = reply.header(QNetworkRequest.ContentTypeHeader).lower()
 
-            if 'json' in response.headers.get('content-type', ()):
-                data = response.json()
+            if is_error_status(status_code):
+                return status_code
+
+            if 'json' in content_type:
+                data = json.loads(encoded_data.decode(guess_json_utf(encoded_data)))
             else:
-                data = response.content
+                data = encoded_data
 
-            print(f"DOWNLOADED {path} >>> {response.headers.get('content-type')}")
+            print(f"DOWNLOADED {path} >>> {content_type}")
             dump_data(os_path, data)
             if micro_sleep:
                 time.sleep(random.randint(100, 200) / 750)
@@ -180,8 +189,11 @@ class Client:
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
-        response: Response = self.web_session.get('https://www.halowaypoint.com/')
-        self.web_session.cookies.update(response.cookies)
+        reply: QNetworkReply = self.web_session.get('https://www.halowaypoint.com/')
+
+        # TODO: After moving client to separate thread, remove this and QtWidgets import.
+        while not reply.isFinished():
+            QApplication.processEvents()
 
         wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
         token:  str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
@@ -192,13 +204,12 @@ class Client:
             self.token = token
 
     def delete_cookie(self, name: str) -> None:
-        """Delete given cookie if cookie exists, else pass."""
-        if name in self.web_session.cookies:
-            self.web_session.cookies.clear(domain=self.WEB_HOST, path='/', name=name)
+        """Delete given cookie if cookie exists."""
+        self.web_session.clear_cookies(self.WEB_HOST, '/', name)
 
     def set_cookie(self, name: str, value: str) -> None:
         """Set cookie value in Cookie jar. Defaults cookie domain as the WEB_HOST."""
-        self.web_session.cookies.set(name=name, value=value, domain=self.WEB_HOST)
+        self.web_session.set_cookie(name, value, self.WEB_HOST)
 
     @property
     def token(self) -> str | None:
