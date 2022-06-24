@@ -41,7 +41,6 @@ class SettingsWindow(QWidget):
     def __init__(self, parent: 'AppWindow', size: QSize) -> None:
         """Create a new settings window. Should only have one instance."""
         super().__init__()
-        self.client = parent.client
         self.app_window = parent
 
         self.setWindowTitle(app().translator('gui.settings.title'))
@@ -84,14 +83,14 @@ class SettingsWindow(QWidget):
             """Hide API key."""
             self.key_set_button.setDisabled(True)
             self.key_field.setDisabled(True)
-            self.key_field.setText(self.client.hidden_key())
+            self.key_field.setText(app().client.hidden_key())
             self.key_field.setAlignment(Qt.AlignCenter)
 
         def toggle_key_visibility() -> None:
             """Toggle hiding and showing the API key."""
             if not self.key_field.isEnabled():
                 self.key_field.setAlignment(Qt.AlignLeft)
-                self.key_field.setText(self.client.wpauth)
+                self.key_field.setText(app().client.wpauth)
                 self.key_field.setDisabled(False)
                 self.key_field.setFocus()
                 self.key_set_button.setDisabled(False)
@@ -102,13 +101,13 @@ class SettingsWindow(QWidget):
             """Set the client's auth_key to the current text in the key field."""
             text = self.key_field.text().strip()
             if text:
-                self.client.wpauth = text
+                app().client.wpauth = text
             else:
-                del self.client.wpauth
+                del app().client.wpauth
             toggle_key_visibility()
 
         def clear_token() -> None:
-            del self.client.token
+            del app().client.token
             self.token_clear_button.setDisabled(True)
 
         # Define base widgets
@@ -173,20 +172,20 @@ class SettingsWindow(QWidget):
                 'clicked': toggle_key_visibility
             },
             key_copy_button: {
-                'clicked': DeferredCallable(app().clipboard().setText, lambda: self.client.wpauth)
+                'clicked': DeferredCallable(app().clipboard().setText, lambda: app().client.wpauth)
             },
             self.key_set_button: {
                 'size': {'minimum': (40, None)},
                 'clicked': set_key
             },
             self.token_clear_button: {
-                'disabled': not self.client.token,
+                'disabled': not app().client.token,
                 'clicked': clear_token
             },
 
             # Line editors
             self.key_field: {
-                'font': QFont('segoe ui', 8), 'text': self.client.hidden_key(),
+                'font': QFont('segoe ui', 8), 'text': app().client.hidden_key(),
                 'pasted': set_key, 'returnPressed': self.key_set_button.click,
                 'size': {'minimum': (220, None)}, 'alignment': Qt.AlignCenter
             },
@@ -318,8 +317,8 @@ class SettingsWindow(QWidget):
         self.key_set_button.setDisabled(True)
         self.key_field.setAlignment(Qt.AlignCenter)
         self.key_field.setDisabled(True)
-        self.key_field.setText(self.client.hidden_key())
-        self.token_clear_button.setDisabled(not self.client.token)
+        self.key_field.setText(app().client.hidden_key())
+        self.token_clear_button.setDisabled(not app().client.token)
         event.accept()
 
 
@@ -329,12 +328,11 @@ class AppWindow(QMainWindow):
 
     shown_key_warning: bool = False
 
-    def __init__(self, client: Client, size: QSize) -> None:
+    def __init__(self, size: QSize) -> None:
         """Create the window for the application."""
         super().__init__()
-        self.client:                Client = client
-        self.current_image:         QPixmap | None = None
-        self.detached:              dict[str, QMainWindow | None] = {'media': None, 'text': None}
+        self.current_image:  QPixmap | None = None
+        self.detached:       dict[str, QMainWindow | None] = {'media': None, 'text': None}
         # self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.change_title(app().translator('app.name') + f' v{__version__}')
         self.resize(size)
@@ -594,11 +592,11 @@ class AppWindow(QMainWindow):
                 'returnPressed': self.use_input
             },
             subdomain_field: {
-                'text': self.client.sub_host, 'disabled': True,
+                'text': app().client.sub_host, 'disabled': True,
                 'size': {'fixed': (125, None)}
             },
             root_folder_field: {
-                'text': self.client.parent_path, 'disabled': True,
+                'text': app().client.parent_path, 'disabled': True,
                 'size': {'fixed': (28, None)}
             },
 
@@ -726,10 +724,10 @@ class AppWindow(QMainWindow):
 
         if search_path:
             if scan:
-                self.client.recursive_search(search_path)
+                app().client.recursive_search(search_path)
                 self.use_input()
             else:
-                data = self.client.get_hi_data(search_path)
+                data = app().client.get_hi_data(search_path)
                 if isinstance(data, dict):
                     data = json.dumps(data, indent=2)
                 data_size = (
@@ -768,7 +766,7 @@ class AppWindow(QMainWindow):
                     if isinstance(data, int):
                         data = app().translator(
                             'gui.outputs.text.errors.http',
-                            self.client.api_root + search_path,  # Search path
+                            app().client.api_root + search_path,  # Search path
                             data, http_code_map[data][0],        # Error code and phrase
                             http_code_map[data][1]               # Error description
                         )
@@ -782,7 +780,7 @@ class AppWindow(QMainWindow):
                     else:
                         output = app().translator(
                             'gui.outputs.text.errors.too_large',
-                            self.client.os_path(search_path)
+                            app().client.os_path(search_path)
                         )
 
                     original_output = output
@@ -835,7 +833,7 @@ class AppWindow(QMainWindow):
                 readme, app().translator('information.first_launch.title'),
                 app().translator('information.first_launch.description')
             )
-        elif not self.shown_key_warning and self.client.token is None:
+        elif not self.shown_key_warning and app().client.token is None:
             QMessageBox.warning(
                 self, app().translator('warnings.empty_token.title'),
                 app().translator('warnings.empty_token.description')

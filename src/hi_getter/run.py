@@ -17,7 +17,6 @@ import toml
 from PySide6.QtCore import *
 
 from ._version import __version__
-from .network import Client
 from .constants import *
 from .exceptions import ExceptionHook
 from .gui import *
@@ -69,13 +68,12 @@ def main(*args, **kwargs) -> int:
         APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS), first_launch=first_launch)
         APP.load_env(verbose=True)
 
-        CLIENT:     Final[Client] = kwargs.pop('client', Client())
         SIZE:       Final[QSize] = QSize(
             # Size to use, with a minimum of 100x100.
             max(kwargs.pop('x_size', APP.settings['gui/window/x_size']), 100),
             max(kwargs.pop('y_size', APP.settings['gui/window/y_size']), 100)
         )
-        WINDOW:     Final[AppWindow] = AppWindow(CLIENT, SIZE)
+        WINDOW:     Final[AppWindow] = AppWindow(SIZE)
         WINDOW.show()
         return APP.exec()
 

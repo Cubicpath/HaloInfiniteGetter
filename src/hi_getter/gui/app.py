@@ -69,12 +69,13 @@ class GetterApp(QApplication):
         self._legacy_style: str = self.styleSheet()  # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
+        self.client:          Client = Client()
         self.icon_store:      dict[str, QIcon] = {}
         self.session:         NetworkSession = NetworkSession()
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self.translator: Translator = Translator(settings['language'])
+        self.translator:      Translator = Translator(settings['language'])
 
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
