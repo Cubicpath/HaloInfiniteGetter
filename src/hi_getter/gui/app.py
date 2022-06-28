@@ -139,6 +139,65 @@ class GetterApp(QApplication):
         """Set the application stylesheet to the one currently selected in settings."""
         self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
 
+    def show_dialog(self, key: str, parent: QWidget | None = None,
+                    buttons: QMessageBox.StandardButtons | None = None,
+                    default_button: QMessageBox.StandardButton | None = None,
+                    title_args: Sequence | None = None,
+                    description_args: Sequence | None = None) -> QMessageBox.StandardButton:
+        """Show a dialog. This is a wrapper around QMessageBox creation.
+
+        The type of dialog depends on the key's first section.
+        The following sections are supported::
+            - 'questions'   -> QMessageBox.question
+            - 'information' -> QMessageBox.information
+            - 'warnings'    -> QMessageBox.warning
+            - 'errors'      -> QMessageBox.critical
+
+        The dialog title and description are determined from the "title" and "description" child sections of the given key.
+        Example with given key as "questions.key"::
+            "questions.key.title": "Question Title"
+            "questions.key.description": "Question Description"
+
+        :param key: The translation key to use for the dialog.
+        :param parent: The parent widget to use for the dialog. If not supplied, a dummy widget is temporarily created.
+        :param buttons: The buttons to use for the dialog. If not supplied, the default buttons are used.
+        :param default_button: The default button to use for the dialog. If not supplied, the default button is used.
+        :param description_args: The translation arguments used to format the description.
+        :param title_args: The translation arguments used to format the title.
+        :return: The button that was clicked.
+        """
+        dummy_widget = QWidget()
+        parent = dummy_widget if parent is None else parent
+        title_args:       Sequence = () if title_args is None else title_args
+        description_args: Sequence = () if description_args is None else description_args
+
+        factory: Callable[[QWidget | QWidget, str, str, QMessageBox.StandardButtons | None, QMessageBox.StandardButton | None], QMessageBox.StandardButton]
+        match key.split('.')[0]:
+            case 'questions':
+                factory = QMessageBox.question
+            case 'information':
+                factory = QMessageBox.information
+            case 'warnings':
+                factory = QMessageBox.warning
+            case 'errors':
+                factory = QMessageBox.critical
+            case _:
+                factory = QMessageBox.information
+
+        title_text:       str = self.translator(f'{key}.title', *title_args)
+        description_text: str = self.translator(f'{key}.description', *description_args)
+        button_args:      list = []
+        if buttons is not None:
+            button_args.append(buttons)
+        if default_button is not None:
+            button_args.append(default_button)
+
+        return_val = factory(
+            parent, title_text, description_text, *button_args
+        )
+        dummy_widget.deleteLater()
+        return return_val
+
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
