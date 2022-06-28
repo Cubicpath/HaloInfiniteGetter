@@ -53,7 +53,7 @@ class ExceptionReporter(QWidget):
         EventBus['exceptions'].subscribe(DeferredCallable(self.reload_exceptions), ExceptionEvent)
 
         self.selected: int = 0
-        self.logger: ExceptionLogger = logger
+        self.logger:   ExceptionLogger = logger
         self.setWindowTitle(app().translator('gui.exception_reporter.title'))
         self.setWindowIcon(self.logger.icon())
         self.resize(QSize(750, 400))
@@ -132,12 +132,11 @@ class ExceptionReporter(QWidget):
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
-        exc_name = type(self.logger.exception_log[self.selected].exception).__name__
-        exc_msg = str(self.logger.exception_log[self.selected].exception).rstrip(".")
-        exc_tb = traceback.format_tb(self.logger.exception_log[self.selected].traceback)[0].strip()
-
-        base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
-        params = {
+        exc_name: str = type(self.logger.exception_log[self.selected].exception).__name__
+        exc_msg:  str = str(self.logger.exception_log[self.selected].exception).rstrip(".")
+        exc_tb:   str = traceback.format_tb(self.logger.exception_log[self.selected].traceback)[0].strip()
+        base:     str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
+        params:   dict[str, str] = {
             'template': 'bug-report.yaml',
             'assignees': 'Cubicpath',
             'labels': 'bug',
@@ -216,9 +215,10 @@ class ExceptionLogger(QPushButton):
         super().__init__(*args, **kwargs)
         EventBus['exceptions'].subscribe(self.on_exception, ExceptionEvent)
 
-        self.exception_log:    list[ExceptionLogger.LoggedException] = []
-        self.reporter:         ExceptionReporter = ExceptionReporter(self)
-        self.severity:         int = 0
+        self.label:          QLabel = QLabel(self)
+        self.exception_log:  list[ExceptionLogger.LoggedException] = []
+        self.reporter:       ExceptionReporter = ExceptionReporter(self)
+        self.severity:       int = 0
 
         self.reporter.setMinimumWidth(300)
 
@@ -227,6 +227,7 @@ class ExceptionLogger(QPushButton):
         self.exception_log.clear()
         self.severity = 0
         self.setText('')
+        self.label.setText(app().translator('gui.status.default'))
 
     def remove_exception(self, index: int) -> None:
         """Remove an exception from the log and update the current severity."""

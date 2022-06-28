@@ -378,11 +378,11 @@ class AppWindow(QMainWindow):
         (
             menu_bar, status_bar,
             file, settings, tools, help_,
-            logger, logger_label
+            logger
         ) = (
             QToolBar(self), QToolBar(self),
             QAction(self), QAction(self), QAction(self), QAction(self),
-            ExceptionLogger(self), QLabel(self)
+            ExceptionLogger(self),
         )
 
         init_objects({
@@ -426,19 +426,19 @@ class AppWindow(QMainWindow):
             settings.setText: 'gui.menus.settings',
             tools.setText: 'gui.menus.tools',
             help_.setText: 'gui.menus.help',
-            logger_label.setText: 'gui.status.default'
+            logger.label.setText: 'gui.status.default'
         })
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
 
-        EventBus['exceptions'].subscribe(lambda e: logger_label.setText(f'{e.exception}...'), ExceptionEvent)
+        EventBus['exceptions'].subscribe(lambda e: logger.label.setText(f'{e.exception}...'), ExceptionEvent)
         for action in (file, settings, tools, help_):
             menu_bar.addSeparator()
             menu_bar.addAction(action)
         status_bar.addWidget(logger)
         status_bar.addSeparator()
-        status_bar.addWidget(logger_label)
+        status_bar.addWidget(logger.label)
 
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""
