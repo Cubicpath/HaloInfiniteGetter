@@ -50,10 +50,10 @@ class SettingsWindow(QWidget):
         self.setFixedWidth(self.width())
 
         # Create a app().translator DeferredCallable with every tuple acting as arguments.
-        EventBus['settings'].subscribe(DeferredCallable(
-            QMessageBox.critical, self, *(DeferredCallable(app().translator, *key) for key in (
-                ('errors.settings.import_failure.title',), ('errors.settings.import_failure.description', app().settings.path)))),
-            TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import')
+        EventBus['settings'].subscribe(
+            DeferredCallable(app().show_dialog, 'errors.settings.import_failure', self, description_args=(app().settings.path,)),
+            TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import'
+        )
 
         self.theme_dropdown:          QComboBox
         self.aspect_ratio_dropdown:   QComboBox
@@ -848,15 +848,9 @@ class AppWindow(QMainWindow):
             readme = ReadmeViewer()
             readme.setWindowTitle(app().translator('gui.readme_viewer.title_first_launch'))
             readme.show()
-            QMessageBox.information(
-                readme, app().translator('information.first_launch.title'),
-                app().translator('information.first_launch.description')
-            )
+            app().show_dialog('information.first_launch', self)
         elif not self.shown_key_warning and app().client.token is None:
-            QMessageBox.warning(
-                self, app().translator('warnings.empty_token.title'),
-                app().translator('warnings.empty_token.description')
-            )
+            app().show_dialog('warnings.empty_token', self)
             self.__class__.shown_key_warning = True
 
     def resizeEvent(self, event: QResizeEvent) -> None:

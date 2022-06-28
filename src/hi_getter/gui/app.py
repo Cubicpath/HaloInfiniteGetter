@@ -201,12 +201,7 @@ class GetterApp(QApplication):
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
-            dummy_widget = QWidget()
-            QMessageBox.critical(
-                dummy_widget, self.translator('errors.missing_package.title'),
-                self.translator('errors.missing_package.description', 'python-dotenv', Path(sys.executable))
-            )
-            dummy_widget.deleteLater()
+            self.show_dialog('errors.missing_package', description_args=('python-dotenv', Path(sys.executable)))
         else:
             from dotenv import load_dotenv
             load_dotenv(verbose=verbose)

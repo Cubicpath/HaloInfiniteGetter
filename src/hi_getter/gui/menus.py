@@ -76,11 +76,10 @@ class FileContextMenu(QMenu):
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
-        response: int = QMessageBox.warning(
-            self, app().translator('warnings.delete_cache.title'),
-            app().translator('warnings.delete_cache.description'),
+        response: int = int(app().show_dialog(
+            'warnings.delete_cache', self,
             QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel
-        )
+        ))
 
         if response == QMessageBox.StandardButton.Ok:
             rmtree(HI_CACHE_PATH)
@@ -150,30 +149,24 @@ class HelpContextMenu(QMenu):
     def open_about(self) -> None:
         """Open the application's about section."""
         self.setWindowIcon(app().icon_store['about'])
-        QMessageBox.information(self, *self.about_message())
+        app().show_dialog('information.about', self, description_args=(
+            *ver, platform(), sys.implementation.name,
+            sys.version.split('[', maxsplit=1)[0],
+            self.package_versions()
+        ))
 
     @staticmethod
-    def about_message() -> tuple[str, str]:
-        """Generate the 'About' information regarding the application's environment.
+    def package_versions() -> str:
+        """Generate the package version list for use in the about message.
 
-        :return: Tuple containing the title and the message
+        :return: Package version list seperated by newlines.
         """
-        package_versions = '\n'.join(
+        return '\n'.join(
             app().translator(
                 'information.about.package_version',
                 package, version
             ) for package, version in current_requirement_versions(PARENT_PACKAGE).items() if has_package(package)
         )
-
-        return (
-                app().translator('information.about.title'),
-                app().translator(
-                    'information.about.description',
-                    *ver, platform(), sys.implementation.name,
-                    sys.version.split('[', maxsplit=1)[0],
-                    package_versions
-                )
-            )
 
 
 # noinspection PyArgumentList
@@ -202,9 +195,9 @@ class ToolsContextMenu(QMenu):
         exec_path = Path(sys.executable)
 
         if not has_package('pyshortcuts'):
-            QMessageBox.critical(
-                self, app().translator('errors.missing_package.title'),
-                app().translator('errors.missing_package.description', 'pyshortcuts', exec_path)
+            app().show_dialog(
+                'errors.missing_package', self,
+                description_args=('pyshortcuts', exec_path)
             )
         else:
             from pyshortcuts import make_shortcut
