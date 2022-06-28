@@ -29,7 +29,7 @@ _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 
 
 class NetworkSession:
-    """Wrapper for the QNetworkAccessManager."""
+    """Requests-like wrapper over a QNetworkAccessManager."""
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
         'Content-Disposition':  (QNetworkRequest.ContentDispositionHeader, str),
         'Content-Type':         (QNetworkRequest.ContentTypeHeader, str),
@@ -47,9 +47,10 @@ class NetworkSession:
     })
 
     def __init__(self):
-        """Initialize the NetworkWrapper."""
-        self.manager = QNetworkAccessManager(None)
-        self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
+        """Initialize the NetworkSession."""
+        self._headers:                 CaseInsensitiveDict[Any] = CaseInsensitiveDict()
+        self.manager:                  QNetworkAccessManager = QNetworkAccessManager(None)
+        self.default_redirect_policy:  QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -177,7 +178,7 @@ class NetworkSession:
                 # auth: tuple[str, str] | None = None,
                 # timeout: float | tuple[float, float] | None = None,
                 allow_redirects: bool = True,
-                # proxies: dict[str, str] | None = None,
+                proxies: dict[str, str] | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
                 # stream: bool | None = None,
                 verify: bool | str | None = None,
@@ -193,7 +194,7 @@ class NetworkSession:
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
 
-        # Translate tuple pair lists to dictionaries
+        # Translate dictionary-compatible tuple pair lists to dictionaries
         # Ex: [('name', 'value'), ('key': 'value')] -> {'name': 'value', 'key': 'value'}
         for tuple_list in ('params', 'data', 'headers', 'cookies'):
             if isinstance(vars()[tuple_list], list):
@@ -244,10 +245,10 @@ class NetworkSession:
             ssl_config.setCaCertificates(QSslCertificate.fromPath(verify))
 
         if isinstance(cert, str):
-            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert))
+            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(cert))
         elif isinstance(cert, tuple):
             # cert is a tuple of (cert_path, key_path)
-            ssl_config.setLocalCertificate(QSslCertificate.fromPath(cert[0]))
+            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(cert[0]))
             ssl_config.setPrivateKey(QSslKey(Path(cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
 
         request.setSslConfiguration(ssl_config)
@@ -272,6 +273,25 @@ class NetworkSession:
         if not allow_redirects:
             self.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
 
+        if proxies is not None:
+            for protocol, proxy_url in proxies.items():
+                proxy_type: QNetworkProxy.ProxyType
+                match protocol:
+                    case '':
+                        proxy_type = QNetworkProxy.NoProxy
+                    case 'ftp':
+                        proxy_type = QNetworkProxy.FtpCachingProxy
+                    case 'http':
+                        proxy_type = QNetworkProxy.HttpProxy
+                    case 'socks5':
+                        proxy_type = QNetworkProxy.Socks5Proxy
+                    case other:
+                        raise ValueError(f'proxy protocol "{other}" is not supported.')
+
+                proxy_url = QUrl(proxy_url)
+                proxy = QNetworkProxy(proxy_type, proxy_url.host(), proxy_url.port())
+                self.manager.setProxy(proxy)
+
         # Handle Reply
 
         reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
@@ -284,8 +304,8 @@ class NetworkSession:
 
         if self.manager.cookieJar() is not original_cookie_jar:
             self.manager.setCookieJar(original_cookie_jar)
-        if self.manager.redirectPolicy() != QNetworkRequest.NoLessSafeRedirectPolicy:
-            self.manager.setRedirectPolicy(QNetworkRequest.NoLessSafeRedirectPolicy)
+        if self.manager.redirectPolicy() != self.default_redirect_policy:
+            self.manager.setRedirectPolicy(self.default_redirect_policy)
 
         return reply
 
