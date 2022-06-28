@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 from typing import Final
 
+from PySide6.QtCore import *
 from PySide6.QtNetwork import *
 from PySide6.QtWidgets import *
 
@@ -34,10 +35,13 @@ TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
-class Client:
-    """HTTP REST Client that interfaces with Halo Waypoint to get data."""
+class Client(QObject):
+    """Asynchronous HTTP REST Client that interfaces with Halo Waypoint to get data."""
+    receivedData = Signal(str, bytes, name='receivedData')
+    receivedError = Signal(str, int, name='receivedError')
+    receivedJson = Signal(str, dict, name='receivedJson')
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, parent: QObject, **kwargs) -> None:
         """Initializes Halo Waypoint Client
 
         token is first taken from token kwarg, then HI_SPARTAN_AUTH environment variable, then from user's .token file.
@@ -46,6 +50,7 @@ class Client:
         :keyword token: Token to authenticate self to 343 API.
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
+        super().__init__(parent)
         self.SVC_HOST:       str = 'svc.halowaypoint.com'
         self.WEB_HOST:       str = 'www.halowaypoint.com'
         self.parent_path:    str = '/hi/'
@@ -128,15 +133,18 @@ class Client:
             reply:        QNetworkReply = self.get(path)
             encoded_data: bytes = reply.readAll().data()
             status_code:  int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-            content_type: str | None = reply.header(QNetworkRequest.ContentTypeHeader)
+            content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
 
             if is_error_status(status_code):
+                self.receivedError.emit(path, status_code)
                 return status_code
 
             if 'json' in content_type:
                 data = json.loads(encoded_data.decode(guess_json_utf(encoded_data)))
+                self.receivedJson.emit(path, data)
             else:
                 data = encoded_data
+                self.receivedData.emit(path, data)
 
             print(f"DOWNLOADED {path} >>> {content_type}")
             dump_data(os_path, data)
@@ -150,6 +158,9 @@ class Client:
             data = os_path.read_bytes()
             if os_path.suffix == '.json':
                 data = json.loads(data.decode(guess_json_utf(data)))
+                self.receivedJson.emit(path, data)
+            else:
+                self.receivedData.emit(path, data)
 
         return data
 
@@ -160,7 +171,7 @@ class Client:
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
-    def os_path(self, path, parent: Path = HI_CACHE_PATH) -> Path:
+    def os_path(self, path: str, parent: Path = HI_CACHE_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
 

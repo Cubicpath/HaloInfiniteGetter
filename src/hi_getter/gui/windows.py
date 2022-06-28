@@ -14,6 +14,7 @@ import sys
 import webbrowser
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -331,6 +332,10 @@ class AppWindow(QMainWindow):
     def __init__(self, size: QSize) -> None:
         """Create the window for the application."""
         super().__init__()
+        app().client.receivedError.connect(self.update_error)
+        app().client.receivedData.connect(self.update_image)
+        app().client.receivedJson.connect(self.update_text)
+
         self.current_image:  QPixmap | None = None
         self.detached:       dict[str, QMainWindow | None] = {'media': None, 'text': None}
         # self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -725,84 +730,98 @@ class AppWindow(QMainWindow):
         if search_path:
             if scan:
                 app().client.recursive_search(search_path)
-                self.use_input()
             else:
-                data = app().client.get_hi_data(search_path)
-                if isinstance(data, dict):
-                    data = json.dumps(data, indent=2)
-                data_size = (
-                    len(data) if isinstance(data, bytes)
-                    else len(data.encode('utf8', errors='ignore')) if isinstance(data, str)
-                    else 0
-                )
-                # Find the best size label for the data size
-                display_unit = 'Bytes'
-                for size_label in BYTE_UNITS:
-                    if data_size >= (BYTE_UNITS[size_label] // 2):
-                        display_unit = size_label
-                    else:
-                        break
+                app().client.get_hi_data(search_path)
 
-                display_size = round(data_size / BYTE_UNITS[display_unit], 4)
+    @staticmethod
+    def size_label_for(data: bytes) -> str:
+        """Return the best display unit to describe the given data's size.
 
-                if isinstance(data, bytes):
-                    self.clear_picture.setDisabled(False)
-                    self.copy_picture.setDisabled(False)
-                    self.current_image = QPixmap()
-                    self.current_image.loadFromData(data)
-                    self.image_size_label.setText(app().translator(
-                        'gui.outputs.image.label',
-                        self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
-                        display_size, display_unit                                              # Size in given unit
-                    ))
-                    self.resize_image()
-                else:
-                    scroll_to_top(self.text_output)
-                    self.clear_text.setDisabled(False)
-                    self.copy_text.setDisabled(False)
-                    self.text_output.setDisabled(False)
-                    self.text_output.clear()
+        Ex: Bytes, KiB, MiB, GiB, TiB
+        """
+        display_unit = 'Bytes'
+        for size_label in BYTE_UNITS:
+            if len(data) >= (BYTE_UNITS[size_label] // 2):
+                display_unit = size_label
+            else:
+                break
+        return display_unit
 
-                    if isinstance(data, int):
-                        data = app().translator(
-                            'gui.outputs.text.errors.http',
-                            app().client.api_root + search_path,  # Search path
-                            data, http_code_map[data][0],        # Error code and phrase
-                            http_code_map[data][1]               # Error description
-                        )
-                        self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
-                        self.text_output.setPlainText(data)
-                        return
+    def update_image(self, _: str, data: bytes) -> None:
+        """Update the image output with the given data."""
+        display_unit: str = self.size_label_for(data)
+        display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
 
-                    # Load up to 8 MiB of text data
-                    if data_size <= BYTE_UNITS['MiB'] * 8:
-                        output = data
-                    else:
-                        output = app().translator(
-                            'gui.outputs.text.errors.too_large',
-                            app().client.os_path(search_path)
-                        )
+        self.clear_picture.setDisabled(False)
+        self.copy_picture.setDisabled(False)
+        self.current_image = QPixmap()
+        self.current_image.loadFromData(data)
+        self.image_size_label.setText(app().translator(
+            'gui.outputs.image.label',
+            self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
+            display_size, display_unit                                              # Size in given unit
+        ))
+        self.resize_image()
 
-                    original_output = output
+    def update_text(self, search_path: str, data: dict[str, Any]) -> None:
+        """Update the text output with the given data."""
+        data = json.dumps(data, indent=2)
 
-                    replaced = set()
-                    for match in HI_PATH_PATTERN.finditer(original_output):
-                        match = match[0].replace('"', '')
-                        if match not in replaced:
-                            output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
-                            replaced.add(match)
+        scroll_to_top(self.text_output)
+        self.clear_text.setDisabled(False)
+        self.copy_text.setDisabled(False)
+        self.text_output.setDisabled(False)
+        self.text_output.clear()
 
-                    self.text_size_label.setText(app().translator(
-                        'gui.outputs.text.label',
-                        len(data.splitlines()), len(data),  # Line and character count
-                        display_size, display_unit          # Size in given unit
-                    ))
+        display_unit: str = self.size_label_for(data.encode('utf8', errors='ignore'))
+        display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
 
-                    self.text_output.setHtml(
-                        '<body style="white-space: pre-wrap">'
-                        f'{output}'
-                        '</body>'
-                    )
+        # Load up to 8 MiB of text data
+        if len(data) <= BYTE_UNITS['MiB'] * 8:
+            output = data
+        else:
+            output = app().translator(
+                'gui.outputs.text.errors.too_large',
+                app().client.os_path(search_path)
+            )
+
+        original_output = output
+
+        replaced = set()
+        for match in HI_PATH_PATTERN.finditer(original_output):
+            match = match[0].replace('"', '')
+            if match not in replaced:
+                output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
+                replaced.add(match)
+
+        self.text_size_label.setText(app().translator(
+            'gui.outputs.text.label',
+            len(data.splitlines()), len(data),  # Line and character count
+            display_size, display_unit          # Size in given unit
+        ))
+
+        self.text_output.setHtml(
+            '<body style="white-space: pre-wrap">'
+            f'{output}'
+            '</body>'
+        )
+
+    def update_error(self, search_path: str, data: int) -> None:
+        """Update the text output with the given data."""
+        scroll_to_top(self.text_output)
+        self.clear_text.setDisabled(False)
+        self.copy_text.setDisabled(False)
+        self.text_output.setDisabled(False)
+        self.text_output.clear()
+
+        error: str = app().translator(
+            'gui.outputs.text.errors.http',
+            app().client.api_root + search_path,  # Search path
+            data, http_code_map[data][0],         # Error code and phrase
+            http_code_map[data][1]                # Error description
+        )
+        self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
+        self.text_output.setPlainText(error)
 
     def resize_image(self) -> None:
         """Refresh the media output with a resized version of the current image."""
