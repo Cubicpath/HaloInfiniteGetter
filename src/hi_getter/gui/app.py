@@ -71,7 +71,7 @@ class GetterApp(QApplication):
 
         self.client:          Client = Client(self)
         self.icon_store:      dict[str, QIcon] = {}
-        self.session:         NetworkSession = NetworkSession()
+        self.session:         NetworkSession = NetworkSession(self)
         self.settings:        TomlFile = settings
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}

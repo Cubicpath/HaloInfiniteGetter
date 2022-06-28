@@ -65,7 +65,7 @@ class Client(QObject):
         if self._wpauth is None and WPAUTH_PATH.is_file():
             self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
 
-        self.api_session: NetworkSession = NetworkSession()
+        self.api_session: NetworkSession = NetworkSession(self)
         self.api_session.headers = CaseInsensitiveDict({
             'Accept': ', '.join(('application/json', 'text/plain', '*/*')),
             # 'Accept-Encoding': ', '.join(('gzip', 'deflate', 'br')),
@@ -84,7 +84,7 @@ class Client(QObject):
             'TE': 'trailers',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
         })
-        self.web_session: NetworkSession = NetworkSession()
+        self.web_session: NetworkSession = NetworkSession(self)
         self.web_session.headers = self.api_session.headers.copy() | {
             'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
             'Host': self.WEB_HOST,

@@ -46,10 +46,10 @@ class NetworkSession:
         'User-Agent':           (QNetworkRequest.UserAgentHeader, str),
     })
 
-    def __init__(self):
+    def __init__(self, manager_parent: QObject = None):
         """Initialize the NetworkSession."""
         self._headers:                 CaseInsensitiveDict[Any] = CaseInsensitiveDict()
-        self.manager:                  QNetworkAccessManager = QNetworkAccessManager(None)
+        self.manager:                  QNetworkAccessManager = QNetworkAccessManager(manager_parent)
         self.default_redirect_policy:  QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
 
     @property
