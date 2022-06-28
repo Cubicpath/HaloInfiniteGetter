@@ -189,7 +189,6 @@ class NetworkSession:
 
         # Setup values for the request
 
-        url = QUrl(url)
         params = {} if params is None else params
         headers = {} if headers is None else headers
         cookies = {} if cookies is None else cookies
@@ -200,11 +199,12 @@ class NetworkSession:
             if isinstance(vars()[tuple_list], list):
                 vars()[tuple_list] = {key: value for key, value in vars()[tuple_list]}
 
-        request_params = query_to_dict(url.query()) | params  # Override QUrl params with params argument
-        request_headers = self.headers.copy() | headers       # Override session headers with headers argument
-        request_cookies = self.cookies | cookies              # Override session cookies with cookies argument
+        request_url:     QUrl = QUrl(url)                                              # Ensure url is of type QUrl
+        request_params:  dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
+        request_headers: CaseInsensitiveDict = self.headers.copy() | headers           # Override session headers with headers argument
+        request_cookies: dict[str, str] = self.cookies | cookies                       # Override session cookies with cookies argument
 
-        url.setQuery(dict_to_query(request_params))
+        request_url.setQuery(dict_to_query(request_params))
 
         # HTTP Body
 
@@ -233,9 +233,9 @@ class NetworkSession:
             self.manager.setCookieJar(QNetworkCookieJar(self.manager))
 
             for name, value in request_cookies:
-                self.set_cookie(name, value, url.host())
+                self.set_cookie(name, value, request_url.host())
 
-        request = QNetworkRequest(url)
+        request = QNetworkRequest(request_url)
 
         # SSL Configuration
 
@@ -293,6 +293,7 @@ class NetworkSession:
                 self.manager.setProxy(proxy)
 
         # Handle Reply
+        # Since this is an asynchronous request, we don't immediately have the reply data.
 
         reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
 

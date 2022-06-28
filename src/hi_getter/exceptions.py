@@ -45,7 +45,7 @@ class ExceptionHook:
         EventBus['exceptions'] << ExceptionEvent(exception, traceback)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} (old_hook={self.__old_hook})>'
+        return f'<{type(self).__name__} (old_hook={self.__old_hook})>'
 
     def __enter__(self) -> None:
         """Temporary extend current exception hook."""
