@@ -76,10 +76,11 @@ class FileContextMenu(QMenu):
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
-        response: int = int(app().show_dialog(
+        response = app().show_dialog(
             'warnings.delete_cache', self,
-            QMessageBox.StandardButton.Ok, QMessageBox.StandardButton.Cancel
-        ))
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel
+        )
 
         if response == QMessageBox.StandardButton.Ok:
             rmtree(HI_CACHE_PATH)
@@ -149,11 +150,14 @@ class HelpContextMenu(QMenu):
     def open_about(self) -> None:
         """Open the application's about section."""
         self.setWindowIcon(app().icon_store['about'])
-        app().show_dialog('information.about', self, description_args=(
-            *ver, platform(), sys.implementation.name,
-            sys.version.split('[', maxsplit=1)[0],
-            self.package_versions()
-        ))
+        app().show_dialog(
+            'information.about', self,
+            description_args=(
+                *ver, platform(), sys.implementation.name,
+                sys.version.split('[', maxsplit=1)[0],
+                self.package_versions()
+            )
+        )
 
     @staticmethod
     def package_versions() -> str:

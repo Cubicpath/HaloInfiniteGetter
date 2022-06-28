@@ -201,7 +201,10 @@ class GetterApp(QApplication):
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
-            self.show_dialog('errors.missing_package', description_args=('python-dotenv', Path(sys.executable)))
+            self.show_dialog(
+                'errors.missing_package',
+                description_args=('python-dotenv', Path(sys.executable))
+            )
         else:
             from dotenv import load_dotenv
             load_dotenv(verbose=verbose)
@@ -219,9 +222,10 @@ class GetterApp(QApplication):
             filename in (HI_RESOURCE_PATH / 'icons').iterdir() if filename.is_file()
         })
 
-        # Load externally stored icons
+        # Load external icon links
         external_icon_links: dict[str, str] = json.loads((HI_RESOURCE_PATH / 'external_icons.json').read_text(encoding='utf8'))
 
+        # Load externally stored icons
         # pylint: disable=cell-var-from-loop
         for key, url in external_icon_links.items():
             # Create a new handler for every key being requested.

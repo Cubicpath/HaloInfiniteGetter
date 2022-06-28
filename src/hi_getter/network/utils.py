@@ -65,7 +65,7 @@ def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
 
 
 def is_error_status(status: int) -> bool:
-    """ Returns True if the HTTP status code is an error status."""
+    """Returns True if the HTTP status code is an error status."""
     return 400 <= status < 600
 
 
