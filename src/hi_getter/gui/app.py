@@ -213,3 +213,9 @@ class GetterApp(QApplication):
         """List of themes sorted by their display name."""
         # noinspection PyTypeChecker
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)
+
+    @staticmethod
+    def quit() -> None:
+        """Quit the application."""
+        app().client.deleteLater()
+        app().quit()
