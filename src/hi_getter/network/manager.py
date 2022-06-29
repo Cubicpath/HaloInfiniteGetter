@@ -15,6 +15,7 @@ from json import dumps as json_dumps
 from pathlib import Path
 from typing import Any
 from typing import TypeAlias
+from warnings import warn
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
@@ -95,6 +96,20 @@ class NetworkSession:
     def headers(self) -> None:
         """Clear headers on delete."""
         self._headers.clear()
+
+    @staticmethod
+    def _check_method_kwargs(method: str, **kwargs) -> None:
+        """Check that the given keyword arguments are valid for the given HTTP method.
+
+        If some arguments are invalid, a warning is emitted.
+
+        :param method: HTTP method to check.
+        :param kwargs: Keyword arguments to check.
+        """
+
+        if method in ('GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'):
+            if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
+                warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
 
     def _translate_header_value(self, header: str, value: Any) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
         """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
@@ -400,13 +415,16 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished."""
-        return self.request(method='GET', url=url, **kwargs)
+        method: str = 'GET'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
 
     def head(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the HEAD HTTP method.
 
         HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
-        This is useful for checking if a resource exists, or for getting the size of a resource without downloading it.
+        This is useful for checking if a resource exists, or for getting the size of a resource before downloading it.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
@@ -420,7 +438,10 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished."""
-        return self.request(method='HEAD', url=url, **kwargs)
+        method: str = 'HEAD'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
 
     def post(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the POST HTTP method.
@@ -440,12 +461,15 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished."""
-        return self.request(method='POST', url=url, **kwargs)
+        method: str = 'POST'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
 
     def put(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the PUT HTTP method.
 
-        PUT is a method for updating a resource on a server. The data sent PUT should be the full content of the resource.
+        PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
@@ -459,7 +483,10 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished."""
-        return self.request(method='PUT', url=url, **kwargs)
+        method: str = 'PUT'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
 
     def delete(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the DELETE HTTP method.
@@ -478,7 +505,10 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished."""
-        return self.request(method='DELETE', url=url, **kwargs)
+        method: str = 'DELETE'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
 
     def patch(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the PATCH HTTP method.
@@ -498,4 +528,7 @@ class NetworkSession:
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
-        return self.request(method='PATCH', url=url, **kwargs)
+        method: str = 'PATCH'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
