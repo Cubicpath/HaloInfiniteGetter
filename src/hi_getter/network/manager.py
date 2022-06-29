@@ -46,30 +46,37 @@ class NetworkSession:
         'User-Agent':           (QNetworkRequest.UserAgentHeader, str),
     })
 
-    def __init__(self, manager_parent: QObject = None):
-        """Initialize the NetworkSession."""
+    def __init__(self, manager_parent: QObject = None) -> None:
+        """Initialize the NetworkSession.
+
+        :param manager_parent: Parent of the QNetworkAccessManager.
+        """
         self._headers:                 CaseInsensitiveDict[Any] = CaseInsensitiveDict()
         self.manager:                  QNetworkAccessManager = QNetworkAccessManager(manager_parent)
         self.default_redirect_policy:  QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
-        """Dictionary representation of the internal :py:class:`QNetworkCookieJar`."""
+        """:return: Dictionary representation of the internal QNetworkCookieJar"""
         return {cookie.name().toStdString(): cookie.value().toStdString() for cookie in self.manager.cookieJar().allCookies()}
 
     @cookies.deleter
     def cookies(self) -> None:
-        """Clear cookies on delete."""
+        """Clear all cookies on delete."""
         self.clear_cookies()
 
     @property
     def headers(self) -> CaseInsensitiveDict[Any]:
-        """Dictionary containing the default session headers."""
+        """:return: Dictionary containing the default session headers."""
         return self._headers
 
     @headers.setter
     def headers(self, value: Mapping) -> None:
-        """Translate any mapping value to a CaseInsensitiveDict for use as headers."""
+        """Translate any mapping value to a CaseInsensitiveDict for use as headers.
+
+        :param value: Mapping to copy into a CaseInsensitiveDict.
+        :raises TypeError: If the value is not a Mapping.
+        """
         if not isinstance(value, Mapping):
             raise TypeError(f'NetworkSession headers must be a Mapping, not {type(value)}')
 
@@ -80,7 +87,23 @@ class NetworkSession:
         """Clear headers on delete."""
         self._headers.clear()
 
-    def _translate_header_value(self, header: str, value: Any):
+    def _translate_header_value(self, header: str, value: Any) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
+        """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
+
+        Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
+
+        The following types are supported:
+            - str: Given value is translated into a str.
+            - bytes: Translates string value into a utf8 encoded version.
+            - QDateTime: Translates string and datetime values into a QDateTime.
+            - QNetworkCookie: Translates string pairs into a QNetworkCookie list. The first value is the cookie name, the second is the cookie value.
+            - QStringListModel: Iterates over value and translates all inner-values to strings. Returns a list of the translated strings.
+            - QUrl: Calls the QUrl constructor on value and returns result.
+
+        :param header: Header defined in KNOWN_HEADERS.
+        :param value: Value to translate into an accepted type.
+        :return: Transformed value.
+        """
         old_value = value
 
         # Match the known-header's value name and translate value to that type.
@@ -136,17 +159,40 @@ class NetworkSession:
         path within that domain are removed.  If given three arguments, then
         the cookie with the specified name, path and domain is removed.
 
-        :return: True if a cookie was deleted.
+        :param domain: The domain of the cookie to remove.
+        :param path: The path of the cookie to remove.
+        :param name: The name of the cookie to remove.
+        :return: True if any cookies were removed, False otherwise.
+        :raises ValueError: If name is provided, must provide path. If path is provided, must provide domain. Raise otherwise.
         """
 
-        def deletion_predicate(cookie: QNetworkCookie):
-            if name is not None:      # 3 args
+        def deletion_predicate(cookie: QNetworkCookie) -> bool:
+            """Return whether the cookie should be deleted.
+
+            :param cookie: The cookie to check.
+            :return: True if the cookie should be removed, False otherwise.
+            :raises ValueError: If name is provided, must provide path. If path is provided, must provide domain. Raise otherwise.
+            """
+            # 3 args -- Delete the specific cookie which matches all information.
+            if name is not None:
+                if domain is None or path is None:
+                    raise ValueError('Must specify domain and path if specifying name')
+
                 return cookie.name().toStdString() == name and cookie.domain() == domain and cookie.path() == path
-            elif path is not None:    # 2 args
+
+            # 2 args -- Delete all cookies with the given domain and path.
+            elif path is not None:
+                if path is None:
+                    raise ValueError('Must specify domain if specifying path')
+
                 return cookie.domain() == domain and cookie.path() == path
-            elif domain is not None:  # 1 arg
+
+            # 1 arg -- Delete all cookies in the given domain.
+            elif domain is not None:
                 return cookie.domain() == domain
-            else:                     # 0 args
+
+            # 0 args -- Delete all cookies
+            else:
                 return True
 
         results = []
@@ -162,6 +208,7 @@ class NetworkSession:
         Replaces a pre-existing cookie with the same identifier if it exists.
 
         :return: True if the cookie was set.
+        :raises: ValueError if name and value are not strings.
         """
         cookie = QNetworkCookie(name=name.encode('utf8'), value=value.encode('utf8'))
         cookie.setDomain(domain)
@@ -178,14 +225,30 @@ class NetworkSession:
                 # auth: tuple[str, str] | None = None,
                 # timeout: float | tuple[float, float] | None = None,
                 allow_redirects: bool = True,
-                proxies: dict[str, str] | None = None,
+                proxies: dict[str, str] | list[tuple[str, str]] | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
                 # stream: bool | None = None,
                 verify: bool | str | None = None,
                 cert: str | tuple[str, str] | None = None,
                 json: dict[str, Any] | None = None,
-                finished: _NetworkReplyConsumer | None = None):
-        """Send an HTTP request to the given URL with the given data."""
+                finished: _NetworkReplyConsumer | None = None) -> QNetworkReply:
+        """Send an HTTP request to the given URL with the given data.
+
+        :param method: HTTP method/verb to use for the request. Case-sensitive.
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :param params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :param data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :param headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param cookies: Cookies to use for the request. Case-sensitive.
+        :param allow_redirects: If False, do not follow any redirect requests.
+        :param proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :param verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :param cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :param json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :param finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
+        """
 
         # Setup values for the request
 
@@ -195,14 +258,14 @@ class NetworkSession:
 
         # Translate dictionary-compatible tuple pair lists to dictionaries
         # Ex: [('name', 'value'), ('key': 'value')] -> {'name': 'value', 'key': 'value'}
-        for tuple_list in ('params', 'data', 'headers', 'cookies'):
+        for tuple_list in ('params', 'data', 'headers', 'cookies', 'proxies'):
             if isinstance(vars()[tuple_list], list):
                 vars()[tuple_list] = {key: value for key, value in vars()[tuple_list]}
 
         request_url:     QUrl = QUrl(url)                                              # Ensure url is of type QUrl
         request_params:  dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
-        request_headers: CaseInsensitiveDict = self.headers.copy() | headers           # Override session headers with headers argument
-        request_cookies: dict[str, str] = self.cookies | cookies                       # Override session cookies with cookies argument
+        request_headers: CaseInsensitiveDict = self.headers.copy() | headers           # Update session headers with headers argument
+        request_cookies: dict[str, str] = self.cookies | cookies                       # Update session cookies with cookies argument
 
         request_url.setQuery(dict_to_query(request_params))
 
@@ -311,7 +374,23 @@ class NetworkSession:
         return reply
 
     def get(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the GET HTTP method."""
+        """Create and send a request with the GET HTTP method.
+
+        GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
+        by web browsers to get HTML pages, images, and other resources.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='GET', url=url, **kwargs)
 
     def head(self, url: QUrl | str, **kwargs):
