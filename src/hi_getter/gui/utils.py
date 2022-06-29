@@ -112,7 +112,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
                         # None can be used rather than int to skip a dimension.
                         if size[0]:
                             getattr(obj, f'set{size_type.title()}Width')(size[0])
-                        if size.get(size_type)[1]:
+                        if size[1]:
                             getattr(obj, f'set{size_type.title()}Height')(size[1])
 
         # Translate widget texts
