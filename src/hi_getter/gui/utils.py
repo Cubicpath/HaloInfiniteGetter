@@ -72,7 +72,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
     # Initialize widget attributes
     for obj, data in object_data.items():
         special_keys = ('items', 'size', 'text',)
-        items, size, text = (data.get(key) for key in special_keys)
+        items, size_dict, text = (data.get(key) for key in special_keys)
 
         # Find setter method for all non specially-handled keys
         for key, val in data.items():
@@ -82,8 +82,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
             # Check if key is a signal on widget
             # If so, connect it to the given function
             if hasattr(obj, key):
-                attribute = getattr(obj, key)
-                if isinstance(attribute, SignalInstance):
+                if isinstance((attribute := getattr(obj, key)), SignalInstance):
                     if isinstance(val, Iterable):
                         for slot in val:
                             attribute.connect(slot)
@@ -101,19 +100,20 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
             obj.addItems(translator(key) for key in items)
 
         # Set size
-        if size is not None:
-            for s_type in ('minimum', 'maximum', 'fixed'):
-                if size.get(s_type) is not None:
-                    if isinstance(size.get(s_type), QSize):
+        if size_dict is not None:
+            for size_type in ('minimum', 'maximum', 'fixed'):
+                if size_dict.get(size_type) is not None:
+                    size: QSize | Sequence[int] = size_dict.get(size_type)
+                    if isinstance(size, QSize):
                         # For PySide6.QtCore.QSize objects
-                        getattr(obj, f'set{s_type.title()}Size')(size[s_type])
-                    elif isinstance(size.get(s_type), Sequence):
+                        getattr(obj, f'set{size_type.title()}Size')(size)
+                    elif isinstance(size, Sequence):
                         # For lists, tuples, etc. Set width and height separately.
                         # None can be used rather than int to skip a dimension.
-                        if size.get(s_type)[0]:
-                            getattr(obj, f'set{s_type.title()}Width')(size[s_type][0])
-                        if size.get(s_type)[1]:
-                            getattr(obj, f'set{s_type.title()}Height')(size[s_type][1])
+                        if size[0]:
+                            getattr(obj, f'set{size_type.title()}Width')(size[0])
+                        if size.get(size_type)[1]:
+                            getattr(obj, f'set{size_type.title()}Height')(size[1])
 
         # Translate widget texts
         if text is not None:

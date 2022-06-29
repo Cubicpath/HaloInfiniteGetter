@@ -215,8 +215,7 @@ class TomlFile:
         scope, path = self._search_scope(key, mode='get')
 
         # Get value from CommentValue
-        val = scope.get(path)
-        if isinstance(val, CommentValue):
+        if isinstance((val := scope.get(path)), CommentValue):
             val = val.val
 
         self.event_bus << TomlEvents.Get(self, key, val)
@@ -233,8 +232,7 @@ class TomlFile:
         scope, path = self._search_scope(key, 'set')
 
         # Preserve comments, or edit them if comment argument was filled
-        prev_val = scope.get(path)
-        if isinstance(prev_val, CommentValue):
+        if isinstance((prev_val := scope.get(path)), CommentValue):
             value = make_comment_val(value, prev_val.comment.lstrip().removeprefix(_COMMENT_PREFIX), new_line=prev_val.comment.startswith('\n'))
             if comment is not None:
                 value.comment = comment

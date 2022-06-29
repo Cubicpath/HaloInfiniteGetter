@@ -248,8 +248,7 @@ class GetterApp(QApplication):
                 continue
 
             theme: dict = theme.copy()
-            path: CommentValue | Path = theme.pop('path')
-            if isinstance(path, CommentValue):
+            if isinstance((path := theme.pop('path')), CommentValue):
                 path = Path(path.val)
             if path.is_dir():
                 search_path = f'hi_theme+{id_}'
