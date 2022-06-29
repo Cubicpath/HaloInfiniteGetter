@@ -149,9 +149,14 @@ class TomlFile:
     """
 
     def __init__(self, path: Path | str, default: dict[str, TomlValue | CommentValue] | None = None) -> None:
+        """Initialize a :py:class:`TomlFile` object.
+
+        :param path: Path to the TOML file.
+        :param default: Default values for the TOML file.
+        """
         self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
-        self._data: dict[str, TomlValue | CommentValue] = default if default is not None else {}
+        self._data: dict[str, TomlValue | CommentValue] = {} if default is None else default
         self.event_bus: EventBus[TomlEvents.TomlEvent] = EventBus()
         if self.reload() is False:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
@@ -200,17 +205,24 @@ class TomlFile:
 
     @property
     def path(self) -> Path:
-        """Current OS path that TomlFile with save and reload from."""
+        """:return: Current OS path that TomlFile with save and reload from."""
         return self._path
 
     @path.setter
     def path(self, value: Path | str) -> None:
+        """Set the path to the TOML file to save and reload from.
+
+        Translates string paths to pathlib Paths.
+        """
         self._path = Path(value)
 
-    def get_key(self, key: str) -> TomlValue | None:
+    def get_key(self, key: str) -> TomlValue:
         """Get a key from path. Searches with each '/' defining a new table to check.
 
         :param key: Key to get value from.
+        :return: Value of key.
+        :raises KeyError: If key doesn't exist.
+        :raises ValueError: If key is an empty string.
         """
         scope, path = self._search_scope(key, mode='get')
 
@@ -228,6 +240,8 @@ class TomlFile:
         :param key: Key to set.
         :param value: Value to set key as.
         :param comment: Append an optional comment to the value.
+        :raises KeyError: If key evaluates to a table.
+        :raises ValueError: If key is an empty string.
         """
         scope, path = self._search_scope(key, 'set')
 
@@ -248,16 +262,23 @@ class TomlFile:
         )
 
     def save(self) -> bool:
-        """Save current settings to self.path."""
+        """Save current settings to self.path.
+
+        :return: True if successful, otherwise False.
+        """
         return self.export_to(self.path)
 
     def reload(self) -> bool:
-        """Reset settings to settings stored in self.path."""
+        """Reset settings to settings stored in self.path.
+
+        :return: True if successful, otherwise False.
+        """
         return self.import_from(self.path, update=True)
 
     def export_to(self, path: Path | str) -> bool:
         """Export internal dictionary as a TOML file to path.
 
+        :param path: Path to export TOML file to.
         :return: True if successful, otherwise False.
         """
         path = Path(path)  # Make sure path is of type Path
@@ -274,7 +295,10 @@ class TomlFile:
     def import_from(self, path: Path | str, update: bool = False) -> bool:
         """Import TOML file from path to internal dictionary.
 
-        :return: True if successful, otherwise False."""
+        :param path: Path to import TOML file from.
+        :param update: If True, will update existing keys with new values, instead of replacing the internal dictionary.
+        :return: True if successful, otherwise False.
+        """
 
         path = Path(path)  # Make sure path is of type Path
         if path.is_file():
@@ -282,7 +306,7 @@ class TomlFile:
                 with path.open(mode='r', encoding='utf8') as file:
                     toml_data = toml.load(file, decoder=PathTomlDecoder())
                     if update:
-                        self._data.update(toml_data)
+                        self._data |= toml_data
                     else:
                         self._data = toml_data
 

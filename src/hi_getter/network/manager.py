@@ -386,7 +386,7 @@ class NetworkSession:
         """Create and send a request with the GET HTTP method.
 
         GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
-        by web browsers to get HTML pages, images, and other resources.
+        by web browsers to download HTML pages, images, and other resources.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
@@ -426,7 +426,7 @@ class NetworkSession:
         """Create and send a request with the POST HTTP method.
 
         POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
-        This makes it very common for servers to accept POST requests a multitude of things.
+        This makes it very common for servers to accept POST requests for a multitude of things.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
@@ -446,7 +446,6 @@ class NetworkSession:
         """Create and send a request with the PUT HTTP method.
 
         PUT is a method for updating a resource on a server. The data sent PUT should be the full content of the resource.
-        It is not widely supported, but is supported by some servers.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
@@ -485,7 +484,6 @@ class NetworkSession:
         """Create and send a request with the PATCH HTTP method.
 
         PATCH is used to send a partial update of an existing resource.
-        It is not widely supported, but is supported by some servers.
 
         :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
