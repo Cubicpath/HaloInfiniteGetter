@@ -29,7 +29,16 @@ _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 
 
 class NetworkSession:
-    """Requests-like wrapper over a QNetworkAccessManager."""
+    """Requests-like wrapper over a QNetworkAccessManager.
+
+    The following convenience methods are supported:
+        - get
+        - head
+        - post
+        - put
+        - delete
+        - patch
+    """
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
         'Content-Disposition':  (QNetworkRequest.ContentDispositionHeader, str),
         'Content-Type':         (QNetworkRequest.ContentTypeHeader, str),
@@ -393,22 +402,102 @@ class NetworkSession:
         :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='GET', url=url, **kwargs)
 
-    def head(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the HEAD HTTP method."""
+    def head(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+        """Create and send a request with the HEAD HTTP method.
+
+        HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
+        This is useful for checking if a resource exists, or for getting the size of a resource without downloading it.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='HEAD', url=url, **kwargs)
 
-    def post(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the POST HTTP method."""
+    def post(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+        """Create and send a request with the POST HTTP method.
+
+        POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
+        This makes it very common for servers to accept POST requests a multitude of things.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='POST', url=url, **kwargs)
 
-    def put(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the PUT HTTP method."""
+    def put(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+        """Create and send a request with the PUT HTTP method.
+
+        PUT is a method for updating a resource on a server. The data sent PUT should be the full content of the resource.
+        It is not widely supported, but is supported by some servers.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='PUT', url=url, **kwargs)
 
-    def delete(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the DELETE HTTP method."""
+    def delete(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+        """Create and send a request with the DELETE HTTP method.
+
+        DELETE is used to delete a specified resource.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished."""
         return self.request(method='DELETE', url=url, **kwargs)
 
-    def patch(self, url: QUrl | str, **kwargs):
-        """Create and send a request with the PATCH HTTP method."""
+    def patch(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+        """Create and send a request with the PATCH HTTP method.
+
+        PATCH is used to send a partial update of an existing resource.
+        It is not widely supported, but is supported by some servers.
+
+        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
+        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
+        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
+        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
+        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
+        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         return self.request(method='PATCH', url=url, **kwargs)
