@@ -186,8 +186,13 @@ class ToolsContextMenu(QMenu):
             app().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
         )
 
+        exception_reporter: QAction = QAction(
+            parent.exception_reporter.logger.icon(),
+            app().translator('gui.menus.tools.exception_reporter'), self, triggered=parent.exception_reporter.show
+        )
+
         section_map = {
-            'Tools': (shortcut_tool,)
+            'Tools': (shortcut_tool, exception_reporter)
         }
 
         for section, actions in section_map.items():

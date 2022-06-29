@@ -345,6 +345,7 @@ class AppWindow(QMainWindow):
 
         self.settings_window = SettingsWindow(self, QSize(420, 600))
 
+        self.exception_reporter:  ExceptionReporter
         self.input_field:         HistoryComboBox
         self.media_frame:         QFrame
         self.image_size_label:    QLabel
@@ -429,6 +430,8 @@ class AppWindow(QMainWindow):
             help_.setText: 'gui.menus.help',
             logger.label.setText: 'gui.status.default'
         })
+
+        self.exception_reporter = logger.reporter
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
