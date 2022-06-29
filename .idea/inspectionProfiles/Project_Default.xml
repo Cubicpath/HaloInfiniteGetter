@@ -19,6 +19,13 @@
           <option value="N806" />
         </list>
       </option>
+      <option name="ignoredBaseClasses">
+        <list>
+          <option value="unittest.TestCase" />
+          <option value="unittest.case.TestCase" />
+          <option value="shiboken6.Shiboken.Object" />
+        </list>
+      </option>
     </inspection_tool>
     <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="ignoredNames">
