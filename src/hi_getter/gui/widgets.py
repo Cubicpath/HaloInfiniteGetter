@@ -191,6 +191,7 @@ class ExceptionReporter(QWidget):
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """Resizes the left panel to better fit the window."""
+        super().resizeEvent(event)
         self.left_panel.setMaximumWidth(event.size().width() // 3)
         for i in range(self.scroll_widget.layout().count()):
             self.scroll_widget.layout().itemAt(i).widget().setMaximumWidth((event.size().width() // 3) - 50)
@@ -352,6 +353,7 @@ class ExternalTextBrowser(QTextBrowser):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Execute :py:class:`Callable` mapped to the key press."""
+        super().keyPressEvent(event)
         self.key_callable_map[event.key()]()
         event.accept()
 
@@ -367,6 +369,7 @@ class PasteLineEdit(QLineEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Call self.pasted on paste."""
+        super().keyPressEvent(event)
         if event.matches(QKeySequence.Paste):
             self.pasted.emit()
         event.accept()
@@ -540,5 +543,6 @@ class ReadmeViewer(QWidget):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Manually signal the readme_viewer for garbage collection."""
+        super().closeEvent(event)
         self.readme_viewer.deleteLater()
         event.accept()
