@@ -127,6 +127,13 @@ class HelpContextMenu(QMenu):
             app().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
+        about_qt_view: QAction = QAction(
+            app().icon_store['about'],
+            app().translator('gui.menus.help.about_qt'), self, triggered=DeferredCallable(
+                QMessageBox(self).aboutQt, self, app().translator('about.qt.title')
+            )
+        )
+
         license_view: QAction = QAction(
             app().icon_store['copyright'],
             app().translator('gui.menus.help.license'), self, triggered=self.license_window.show
@@ -139,7 +146,7 @@ class HelpContextMenu(QMenu):
 
         section_map = {
             'Github': (github_view, create_issue),
-            'Information': (about_view, license_view, readme)
+            'Information': (about_view, about_qt_view, license_view, readme)
         }
 
         for section, actions in section_map.items():
