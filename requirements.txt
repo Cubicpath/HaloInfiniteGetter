@@ -1,4 +1,7 @@
-pyshortcuts==1.8.2
-PySide6_Essentials==6.3.1
-python-dotenv==0.20.0
-toml==0.10.2
+# Hard-requirements:
+PySide6_Essentials==6.3.1  # GUI, Networking stack, etc.
+toml==0.10.2               # Configuration file parser and editor
+
+# Soft-requirements:
+pyshortcuts==1.8.2     # For the "Create Desktop Shortcut" tool
+python-dotenv==0.20.0  # To load .env files
