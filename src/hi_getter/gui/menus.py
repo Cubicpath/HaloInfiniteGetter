@@ -169,7 +169,7 @@ class HelpContextMenu(QMenu):
             app().translator(
                 'information.about.package_version',
                 package, version
-            ) for package, version in current_requirement_versions(PARENT_PACKAGE).items() if has_package(package)
+            ) for package, version in current_requirement_versions(PARENT_PACKAGE, include_extras=True).items()
         )
 
 

@@ -67,6 +67,9 @@ def current_requirement_names(package: str, include_extras: bool = False) -> lis
     for requirement in requires(package):
         if not include_extras and '; extra' in requirement:
             continue
+        # Don't include testing extras
+        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
+            continue
 
         split_char = 0
         for char in requirement:
@@ -80,7 +83,7 @@ def current_requirement_names(package: str, include_extras: bool = False) -> lis
 
 
 def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
-    """Return the current versions for the requirements of the given package.
+    """Return the current versions of the installed requirements for the given package.
 
     :param package: Package name to search
     :param include_extras: Whether to include packages installed with extras
@@ -88,7 +91,7 @@ def current_requirement_versions(package: str, include_extras: bool = False) -> 
     """
     from importlib.metadata import version
 
-    return {name: version(name) for name in current_requirement_names(package, include_extras)}
+    return {name: version(name) for name in current_requirement_names(package, include_extras) if has_package(name)}
 
 
 def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
