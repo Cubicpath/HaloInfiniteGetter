@@ -10,6 +10,7 @@ __all__ = (
 )
 
 import json
+import subprocess
 import sys
 from collections.abc import Callable
 from collections.abc import Sequence
@@ -140,72 +141,142 @@ class GetterApp(QApplication):
         self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
-                    buttons: QMessageBox.StandardButtons | None = None,
-                    default_button: QMessageBox.StandardButton | None = None,
+                    buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButtons | None = None,
+                    default_button: QAbstractButton | None = None,
                     title_args: Sequence | None = None,
-                    description_args: Sequence | None = None) -> QMessageBox.StandardButton:
+                    description_args: Sequence | None = None) -> tuple[QAbstractButton, QMessageBox.ButtonRole]:
         """Show a dialog. This is a wrapper around QMessageBox creation.
 
-        The type of dialog depends on the key's first section.
+        The type of dialog icon depends on the key's first section.
         The following sections are supported::
-            - 'questions'   -> QMessageBox.question
-            - 'information' -> QMessageBox.information
-            - 'warnings'    -> QMessageBox.warning
-            - 'errors'      -> QMessageBox.critical
+            - 'about':      -> QMessageBox.about
+            - 'questions'   -> QMessageBox.Question
+            - 'information' -> QMessageBox.Information
+            - 'warnings'    -> QMessageBox.Warning
+            - 'errors'      -> QMessageBox.Critical
 
         The dialog title and description are determined from the "title" and "description" child sections of the given key.
         Example with given key as "questions.key"::
             "questions.key.title": "Question Title"
             "questions.key.description": "Question Description"
 
+        WARNING: If a StandardButton is clicked, the button returned is NOT a StandardButton enum, but a QPushButton.
+
         :param key: The translation key to use for the dialog.
         :param parent: The parent widget to use for the dialog. If not supplied, a dummy widget is temporarily created.
-        :param buttons: The buttons to use for the dialog. If not supplied, the default buttons are used.
-        :param default_button: The default button to use for the dialog. If not supplied, the default button is used.
+        :param buttons: The buttons to use for the dialog. If button is not a StandardButton, it should be a tuple containing the button and its role.
+        :param default_button: The default button to use for the dialog.
         :param description_args: The translation arguments used to format the description.
         :param title_args: The translation arguments used to format the title.
-        :return: The button that was clicked.
+        :return: The button that was clicked, as well as its role.
         """
         dummy_widget = QWidget()
         parent = dummy_widget if parent is None else parent
         title_args:       Sequence = () if title_args is None else title_args
         description_args: Sequence = () if description_args is None else description_args
 
-        factory: Callable[[QWidget | QWidget, str, str, QMessageBox.StandardButtons | None, QMessageBox.StandardButton | None], QMessageBox.StandardButton]
-        match key.split('.')[0]:
+        icon: QMessageBox.Icon
+        first_section: str = key.split('.')[0]
+        match first_section:
             case 'questions':
-                factory = QMessageBox.question
+                icon = QMessageBox.Question
             case 'information':
-                factory = QMessageBox.information
+                icon = QMessageBox.Information
             case 'warnings':
-                factory = QMessageBox.warning
+                icon = QMessageBox.Warning
             case 'errors':
-                factory = QMessageBox.critical
+                icon = QMessageBox.Critical
             case _:
-                factory = QMessageBox.information
+                icon = QMessageBox.NoIcon
 
         title_text:       str = self.translator(f'{key}.title', *title_args)
         description_text: str = self.translator(f'{key}.description', *description_args)
-        button_args:      list = []
-        if buttons is not None:
-            button_args.append(buttons)
-        if default_button is not None:
-            button_args.append(default_button)
 
-        return_val = factory(
-            parent, title_text, description_text, *button_args
-        )
+        msg_box = QMessageBox(icon, title_text, description_text, parent=parent)
+
+        if first_section == 'about':
+            return msg_box.about(parent, title_text, description_text)
+
+        # TODO: add About Qt in help menu
+
+        standard_buttons = None
+        if buttons is not None:
+            if isinstance(buttons, Sequence):
+                for button in buttons:
+                    if isinstance(button, tuple):
+                        msg_box.addButton(*button)
+                    else:
+                        # If the button is not a tuple, assume its a QMessageBox.StandardButton.
+                        # Build a StandardButtons from all StandardButton objects in buttons.
+                        if standard_buttons is None:
+                            standard_buttons = button
+                        else:
+                            standard_buttons |= button
+            else:
+                # If the buttons is not a sequence, assume its QMessageBox.StandardButtons.
+                standard_buttons = buttons
+
+        if standard_buttons:
+            msg_box.setStandardButtons(standard_buttons)
+
+        if default_button is not None:
+            msg_box.setDefaultButton(default_button)
+
+        msg_box.buttonClicked.connect((result := set()).add)
+        msg_box.exec()
+
+        result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.NoButton
+        result_role:   QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.NoRole
+
         dummy_widget.deleteLater()
-        return return_val
+
+        return result_button, result_role
+
+    def missing_package_dialog(self, package: str, reason: str | None = None, parent: QObject | None = None) -> None:
+        """Show a dialog informing the user that a package is missing and asks to install said package.
+
+        If a user presses the "OK" button, the package is installed.
+
+        :param package: The name of the package that is missing.
+        :param reason: The reason why the package is attempting to be used.
+        :param parent: The parent widget to use for the dialog. If not supplied, a dummy widget is temporarily created.
+        """
+        exec_path = Path(sys.executable)
+
+        # TODO: implement better system for getting svg button icons from theme.
+        pixmap = QPixmap()
+        pixmap.load(f'hi_theme+{self.settings["gui/themes/selected"]}:dialog_ok.svg')
+        install_button = QPushButton(pixmap, self.translator('errors.missing_package.install'))
+
+        consent_to_install = self.show_dialog(
+            'errors.missing_package', parent,
+            [(install_button, QMessageBox.AcceptRole), QMessageBox.Cancel],
+            QMessageBox.Cancel,
+            description_args=(package, reason, exec_path)
+        )[1] == QMessageBox.AcceptRole
+
+        install_button.deleteLater()
+
+        if consent_to_install:
+            try:
+                # Install the package
+                subprocess.run([exec_path, '-m', 'pip', 'install', package], check=True)
+            except (OSError, subprocess.SubprocessError) as e:
+                self.show_dialog(
+                    'errors.package_install_failure', parent,
+                    description_args=(package, e)
+                )
+            else:
+                self.show_dialog(
+                    'information.package_installed', parent,
+                    description_args=(package, reason)
+                )
 
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
-            self.show_dialog(
-                'errors.missing_package',
-                description_args=('python-dotenv', Path(sys.executable))
-            )
-        else:
+            self.missing_package_dialog('python-dotenv', 'Loading environment variables')
+        if has_package('python-dotenv'):  # Not the same as else, during the dialog, the package may be dynamically installed by user.
             from dotenv import load_dotenv
             load_dotenv(verbose=verbose)
 
@@ -275,4 +346,4 @@ class GetterApp(QApplication):
     def quit() -> None:
         """Quit the application."""
         app().client.deleteLater()
-        app().quit()
+        QApplication.quit()

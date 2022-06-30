@@ -76,13 +76,13 @@ class FileContextMenu(QMenu):
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
-        response = app().show_dialog(
+        do_flush: bool = app().show_dialog(
             'warnings.delete_cache', self,
             QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.Cancel
-        )
+        )[1] == QMessageBox.AcceptRole
 
-        if response == QMessageBox.StandardButton.Ok:
+        if do_flush:
             rmtree(HI_CACHE_PATH)
             HI_CACHE_PATH.mkdir()
 
@@ -149,9 +149,8 @@ class HelpContextMenu(QMenu):
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:
         """Open the application's about section."""
-        self.setWindowIcon(app().icon_store['about'])
         app().show_dialog(
-            'information.about', self,
+            'about.app', self,
             description_args=(
                 *ver, platform(), sys.implementation.name,
                 sys.version.split('[', maxsplit=1)[0],
@@ -167,7 +166,7 @@ class HelpContextMenu(QMenu):
         """
         return '\n'.join(
             app().translator(
-                'information.about.package_version',
+                'about.app.package_version',
                 package, version
             ) for package, version in current_requirement_versions(PARENT_PACKAGE, include_extras=True).items()
         )
@@ -204,11 +203,8 @@ class ToolsContextMenu(QMenu):
         exec_path = Path(sys.executable)
 
         if not has_package('pyshortcuts'):
-            app().show_dialog(
-                'errors.missing_package', self,
-                description_args=('pyshortcuts', exec_path)
-            )
-        else:
+            app().missing_package_dialog('pyshortcuts', 'Creating Shortcuts', self)
+        if has_package('pyshortcuts'):  # Not the same as else, during the dialog, the package may be dynamically installed by user.
             from pyshortcuts import make_shortcut
 
             name = exec_path.with_suffix('').name
