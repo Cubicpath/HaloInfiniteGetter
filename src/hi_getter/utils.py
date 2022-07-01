@@ -161,24 +161,26 @@ def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | N
     # Resolve string path to use with kernel32
     file_path = str(Path(file_path).resolve())
     if sys.platform == 'win32':
-        import win32con
         from ctypes import windll
+
+        # File flags are a 32-bit bitarray, the "hidden" attribute is the 2nd least significant bit
+        FILE_ATTRIBUTE_HIDDEN = 0b00000000000000000000000000000010
 
         # bitarray for boolean flags representing file attributes
         current_attributes: int = windll.kernel32.GetFileAttributesW(file_path)
         if not unhide:
             # Add hide attribute to bitarray using bitwise OR
             # 0b00000000 -> 0b00000010 ---- 0b00000110 -> 0b00000110
-            merged_attributes: int = current_attributes | win32con.FILE_ATTRIBUTE_HIDDEN
+            merged_attributes: int = current_attributes | FILE_ATTRIBUTE_HIDDEN
             return windll.kernel32.SetFileAttributesW(file_path, merged_attributes)
         else:
             # Remove hide attribute from bitarray if it exists
             # Check with bitwise AND; Remove with bitwise XOR
             # 0b00000100 -> 0b00000100 ---- 0b00000110 -> 0b00000100
             # Only Truthy returns (which contain the hidden attribute) will subtract from the bitarray
-            is_hidden = bool(current_attributes & win32con.FILE_ATTRIBUTE_HIDDEN)
+            is_hidden = bool(current_attributes & FILE_ATTRIBUTE_HIDDEN)
             if is_hidden:
-                subtracted_attributes: int = current_attributes ^ win32con.FILE_ATTRIBUTE_HIDDEN
+                subtracted_attributes: int = current_attributes ^ FILE_ATTRIBUTE_HIDDEN
                 return windll.kernel32.SetFileAttributesW(file_path, subtracted_attributes)
 
 
