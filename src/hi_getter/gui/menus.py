@@ -39,14 +39,14 @@ class FileContextMenu(QMenu):
         super().__init__(parent)
 
         open_explorer: QAction = QAction(
-            app().icon_store['folder'],
+            app().get_theme_icon('dialog_open') or app().icon_store['folder'],
             app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
         flush_cache: QAction = QAction(
-            app().icon_store['folder'],
+            app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
             app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
@@ -123,12 +123,12 @@ class HelpContextMenu(QMenu):
         )
 
         about_view: QAction = QAction(
-            app().icon_store['about'],
+            app().get_theme_icon('message_question') or app().icon_store['about'],
             app().translator('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         about_qt_view: QAction = QAction(
-            app().icon_store['about'],
+            app().get_theme_icon('message_question') or app().icon_store['about'],
             app().translator('gui.menus.help.about_qt'), self, triggered=DeferredCallable(
                 QMessageBox(self).aboutQt, self, app().translator('about.qt.title')
             )
@@ -140,7 +140,7 @@ class HelpContextMenu(QMenu):
         )
 
         readme: QAction = QAction(
-            self.style().standardIcon(QStyle.SP_DialogApplyButton),
+            app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
             app().translator('gui.menus.help.readme'), self, triggered=self.readme_window.show
         )
 
