@@ -11,6 +11,8 @@ __all__ = (
     'HI_RESOURCE_PATH',
     'HI_SAMPLE_RESOURCE',
     'HI_URL_PATTERN',
+    'SUPPORTED_IMAGE_EXTENSIONS',
+    'SUPPORTED_IMAGE_MIME_TYPES',
 )
 
 import re
@@ -20,6 +22,22 @@ from typing import Final
 # Mappings
 
 BYTE_UNITS = {'Bytes': 1024**0, 'KiB': 1024**1, 'MiB': 1024**2, 'GiB': 1024**3, 'TiB': 1024**4}
+"""Mapping of byte units to their respective powers of 1024."""
+
+# Tuples
+
+SUPPORTED_IMAGE_EXTENSIONS: Final[tuple[str, ...]] = (
+    'bmp', 'cur', 'gif', 'icns', 'ico', 'jpeg', 'jpg', 'pbm', 'pgm', 'png',
+    'ppm', 'svg', 'svgz', 'tga', 'tif', 'tiff', 'wbmp', 'webp', 'xbm', 'xpm'
+)
+"""Tuple containing all image file extensions supported by application."""
+
+SUPPORTED_IMAGE_MIME_TYPES: Final[tuple[str, ...]] = (
+    'image/bmp', 'image/gif', 'image/jpeg', 'image/png', 'image/svg+xml', 'image/svg+xml-compressed',
+    'image/tiff', 'image/vnd.microsoft.icon', 'image/vnd.wap.wbmp', 'image/webp', 'image/x-icns', 'image/x-portable-bitmap',
+    'image/x-portable-graymap', 'image/x-portable-pixmap', 'image/x-tga', 'image/x-xbitmap', 'image/x-xpixmap'
+)
+"""Tuple containing all image mime types supported by application."""
 
 # Strings
 
