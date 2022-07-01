@@ -58,11 +58,21 @@ def format_value(value: str, *args, _language: 'Language' = None) -> str:
 
     replaced.clear()
     if _language is not None:
-        for match in key_ref.finditer(value):
-            match = match[0]
-            if match not in replaced:
-                replaced.add(match)
-                value = value.replace(match, _language.get_raw(match.strip('{}')))
+        for _ in range(50):
+            # Loop if a match is found, to recursively get translation key values.
+            # Limit of 50 to prevent an infinite loop.
+
+            found = False
+            for match in key_ref.finditer(value):
+                found = True
+                match = match[0]
+                if match not in replaced:
+                    replaced.add(match)
+                    value = value.replace(match, _language.get_raw(match.strip('{}')))
+
+            if not found:
+                # End loop if no inner translation keys are found.
+                break
 
     return value
 

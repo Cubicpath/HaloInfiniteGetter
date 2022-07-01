@@ -111,7 +111,7 @@ class ExceptionReporter(QWidget):
             # Buttons
             clear_all_button.setText: 'gui.exception_reporter.clear_all',
             self.clear_button.setText: 'gui.exception_reporter.clear',
-            self.report_button.setText: 'gui.exception_reporter.report_clear'
+            self.report_button.setText: 'gui.exception_reporter.report'
         })
 
         layout.addWidget(self.left_panel)
