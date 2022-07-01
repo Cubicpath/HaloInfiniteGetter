@@ -726,7 +726,7 @@ class AppWindow(QMainWindow):
         search_path = user_input.strip()
 
         if '/file/' not in user_input:
-            if search_path.endswith(('png', 'jpg', 'jpeg', 'webp', 'gif')):
+            if search_path.split('.')[-1] in SUPPORTED_IMAGE_EXTENSIONS:
                 search_path = f'images/file/{search_path}'
             else:
                 search_path = f'progression/file/{search_path}'

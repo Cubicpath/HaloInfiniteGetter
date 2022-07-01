@@ -125,6 +125,7 @@ class Client(QObject):
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
+        :raises ValueError: If the response is not JSON or a supported image type.
         """
         os_path: Path = self.os_path(path, parent=dump_path)
         data: dict[str, Any] | bytes
@@ -142,9 +143,11 @@ class Client(QObject):
             if 'json' in content_type:
                 data = json.loads(encoded_data.decode(guess_json_utf(encoded_data)))
                 self.receivedJson.emit(path, data)
-            else:
+            elif content_type in SUPPORTED_IMAGE_MIME_TYPES:
                 data = encoded_data
                 self.receivedData.emit(path, data)
+            else:
+                raise ValueError(f'Unsupported content type received: {content_type}')
 
             print(f"DOWNLOADED {path} >>> {content_type}")
             dump_data(os_path, data)
@@ -194,7 +197,7 @@ class Client(QObject):
                     path = 'progression/file/' + value
                     self.searched_paths.update({path: self.searched_paths.get(path, 0) + 1})
                     self.recursive_search(path)
-                elif end in ('png', 'jpg', 'jpeg', 'webp', 'gif'):
+                elif end in SUPPORTED_IMAGE_EXTENSIONS:
                     self.get_hi_data('images/file/' + value)
 
     def refresh_auth(self) -> None:

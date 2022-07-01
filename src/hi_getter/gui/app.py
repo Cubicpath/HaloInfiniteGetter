@@ -85,8 +85,8 @@ class GetterApp(QApplication):
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
         # Load resources from disk
-        self.load_icons()
         self.load_themes()
+        self.load_icons()
 
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
@@ -235,7 +235,7 @@ class GetterApp(QApplication):
     def missing_package_dialog(self, package: str, reason: str | None = None, parent: QObject | None = None) -> None:
         """Show a dialog informing the user that a package is missing and asks to install said package.
 
-        If a user presses the "OK" button, the package is installed.
+        If a user presses the "Install" button, the package is installed.
 
         :param package: The name of the package that is missing.
         :param reason: The reason why the package is attempting to be used.
@@ -243,10 +243,7 @@ class GetterApp(QApplication):
         """
         exec_path = Path(sys.executable)
 
-        # TODO: implement better system for getting svg button icons from theme.
-        pixmap = QPixmap()
-        pixmap.load(f'hi_theme+{self.settings["gui/themes/selected"]}:dialog_ok.svg')
-        install_button = QPushButton(pixmap, self.translator('errors.missing_package.install'))
+        install_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('errors.missing_package.install'))
 
         consent_to_install = self.show_dialog(
             'errors.missing_package', parent,
@@ -307,6 +304,16 @@ class GetterApp(QApplication):
 
             app().session.get(url, finished=handle_reply)
 
+    def get_theme_icon(self, icon: str) -> QIcon | None:
+        """Return the icon for the given theme.
+
+        :param icon: Icon name for given theme.
+        :return: QIcon for the given theme or default value or None if icon not found.
+        """
+        current_theme = self.settings['gui/themes/selected']
+        if (icon_key := f'hi_theme+{current_theme}+{icon}') in self.icon_store:
+            return self.icon_store[icon_key]
+
     def load_themes(self) -> None:
         """Load all theme locations from settings and store them in self.themes.
 
@@ -314,24 +321,28 @@ class GetterApp(QApplication):
         """
         Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
 
-        for id_, theme in self.settings['gui/themes'].items():
+        for id, theme in self.settings['gui/themes'].items():
             if not isinstance(theme, dict):
                 continue
 
             theme: dict = theme.copy()
             if isinstance((path := theme.pop('path')), CommentValue):
                 path = Path(path.val)
-            if path.is_dir():
-                search_path = f'hi_theme+{id_}'
 
+            if path.is_dir():
+                search_path = f'hi_theme+{id}'
                 QDir.addSearchPath(search_path, str(path))
-                file = QFile(f'{search_path}:stylesheet.qss')
-                file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text)
-                theme['id'] = id_
-                theme['style'] = QTextStream(file).readAll()
+
+                for theme_resource in path.iterdir():
+                    if theme_resource.is_file():
+                        if theme_resource.name == 'stylesheet.qss':
+                            theme['id'] = id
+                            theme['style'] = theme_resource.read_text(encoding='utf8')
+                        elif theme_resource.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
+                            # Load all images in the theme directory into the icon store.
+                            self.icon_store[f'hi_theme+{id}+{theme_resource.with_suffix("").name}'] = QIcon(str(theme_resource.resolve()))
 
                 Theme(**theme)
-                file.close()
 
         # noinspection PyUnresolvedReferences
         self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes())}
