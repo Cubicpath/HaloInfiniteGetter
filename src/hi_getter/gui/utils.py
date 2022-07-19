@@ -8,6 +8,7 @@ __all__ = (
     'icon_from_bytes',
     'init_objects',
     'PARENT_PACKAGE',
+    'return_arg',
     'scroll_to_top',
     'set_or_swap_icon',
 )
@@ -29,7 +30,7 @@ PARENT_PACKAGE: Final[str] = __package__.split('.', maxsplit=1)[0]
 _PT = TypeVar('_PT')
 
 
-def _return_arg(__arg: _PT, /) -> _PT:
+def return_arg(__arg: _PT, /) -> _PT:
     """Return the singular positional argument unchanged."""
     return __arg
 
@@ -70,7 +71,7 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
     """
     if not translator:
         # If translator is unavailable, return any string/key unchanged.
-        translator = _return_arg
+        translator = return_arg
 
     # Initialize widget attributes
     for obj, data in object_data.items():
@@ -98,9 +99,14 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
             setter_name: str = f'set{key[0].upper()}{key[1:]}'
             getattr(obj, setter_name)(val)
 
-        # Translate dropdown items
         if items is not None:
-            obj.addItems(translator(key) for key in items)
+            if not isinstance(obj, QComboBox):
+                # Set directly for non-dropdowns
+                obj.setItems(items)
+            else:
+                # Translate keys for dropdowns, append original keys as data.
+                for key_val, key in ((translator(key), key) for key in items):
+                    obj.addItem(key_val, userData=key)
 
         # Set size
         if size_dict is not None:
