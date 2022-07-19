@@ -80,7 +80,7 @@ class FileContextMenu(QMenu):
             'warnings.delete_cache', self,
             QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.Cancel
-        )[1] == QMessageBox.AcceptRole
+        ).role == QMessageBox.AcceptRole
 
         if do_flush:
             rmtree(HI_CACHE_PATH)

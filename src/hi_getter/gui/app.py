@@ -15,6 +15,7 @@ import sys
 from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
+from typing import NamedTuple
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -35,6 +36,12 @@ from .utils import set_or_swap_icon
 def app() -> 'GetterApp':
     """:return: GetterApp.instance()"""
     return GetterApp.instance()
+
+
+class _DialogResponse(NamedTuple):
+    """Response object for GetterApp.show_dialog()."""
+    button: QAbstractButton = QMessageBox.NoButton
+    role:   QMessageBox.ButtonRole = QMessageBox.NoRole
 
 
 class Theme:
@@ -77,6 +84,8 @@ class GetterApp(QApplication):
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
         self.translator:      Translator = Translator(settings['language'])
+
+        # TODO: cache platform() call early on separate thread
 
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
@@ -142,9 +151,9 @@ class GetterApp(QApplication):
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
                     buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButtons | None = None,
-                    default_button: QAbstractButton | None = None,
+                    default_button: QAbstractButton | QMessageBox.StandardButton | None = None,
                     title_args: Sequence | None = None,
-                    description_args: Sequence | None = None) -> tuple[QAbstractButton, QMessageBox.ButtonRole]:
+                    description_args: Sequence | None = None) -> _DialogResponse | None:
         """Show a dialog. This is a wrapper around QMessageBox creation.
 
         The type of dialog icon depends on the key's first section.
@@ -168,10 +177,12 @@ class GetterApp(QApplication):
         :param default_button: The default button to use for the dialog.
         :param description_args: The translation arguments used to format the description.
         :param title_args: The translation arguments used to format the title.
-        :return: The button that was clicked, as well as its role.
+        :return: The button that was clicked, as well as its role. None if the key's first section is "about".
         """
-        dummy_widget = QWidget()
-        parent = dummy_widget if parent is None else parent
+        if parent is None:
+            dummy_widget = QWidget()
+            parent = dummy_widget
+
         title_args:       Sequence = () if title_args is None else title_args
         description_args: Sequence = () if description_args is None else description_args
 
@@ -197,8 +208,6 @@ class GetterApp(QApplication):
         if first_section == 'about':
             return msg_box.about(parent, title_text, description_text)
 
-        # TODO: add About Qt in help menu
-
         standard_buttons = None
         if buttons is not None:
             if isinstance(buttons, Sequence):
@@ -206,14 +215,14 @@ class GetterApp(QApplication):
                     if isinstance(button, tuple):
                         msg_box.addButton(*button)
                     else:
-                        # If the button is not a tuple, assume its a QMessageBox.StandardButton.
+                        # If the button is not a tuple, assume it's a QMessageBox.StandardButton.
                         # Build a StandardButtons from all StandardButton objects in buttons.
                         if standard_buttons is None:
                             standard_buttons = button
                         else:
                             standard_buttons |= button
             else:
-                # If the buttons is not a sequence, assume its QMessageBox.StandardButtons.
+                # If the buttons is not a sequence, assume it's QMessageBox.StandardButtons.
                 standard_buttons = buttons
 
         if standard_buttons:
@@ -228,9 +237,11 @@ class GetterApp(QApplication):
         result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.NoButton
         result_role:   QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.NoRole
 
-        dummy_widget.deleteLater()
+        if parent is None:
+            # noinspection PyUnboundLocalVariable
+            dummy_widget.deleteLater()
 
-        return result_button, result_role
+        return _DialogResponse(button=result_button, role=result_role)
 
     def missing_package_dialog(self, package: str, reason: str | None = None, parent: QObject | None = None) -> None:
         """Show a dialog informing the user that a package is missing and asks to install said package.
@@ -245,12 +256,12 @@ class GetterApp(QApplication):
 
         install_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('errors.missing_package.install'))
 
-        consent_to_install = self.show_dialog(
+        consent_to_install: bool = self.show_dialog(
             'errors.missing_package', parent,
             [(install_button, QMessageBox.AcceptRole), QMessageBox.Cancel],
             QMessageBox.Cancel,
             description_args=(package, reason, exec_path)
-        )[1] == QMessageBox.AcceptRole
+        ).role == QMessageBox.AcceptRole
 
         install_button.deleteLater()
 
