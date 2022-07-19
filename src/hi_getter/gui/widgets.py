@@ -16,7 +16,6 @@ __all__ = (
 import traceback
 import webbrowser
 from collections import defaultdict
-from collections import namedtuple
 from collections.abc import Callable
 from collections.abc import Sequence
 from datetime import datetime
@@ -24,6 +23,7 @@ from importlib.metadata import metadata
 from types import TracebackType
 from typing import Any
 from typing import Final
+from typing import NamedTuple
 from typing import Optional
 
 from PySide6.QtCore import *
@@ -43,6 +43,14 @@ from .utils import delete_layout_widgets
 from .utils import init_objects
 from .utils import PARENT_PACKAGE
 from .utils import scroll_to_top
+
+
+class _LoggedException(NamedTuple):
+    """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
+    severity:  int | None = None
+    exception: Exception | None = None
+    traceback: TracebackType | None = None
+    timestamp: datetime | None = None
 
 
 class ExceptionReporter(QWidget):
@@ -200,10 +208,6 @@ class ExceptionReporter(QWidget):
 
 class ExceptionLogger(QPushButton):
     """A :py:class:`QPushButton` that logs exceptions to the event bus."""
-    LoggedException: tuple[int, Exception, TracebackType, datetime] = namedtuple('LoggedException', [
-        'severity', 'exception', 'traceback', 'timestamp'
-    ], defaults=[None])
-    """A named tuple that contains the severity of the exception, the exception itself, and an optional traceback."""
 
     level_icon_list: list = [
         QStyle.SP_MessageBoxInformation,  # 0, Not a concern
