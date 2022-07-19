@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Data structures for hi_getter.network."""
+from __future__ import annotations
 
 __all__ = (
     'CaseInsensitiveDict',
@@ -73,7 +74,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     def __len__(self) -> int:
         return len(self._store)
 
-    def __or__(self, other: Mapping) -> 'CaseInsensitiveDict':
+    def __or__(self, other: Mapping) -> CaseInsensitiveDict:
         if not isinstance(other, Mapping):
             return NotImplemented
 
@@ -81,7 +82,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         new.update(other)
         return new
 
-    def __ror__(self, other: Mapping) -> 'CaseInsensitiveDict':
+    def __ror__(self, other: Mapping) -> CaseInsensitiveDict:
         if not isinstance(other, Mapping):
             return NotImplemented
 
@@ -89,7 +90,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         new.update(self)
         return new
 
-    def __ior__(self, other: Mapping) -> 'CaseInsensitiveDict':
+    def __ior__(self, other: Mapping) -> CaseInsensitiveDict:
         self.update(other)
 
         return self
@@ -111,7 +112,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         return dict(self.lower_items()) == dict(other.lower_items())
 
     # Copy is required
-    def copy(self) -> 'CaseInsensitiveDict':
+    def copy(self) -> CaseInsensitiveDict:
         """Return new :py:class:`CaseInsensitiveDict` with a copy of this instance's keys and values."""
         return self.__class__(self._store.values())
 

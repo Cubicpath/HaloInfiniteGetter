@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Utils for the HaloInfiniteGetter networking."""
+from __future__ import annotations
 
 __all__ = (
     'decode_url',

@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Package for managing outgoing requests for hi_getter."""
+from __future__ import annotations
 
 __all__ = (
     'NetworkSession',

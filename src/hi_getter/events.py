@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module used for Event subscription."""
+from __future__ import annotations
 
 __all__ = (
     'Event',
@@ -11,7 +12,6 @@ __all__ = (
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Generic
-from typing import Optional
 from typing import overload
 from typing import TypeAlias
 from typing import TypeVar
@@ -32,11 +32,11 @@ class Event:
         values = {attr: val for attr, val in ((attr, getattr(self, attr)) for attr in self.__slots__)}
         return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
 
-    def __rshift__(self, __bus: 'EventBus', /) -> None:
+    def __rshift__(self, __bus: EventBus, /) -> None:
         """Syntax sugar for __bus.fire(event)"""
         __bus.fire(event=self)
 
-    def __rlshift__(self, __bus: 'EventBus', /) -> None:
+    def __rlshift__(self, __bus: EventBus, /) -> None:
         """Right shift if the EventBus.__lshift__ dunder is not working."""
         self >> __bus
 
@@ -99,19 +99,19 @@ class _EventBusMeta(type):
     Maps :py:class:`EventBus` objects to :py:class:`str` ids
     and allows accessing those ids using subscripts on :py:class:`EventBus`.
     """
-    _id_bus_map: dict[str, 'EventBus'] = {}
+    _id_bus_map: dict[str, EventBus] = {}
 
     @classmethod
     @overload
-    def __getitem__(mcs, _: type[Event] | str, /) -> Optional['EventBus']:
+    def __getitem__(mcs, _: type[Event] | str, /) -> EventBus | None:
         """Exist to support Generic Typing on :py:class:`EventBus`."""
 
     @classmethod
-    def __getitem__(mcs, id: str) -> Optional['EventBus']:
+    def __getitem__(mcs, id: str) -> EventBus | None:
         return mcs._id_bus_map.get(id.lower())
 
     @classmethod
-    def __setitem__(mcs, id: str, bus: 'EventBus') -> None:
+    def __setitem__(mcs, id: str, bus: EventBus) -> None:
         """Set an :py:class:`EventBus` from the bus map."""
         if not isinstance(id, str):
             raise TypeError(f'parameter {id=} is not of type {str}.')

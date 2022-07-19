@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing code related to translation and language files."""
+from __future__ import annotations
 
 __all__ = (
     'format_value',
@@ -21,7 +22,6 @@ from string import digits
 from typing import Annotated
 from typing import Any
 from typing import Final
-from typing import Union
 
 from .constants import *
 
@@ -29,7 +29,7 @@ LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 
-def format_value(value: str, *args, _language: 'Language' = None) -> str:
+def format_value(value: str, *args, _language: Language = None) -> str:
     """Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
@@ -79,7 +79,7 @@ def format_value(value: str, *args, _language: 'Language' = None) -> str:
     return value
 
 
-def to_lang(language: Union['Language', str]) -> 'Language':
+def to_lang(language: str | Language) -> Language:
     """Assert that a given value is a :py:class:`Language`."""
     if not isinstance(language, Language):
         language = str(language)  # Stringify non-language object
@@ -247,7 +247,7 @@ class Language:
         return self.get_raw(key)
 
     @classmethod
-    def from_tag(cls, tag: str) -> 'Language':
+    def from_tag(cls, tag: str) -> Language:
         """Build a :py:class:`Language` object using a plain string tag.
 
         Breaks tag into sub-tags and verifies compliance with RFC 5646.

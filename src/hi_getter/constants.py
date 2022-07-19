@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Neutral namespace for constants. Meant to be star imported."""
+from __future__ import annotations
 
 __all__ = (
     'BYTE_UNITS',

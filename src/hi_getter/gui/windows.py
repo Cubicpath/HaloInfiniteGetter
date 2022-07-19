@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing GUI elements meant to be used as windows."""
+from __future__ import annotations
 
 __all__ = (
     'AppWindow',
@@ -39,7 +40,7 @@ from .widgets import *
 class SettingsWindow(QWidget):
     """Window that provides user interaction with the application's settings."""
 
-    def __init__(self, parent: 'AppWindow', size: QSize) -> None:
+    def __init__(self, parent: AppWindow, size: QSize) -> None:
         """Create a new settings window. Should only have one instance."""
         super().__init__()
         self.app_window = parent

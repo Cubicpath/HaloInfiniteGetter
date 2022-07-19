@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Custom :py:class:`Exception`'s and excepthook implementation."""
+from __future__ import annotations
 
 __all__ = (
     'ExceptHookCallable',

@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module for the main application classes."""
+from __future__ import annotations
 
 __all__ = (
     'app',
@@ -33,7 +34,7 @@ from .utils import icon_from_bytes
 from .utils import set_or_swap_icon
 
 
-def app() -> 'GetterApp':
+def app() -> GetterApp:
     """:return: GetterApp.instance()"""
     return GetterApp.instance()
 
@@ -101,7 +102,7 @@ class GetterApp(QApplication):
         self.setWindowIcon(self.icon_store['hi'])
 
     @classmethod
-    def instance(cls) -> 'GetterApp':
+    def instance(cls) -> GetterApp:
         """Return the singleton instance of :py:class:`GetterApp`."""
         o: GetterApp | None = super().instance()
         if o is None:

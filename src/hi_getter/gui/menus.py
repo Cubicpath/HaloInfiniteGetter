@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing :py:class:`QMenu` Context Menus."""
+from __future__ import annotations
 
 __all__ = (
     'FileContextMenu',

@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing utils for GUI elements."""
+from __future__ import annotations
 
 __all__ = (
     'delete_layout_widgets',

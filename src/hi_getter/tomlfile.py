@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module used for TOML configurations."""
+from __future__ import annotations
 
 __all__ = (
     'CommentValue',
@@ -51,14 +52,14 @@ class TomlEvents:
         """Generic event for TomlFiles"""
         __slots__ = ('toml_file',)
 
-        def __init__(self, toml_file: 'TomlFile') -> None:
+        def __init__(self, toml_file: TomlFile) -> None:
             self.toml_file = toml_file
 
     class File(TomlEvent):
         """Accessing a File on disk."""
         __slots__ = ('toml_file', 'path')
 
-        def __init__(self, toml_file: 'TomlFile', path: Path) -> None:
+        def __init__(self, toml_file: TomlFile, path: Path) -> None:
             super().__init__(toml_file=toml_file)
             self.path = path
 
@@ -74,7 +75,7 @@ class TomlEvents:
         """A key's value is accessed."""
         __slots__ = ('toml_file', 'key')
 
-        def __init__(self, toml_file: 'TomlFile', key: str) -> None:
+        def __init__(self, toml_file: TomlFile, key: str) -> None:
             super().__init__(toml_file=toml_file)
             self.key: str = key
 
@@ -82,7 +83,7 @@ class TomlEvents:
         """Value is given."""
         __slots__ = ('toml_file', 'key', 'value')
 
-        def __init__(self, toml_file: 'TomlFile', key: str, value: TomlValue) -> None:
+        def __init__(self, toml_file: TomlFile, key: str, value: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
             self.value = value
 
@@ -90,7 +91,7 @@ class TomlEvents:
         """Value is set."""
         __slots__ = ('toml_file', 'key', 'old', 'new')
 
-        def __init__(self, toml_file: 'TomlFile', key: str, old: TomlValue, new: TomlValue) -> None:
+        def __init__(self, toml_file: TomlFile, key: str, old: TomlValue, new: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
             self.old: TomlValue | None = old
             self.new: TomlValue | None = new
@@ -99,7 +100,7 @@ class TomlEvents:
         """General Failure."""
         __slots__ = ('toml_file', 'failure',)
 
-        def __init__(self, toml_file: 'TomlFile', failure: str) -> None:
+        def __init__(self, toml_file: TomlFile, failure: str) -> None:
             super().__init__(toml_file=toml_file)
             self.failure = failure
 

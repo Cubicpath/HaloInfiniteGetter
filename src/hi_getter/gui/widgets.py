@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing miscellaneous :py:class:`QWidget` Widgets."""
+from __future__ import annotations
 
 __all__ = (
     'ExceptionReporter',
@@ -24,7 +25,6 @@ from types import TracebackType
 from typing import Any
 from typing import Final
 from typing import NamedTuple
-from typing import Optional
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -56,7 +56,7 @@ class _LoggedException(NamedTuple):
 class ExceptionReporter(QWidget):
     """A :py:class:`QWidget` that displays logged exceptions and their traceback."""
 
-    def __init__(self, logger: 'ExceptionLogger') -> None:
+    def __init__(self, logger: ExceptionLogger) -> None:
         super().__init__()
         EventBus['exceptions'].subscribe(DeferredCallable(self.reload_exceptions), ExceptionEvent)
 
@@ -255,7 +255,7 @@ class ExceptionLogger(QPushButton):
         if self.severity < level:
             self.severity = level
 
-        self.exception_log.append(self.LoggedException(level, event.exception, event.traceback, datetime.now()))
+        self.exception_log.append(_LoggedException(level, event.exception, event.traceback, datetime.now()))
         self.sort_exceptions()
 
         logged = len(self.exception_log)
@@ -366,7 +366,7 @@ class PasteLineEdit(QLineEdit):
     """A :py:class:`QLineEdit` with an added paste listener."""
     pasted = Signal(name='pasted')
 
-    def __init__(self, *args, pasted: Optional[Callable] = None, **kwargs) -> None:
+    def __init__(self, *args, pasted: Callable | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if pasted is not None:
             self.pasted.connect(pasted)
