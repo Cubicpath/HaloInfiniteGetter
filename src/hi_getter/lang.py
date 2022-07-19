@@ -7,6 +7,7 @@ __all__ = (
     'format_value',
     'LANG_PATH',
     'Language',
+    'to_lang',
     'Translator',
 )
 
@@ -20,6 +21,7 @@ from string import digits
 from typing import Annotated
 from typing import Any
 from typing import Final
+from typing import Union
 
 from .constants import *
 
@@ -75,6 +77,18 @@ def format_value(value: str, *args, _language: 'Language' = None) -> str:
                 break
 
     return value
+
+
+def to_lang(language: Union['Language', str]) -> 'Language':
+    """Assert that a given value is a :py:class:`Language`."""
+    if not isinstance(language, Language):
+        language = str(language)  # Stringify non-language object
+
+    if isinstance(language, str):
+        # TODO: Move this to Language.from_tag
+        language = language.replace(' ', '-').replace('_', '-').strip()
+        language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
+    return language
 
 
 class Language:
@@ -214,8 +228,16 @@ class Language:
         for lang_file in LANG_PATH.iterdir():
             if lang_file.suffix == '.json' and lang_file.with_suffix('').name.lower() == self.tag.replace('-', '_').lower():
                 # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
-                new_data = json.loads(lang_file.read_text(encoding='utf8'))
-                self._data.update(new_data)
+
+                # Read the language file corresponding to this Language's tags.
+                file_data: dict[str, Any] = json.loads(lang_file.read_text(encoding='utf8'))
+
+                # Read the parent language file if it exists.
+                if (parent_lang := file_data['meta'].get('inherits_from')) is not None:
+                    self._data |= to_lang(parent_lang).data
+
+                # Overwrite inherited keys.
+                self._data |= file_data['keys']
                 break
 
     def __repr__(self) -> str:
@@ -231,6 +253,11 @@ class Language:
         Breaks tag into sub-tags and verifies compliance with RFC 5646.
         """
         # TODO: Add functionality
+
+    @property
+    def data(self) -> dict[str, Any]:
+        """:returns: a copy of the internal key dictionary."""
+        return self._data.copy()
 
     def get(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key and format with the given arguments if required.
@@ -272,7 +299,7 @@ class Translator:
     """
 
     def __init__(self, language: Language | str) -> None:
-        self._language = self._lang_to_lang(language)
+        self._language = to_lang(language)
 
     def __bool__(self) -> bool:
         """Return whether the Translator is available."""
@@ -289,7 +316,7 @@ class Translator:
 
     @language.setter
     def language(self, value: Language | str) -> None:
-        self._language = self._lang_to_lang(value)
+        self._language = to_lang(value)
 
     def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
@@ -305,15 +332,3 @@ class Translator:
 
         # __exit__
         self._language = old_lang
-
-    @staticmethod
-    def _lang_to_lang(language: Language | str) -> Language:
-        """Assert that a given value is a :py:class:`Language`."""
-        if not isinstance(language, Language):
-            language = str(language)  # Stringify non-language object
-
-        if isinstance(language, str):
-            # TODO: Move this to Language.from_tag
-            language = language.replace(' ', '-').replace('_', '-').strip()
-            language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
-        return language
