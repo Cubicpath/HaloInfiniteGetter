@@ -247,7 +247,7 @@ class NetworkSession:
                 # TODO: Finish requests-like implementation
                 # files: dict[str, Any] | None = None,
                 # auth: tuple[str, str] | None = None,
-                # timeout: float | tuple[float, float] | None = None,
+                timeout: float | tuple[float, float] | None = 30.0,
                 allow_redirects: bool = True,
                 proxies: dict[str, str] | list[tuple[str, str]] | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
@@ -264,6 +264,8 @@ class NetworkSession:
         :param data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :param headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :param cookies: Cookies to use for the request. Case-sensitive.
+        :param timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value is
+        the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :param allow_redirects: If False, do not follow any redirect requests.
         :param proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :param verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -379,6 +381,12 @@ class NetworkSession:
                 proxy = QNetworkProxy(proxy_type, proxy_url.host(), proxy_url.port())
                 self.manager.setProxy(proxy)
 
+        if timeout:
+            # Set transfer timeout amount
+            # This is for the REQUEST side of the connection.
+            transfer_timeout = int((timeout[1] if isinstance(timeout, Sequence) else timeout) * 1000)
+            request.setTransferTimeout(transfer_timeout)
+
         # Handle Reply
         # Since this is an asynchronous request, we don't immediately have the reply data.
 
@@ -394,6 +402,20 @@ class NetworkSession:
             self.manager.setCookieJar(original_cookie_jar)
         if self.manager.redirectPolicy() != self.default_redirect_policy:
             self.manager.setRedirectPolicy(self.default_redirect_policy)
+
+        if timeout:
+            # Create connection timeout timer
+            # This is for the RESPONSE side of the connection.
+            def handle_connection_timeout():
+                if not reply.isFinished():
+                    reply.abort()
+
+            connection_timeout = int((timeout[0] if isinstance(timeout, Sequence) else timeout) * 1000)
+            timer = QTimer(reply)
+            timer.setSingleShot(True)
+            timer.setInterval(connection_timeout)
+            timer.timeout.connect(handle_connection_timeout)
+            timer.start()
 
         return reply
 

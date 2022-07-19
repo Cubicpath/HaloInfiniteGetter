@@ -114,11 +114,14 @@ class Client(QObject):
         while not reply.isFinished():
             QApplication.processEvents()
 
-        status_code: int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-        if is_error_status(status_code):
+        # None is returned if the request was aborted
+        status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+        if status_code and is_error_status(status_code):
+            # Handle errors
             if status_code == 401 and update_auth_on_401 and self.wpauth is not None:
                 self.refresh_auth()
                 reply = self.get(path, False, **kwargs)
+
         return reply
 
     def get_hi_data(self, path: str, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
@@ -133,10 +136,10 @@ class Client(QObject):
         if not os_path.is_file():
             reply:        QNetworkReply = self.get(path)
             encoded_data: bytes = reply.readAll().data()
-            status_code:  int = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+            status_code:  int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
             content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
 
-            if is_error_status(status_code):
+            if status_code and is_error_status(status_code):
                 self.receivedError.emit(path, status_code)
                 return status_code
 
