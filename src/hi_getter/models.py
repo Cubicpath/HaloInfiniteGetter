@@ -105,7 +105,7 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
         """
         # Add additional arguments from local args
         args = self.args + args[:self._extra_pos_args]  # Trim all arguments that are not expected
-        kwargs |= self.kwargs  # PEP 0584
+        kwargs |= self.kwargs
 
         # Evaluate all callable arguments
         args = tuple(self._evaluate_value(arg) for arg in args)

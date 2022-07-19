@@ -16,6 +16,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
 from typing import Final
+from typing import TypeVar
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -25,8 +26,10 @@ from ..lang import Translator
 
 PARENT_PACKAGE: Final[str] = __package__.split('.', maxsplit=1)[0]
 
+_PT = TypeVar('_PT')
 
-def _return_arg(__arg: ..., /) -> ...:
+
+def _return_arg(__arg: _PT, /) -> _PT:
     """Return the singular positional argument unchanged."""
     return __arg
 

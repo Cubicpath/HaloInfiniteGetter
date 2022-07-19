@@ -440,6 +440,7 @@ class AppWindow(QMainWindow):
         for action in (file, settings, tools, help_):
             menu_bar.addSeparator()
             menu_bar.addAction(action)
+
         status_bar.addWidget(logger)
         status_bar.addSeparator()
         status_bar.addWidget(logger.label)
