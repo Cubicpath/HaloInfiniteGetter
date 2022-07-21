@@ -193,6 +193,59 @@ def get_parent_doc(__type: type, /) -> str | None:
     return doc
 
 
+def get_start_menu_path() -> Path | None:
+    """Cross-platform utility to obtain the path to the Start Menu or equivalent.
+
+    This function is cached after the first call.
+
+    * On Windows, this returns the main Start Menu folder, so it is recommended that you use the "Programs" sub-folder for adding shortcuts.
+
+    * On Linux, this returns the ~/.local/share/applications directory.
+
+    * On macOS, this returns None.
+
+    :return: Path to the Start Menu or None if not found.
+    """
+    import os
+    import sys
+
+    # Assume that once found, the start menu path does not change
+    if hasattr(get_start_menu_path, '__cached__'):
+        return get_start_menu_path.__cached__
+
+    platform:   str = sys.platform.lower()
+    start_menu: Path | None = None
+
+    if platform == 'win32':
+        shell_folder_key: str = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        start_menu = Path.home() / 'AppData/Roaming/Microsoft/Windows/Start Menu'
+
+        try:
+            import winreg
+
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, shell_folder_key, 0, winreg.KEY_READ) as reg_key:
+                val, reg_type = winreg.QueryValueEx(reg_key, 'Start Menu')
+
+                # Expand environment variables
+                if reg_type == winreg.REG_EXPAND_SZ:
+                    val = val.replace('%USERPROFILE%', str(Path.home()))
+                    val = val.replace('%USERNAME%', Path.home().name)
+
+                # Make sure the path is resolved
+                start_menu = Path(val).resolve(strict=True).absolute()
+
+        except (ImportError, OSError):
+            pass  # Return the default windows path if the registry couldn't be read.
+
+    elif platform.startswith('linux'):
+        home: Path = Path.home() or Path(os.getenv('HOME', None))
+
+        start_menu = home / '.local/share/applications'
+
+    get_start_menu_path.__cached__ = start_menu
+    return start_menu
+
+
 def has_package(package: str) -> bool:
     """Check if the given package is available.
 
