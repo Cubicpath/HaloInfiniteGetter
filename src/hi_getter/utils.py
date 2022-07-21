@@ -121,6 +121,65 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
             json.dump(data, file, indent=2)
 
 
+def get_desktop_path() -> Path | None:
+    """Cross-platform utility to obtain the path to the desktop.
+
+    This function is cached after the first call.
+
+    :return: Path to the desktop or None if not found.
+    """
+    import os
+    import sys
+
+    # Assume that once found, the desktop path does not change
+    if hasattr(get_desktop_path, '__cached__'):
+        return get_desktop_path.__cached__
+
+    platform: str = sys.platform.lower()
+    desktop:  Path | None = None
+
+    if platform == 'win32':
+        shell_folder_key: str = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        desktop = Path.home() / 'Desktop'
+
+        try:
+            import winreg
+
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, shell_folder_key, 0, winreg.KEY_READ) as reg_key:
+                val, reg_type = winreg.QueryValueEx(reg_key, 'Desktop')
+
+                # Expand environment variables
+                if reg_type == winreg.REG_EXPAND_SZ:
+                    val = val.replace('%USERPROFILE%', str(Path.home()))
+                    val = val.replace('%USERNAME%', Path.home().name)
+
+                # Make sure the path is resolved
+                desktop = Path(val).resolve(strict=True).absolute()
+
+        except (ImportError, OSError):
+            pass  # Return the default windows path if the registry couldn't be read.
+
+    if platform.startswith('linux') or platform == 'darwin':
+        homedir: Path = Path.home() or Path(os.getenv('HOME', None))
+        desktop: Path = homedir / 'Desktop'
+
+        # If desktop is defined in user's config, use that
+        dir_file: Path = homedir / '.config/user-dirs.dirs'
+        if dir_file.is_file():
+            with dir_file.open(mode='r', encoding='utf8') as f:
+                text: list[str] = f.readlines()
+
+            for line in text:
+                # Read the DESKTOP variable's value and evaluate it
+                if 'DESKTOP' in line:
+                    line = line.replace('$HOME', str(homedir))[:-1]
+                    config_val = line.split('=')[1].strip('\'\"')
+                    desktop = Path(config_val)
+
+    get_desktop_path.__cached__ = desktop
+    return desktop
+
+
 def get_parent_doc(__type: type, /) -> str | None:
     """Get the nearest parent documentation using the given :py:class:`type`'s mro.
 
