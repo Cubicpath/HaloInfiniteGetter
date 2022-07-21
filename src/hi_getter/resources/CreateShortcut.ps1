@@ -23,10 +23,10 @@ Function CreateShortcut($Path) {
     $Shortcut = $WshShell.CreateShortcut($Path)
     $Shortcut.TargetPath = $Target
 
-    if ($Arguments)        { $Shortcut.Arguments = $Arguments }
-    if ($Description)      { $Shortcut.Description = $Description }
-    if ($Icon)             { $Shortcut.IconLocation = $Icon }
-    if ($WorkingDirectory) { $Shortcut.Arguments = $WorkingDirectory }
+    if ( $Arguments )        { $Shortcut.Arguments = $Arguments }
+    if ( $Description )      { $Shortcut.Description = $Description }
+    if ( $Icon )             { $Shortcut.IconLocation = $Icon }
+    if ( $WorkingDirectory ) { $Shortcut.Arguments = $WorkingDirectory }
 
     $Shortcut.Save()
 }

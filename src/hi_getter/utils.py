@@ -16,9 +16,103 @@ __all__ = (
     'unique_values',
 )
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from pathlib import Path
+
+from .constants import *
+
+
+def bit_rep(__bool: bool, /) -> str:
+    """Return a string representing the bit value of a boolean."""
+    return str(int(__bool))
+
+
+def create_shortcut(path: Path, arguments: str | None = None,
+                    name: str | None = None, description: str | None = None,
+                    icon: Path | None = None, working_dir: Path | None = None,
+                    desktop: bool = True, start_menu: bool = True) -> None:
+    """Create a shortcut on the given path.
+
+    :param path: Path to create a shortcut to.
+    :param arguments: Command line arguments to pass to the target.
+    :param name: Name of the shortcut.
+    :param description: Description of the shortcut.
+    :param icon: Path to an icon to use for the shortcut.
+    :param working_dir: Working directory to start in when executing the shortcut.
+    :param desktop: Whether to create a desktop shortcut.
+    :param start_menu: Whether to create a start menu shortcut.
+    :raises ValueError: icon extension cannot be used as an icon for the given platform.
+    """
+    import subprocess
+    import sys
+
+    if not desktop and not start_menu:
+        return
+
+    name = 'Shortcut' if name is None else name
+    working_dir = Path.home() if working_dir is None else working_dir
+
+    PLATFORM_SHORTCUT_DATA: dict[str, dict[str, ...]] = {
+        'darwin': {
+            'shortcut_ext': '.app',
+            'icon_exts': ('.icns',),
+        },
+        'linux': {
+            'shortcut_ext': '.desktop',
+            'icon_exts': ('.ico', '.svg', '.png'),
+        },
+        'win32': {
+            'shortcut_ext': '.lnk',
+            'icon_exts': ('.ico', '.exe'),
+        }
+    }
+
+    data = PLATFORM_SHORTCUT_DATA.get(sys.platform)
+
+    if not data:
+        return
+
+    if icon and icon.suffix not in data['icon_exts']:
+        raise ValueError(f'Icon must be one of {data["icon_exts"]} for {sys.platform}')
+
+    match sys.platform:
+        case 'darwin':
+            ...
+
+        case 'linux':
+            ...
+
+        case 'win32':
+            arg_factories: dict[str, tuple[object, Callable]] = {
+                'Target': (path, quote_str),
+                'Arguments': (arguments, quote_str),
+                'Name': (name, quote_str),
+                'Description': (description, quote_str),
+                'Icon': (icon, quote_str),
+                'WorkingDirectory': (working_dir, quote_str),
+                'Extension': (data['shortcut_ext'], quote_str),
+                'Desktop': (desktop, bit_rep),
+                'StartMenu': (start_menu, bit_rep)
+            }
+
+            abs_script_path: Path = (HI_RESOURCE_PATH / 'CreateShortcut.ps1').resolve(strict=True).absolute()
+            powershell_arguments = [
+                'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
+            ]
+
+            # Append keyword arguments to the powershell script if the value is not None
+            for arg_name, (arg_value, arg_factory) in arg_factories.items():
+                if arg_value is not None:
+                    powershell_arguments.append(f'-{arg_name}')
+                    powershell_arguments.append(arg_factory(arg_value))
+
+            subprocess.run(
+                powershell_arguments,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                universal_newlines=True, check=True
+            )
 
 
 def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
@@ -332,6 +426,11 @@ def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
     if sys.platform == 'win32':
         from ctypes import windll
         return windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+
+
+def quote_str(__str: str, /) -> str:
+    """Encapsulate a string in double-quotes."""
+    return f'"{__str}"'
 
 
 def unique_values(data: Iterable) -> set:
