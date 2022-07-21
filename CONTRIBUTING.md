@@ -50,17 +50,19 @@ Order of module elements:
 
 3. Module's docstring
 
-4. Dunder variables (ex: `__all__`)
+4. Any `from __future__` imports
 
-5. Imports
+5. Dunder variables (ex: `__all__`)
 
-6. Constants
+6. Imports
 
-7. Functions
+7. Constants
 
-8. Classes
+8. Functions
 
-9. `if __name__ == '__main__':` entrypoint
+9. Classes
+
+10. `if __name__ == '__main__':` entrypoint
 
 Full Example:
 ```python
@@ -93,7 +95,9 @@ if __name__ == '__main__':
 
 ### Imports
 
-`__all__` should be a tuple containing the module's public attributes, ordered alphabetically.
+`__all__` should be a tuple containing the module's public attributes meant for import, ordered alphabetically.
+
+`__future__` imports are not to be grouped with other imports, and should be right below the module docstring.
 
 Imports should be formatted as follows:
 
