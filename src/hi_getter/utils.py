@@ -143,22 +143,14 @@ def get_desktop_path() -> Path | None:
     desktop:  Path | None = None
 
     if platform == 'win32':
-        shell_folder_key: str = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
         desktop = Path.home() / 'Desktop'
 
         try:
-            import winreg
+            val = get_winreg_value(shell_folder_key, 'Desktop')
 
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, shell_folder_key, 0, winreg.KEY_READ) as reg_key:
-                val, reg_type = winreg.QueryValueEx(reg_key, 'Desktop')
-
-                # Expand environment variables
-                if reg_type == winreg.REG_EXPAND_SZ:
-                    val = val.replace('%USERPROFILE%', str(Path.home()))
-                    val = val.replace('%USERNAME%', Path.home().name)
-
-                # Make sure the path is resolved
-                desktop = Path(val).resolve(strict=True).absolute()
+            # Make sure the path is resolved
+            desktop = Path(val).resolve(strict=True).absolute()
 
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
@@ -221,22 +213,14 @@ def get_start_menu_path() -> Path | None:
     start_menu: Path | None = None
 
     if platform == 'win32':
-        shell_folder_key: str = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
         start_menu = Path.home() / 'AppData/Roaming/Microsoft/Windows/Start Menu'
 
         try:
-            import winreg
+            val = get_winreg_value(shell_folder_key, 'Start Menu')
 
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, shell_folder_key, 0, winreg.KEY_READ) as reg_key:
-                val, reg_type = winreg.QueryValueEx(reg_key, 'Start Menu')
-
-                # Expand environment variables
-                if reg_type == winreg.REG_EXPAND_SZ:
-                    val = val.replace('%USERPROFILE%', str(Path.home()))
-                    val = val.replace('%USERNAME%', Path.home().name)
-
-                # Make sure the path is resolved
-                start_menu = Path(val).resolve(strict=True).absolute()
+            # Make sure the path is resolved
+            start_menu = Path(val).resolve(strict=True).absolute()
 
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
@@ -248,6 +232,40 @@ def get_start_menu_path() -> Path | None:
 
     get_start_menu_path.__cached__ = start_menu
     return start_menu
+
+
+def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list | None:
+    """Get a value from the Windows registry.
+
+    :param key_name: The registry key to read. The parent key must be the name of a defined winreg constant.
+    :param value_name: The value to read.
+    :return: The value, or None if not found.
+    :raises AttributeError: If the parent_key is not a defined winreg constant.
+    :raises ImportError: If winreg is not available.
+    :raises OSError: If the registry key could not be read.
+    """
+    from os.path import expandvars
+
+    try:
+        import winreg
+    except ImportError as e:
+        raise ImportError('winreg is required to use this function.') from e
+
+    parent_key: int = getattr(winreg, key_name.split('\\')[0])
+    sub_key:    str = '\\'.join(key_name.split('\\')[1:])
+    if not isinstance(parent_key, int):
+        raise AttributeError('parent_key is not a defined winreg constant.')
+
+    reg_key = winreg.OpenKey(parent_key, sub_key, 0, winreg.KEY_QUERY_VALUE)
+    val, reg_type = winreg.QueryValueEx(reg_key, value_name)
+
+    reg_key.Close()
+
+    # Expand environment variables
+    if reg_type == winreg.REG_EXPAND_SZ:
+        val = expandvars(val)
+
+    return val
 
 
 def has_package(package: str) -> bool:
