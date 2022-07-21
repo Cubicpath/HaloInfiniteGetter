@@ -47,21 +47,21 @@ HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalen
 
 # Paths
 
-HI_CACHE_PATH:      Final[Path] = Path.home() / '.cache/hi_getter'
+HI_CACHE_PATH:    Final[Path] = Path.home() / '.cache/hi_getter'
 """Directory containing cached API results."""
 
-HI_CONFIG_PATH:     Final[Path] = Path.home() / '.config/hi_getter'
+HI_CONFIG_PATH:   Final[Path] = Path.home() / '.config/hi_getter'
 """Directory containing user configuration data."""
 
-HI_RESOURCE_PATH:   Final[Path] = Path(__file__).parent / 'resources'
+HI_RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
 """Directory containing application resources."""
 
 # Patterns
 
-HI_PATH_PATTERN:    Final[re.Pattern] = re.compile(r'([A-Z]:\\)*([\w\-_.]+[/\\])+[\w\-_]*\.\w+|[/\\]\.\w+')
+HI_PATH_PATTERN: Final[re.Pattern] = re.compile(r'([A-Z]:\\)*([\w\-_.]+[/\\])+[\w\-_]*\.\w+|[/\\]\.\w+')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
 
-HI_URL_PATTERN:     Final[re.Pattern] = re.compile(
+HI_URL_PATTERN:  Final[re.Pattern] = re.compile(
     r'(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|'
     r'[a-z0-9.\-]+[.][a-z]{2,}/)(?:[^\s()<>{}\[\]]+|'
     r'\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|'

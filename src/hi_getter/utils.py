@@ -117,7 +117,7 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
             path.write_bytes(data)
     elif isinstance(data, dict):
         # Write dictionaries as json files
-        with path.open('w', encoding=encoding or default_encoding) as file:
+        with path.open(mode='w', encoding=encoding or default_encoding) as file:
             json.dump(data, file, indent=2)
 
 
@@ -126,7 +126,11 @@ def get_desktop_path() -> Path | None:
 
     This function is cached after the first call.
 
-    :return: Path to the desktop or None if not found.
+    * On Windows, this returns the path found in the registry, or the default ~/Desktop if the registry could not be read from.
+
+    * On Linux and macOS, this returns the DESKTOP value in ~/.config/user-dirs.dirs file, or the default ~/Desktop.
+
+    :return: Path to the user's desktop or None if not found.
     """
     import os
     import sys
@@ -159,12 +163,12 @@ def get_desktop_path() -> Path | None:
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
 
-    if platform.startswith('linux') or platform == 'darwin':
-        homedir: Path = Path.home() or Path(os.getenv('HOME', None))
-        desktop: Path = homedir / 'Desktop'
+    elif platform.startswith('linux') or platform == 'darwin':
+        home: Path = Path.home() or Path(os.getenv('HOME', None))
+        desktop: Path = home / 'Desktop'
 
         # If desktop is defined in user's config, use that
-        dir_file: Path = homedir / '.config/user-dirs.dirs'
+        dir_file: Path = home / '.config/user-dirs.dirs'
         if dir_file.is_file():
             with dir_file.open(mode='r', encoding='utf8') as f:
                 text: list[str] = f.readlines()
@@ -172,7 +176,7 @@ def get_desktop_path() -> Path | None:
             for line in text:
                 # Read the DESKTOP variable's value and evaluate it
                 if 'DESKTOP' in line:
-                    line = line.replace('$HOME', str(homedir))[:-1]
+                    line = line.replace('$HOME', str(home))[:-1]
                     config_val = line.split('=')[1].strip('\'\"')
                     desktop = Path(config_val)
 

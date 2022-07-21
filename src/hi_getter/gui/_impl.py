@@ -484,7 +484,7 @@ class ToolsContextMenu(QMenu):
                 name += 'w'
             shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {PARENT_PACKAGE}'
 
-            with redirect_stdout(open(os.devnull, 'w', encoding='utf8')):
+            with redirect_stdout(open(os.devnull, mode='w', encoding='utf8')):
                 make_shortcut(script=shortcut_path, name=app().translator('app.name'),
                               description=app().translator('app.description'),
                               icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
