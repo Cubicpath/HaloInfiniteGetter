@@ -29,14 +29,22 @@ def bit_rep(__bool: bool, /) -> str:
     return str(int(__bool))
 
 
-def create_shortcut(path: Path, arguments: str | None = None,
+def create_shortcut(target: Path, arguments: str | None = None,
+                    version: str | None = None, terminal: bool = True,
                     name: str | None = None, description: str | None = None,
                     icon: Path | None = None, working_dir: Path | None = None,
                     desktop: bool = True, start_menu: bool = True) -> None:
     """Create a shortcut on the given path.
 
-    :param path: Path to create a shortcut to.
+    Notes:
+        * version is Linux only
+        * terminal is ignored by Windows
+        * start_menu is ignored on macOS
+
+    :param target: Target of the shortcut.
     :param arguments: Command line arguments to pass to the target.
+    :param version: Version identifier of the target.
+    :param terminal: Whether to open the target with a terminal.
     :param name: Name of the shortcut.
     :param description: Description of the shortcut.
     :param icon: Path to an icon to use for the shortcut.
@@ -77,42 +85,66 @@ def create_shortcut(path: Path, arguments: str | None = None,
     if icon and icon.suffix not in data['icon_exts']:
         raise ValueError(f'Icon must be one of {data["icon_exts"]} for {sys.platform}')
 
-    match sys.platform:
-        case 'darwin':
-            ...
+    platform = sys.platform.lower()
+    if platform == 'darwin':
+        ...
 
-        case 'linux':
-            ...
+    elif platform.startswith('linux'):
+        for (do, path) in (
+                (desktop, get_desktop_path()),
+                (start_menu, get_start_menu_path())
+        ):
+            if do:
+                # Create the directory if it doesn't exist
+                path = get_desktop_path()
+                if not path.is_dir():
+                    path.mkdir(parents=True)
 
-        case 'win32':
-            arg_factories: dict[str, tuple[object, Callable]] = {
-                'Target': (path, quote_str),
-                'Arguments': (arguments, quote_str),
-                'Name': (name, quote_str),
-                'Description': (description, quote_str),
-                'Icon': (icon, quote_str),
-                'WorkingDirectory': (working_dir, quote_str),
-                'Extension': (data['shortcut_ext'], quote_str),
-                'Desktop': (desktop, bit_rep),
-                'StartMenu': (start_menu, bit_rep)
-            }
+                # Create the .desktop file
+                dest = (path / f'{name}').with_suffix(data['shortcut_ext'])
+                with dest.open('w', encoding='utf8') as f:
+                    f.writelines([
+                        '[Desktop Entry]',
+                        'Encoding=UTF-8',
+                        f'Version={version}',
+                        'Type=Application',
+                        f'Exec={target} {arguments}',
+                        f'Terminal={terminal}',
+                        f'Icon={icon}',
+                        f'Name={name}',
+                        f'Comment={description}',
+                    ])
+                dest.chmod(0o755)  # rwxr-xr-x
 
-            abs_script_path: Path = (HI_RESOURCE_PATH / 'CreateShortcut.ps1').resolve(strict=True).absolute()
-            powershell_arguments = [
-                'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
-            ]
+    elif platform == 'win32':
+        arg_factories: dict[str, tuple[object, Callable]] = {
+            'Target': (target, quote_str),
+            'Arguments': (arguments, quote_str),
+            'Name': (name, quote_str),
+            'Description': (description, quote_str),
+            'Icon': (icon, quote_str),
+            'WorkingDirectory': (working_dir, quote_str),
+            'Extension': (data['shortcut_ext'], quote_str),
+            'Desktop': (desktop, bit_rep),
+            'StartMenu': (start_menu, bit_rep)
+        }
 
-            # Append keyword arguments to the powershell script if the value is not None
-            for arg_name, (arg_value, arg_factory) in arg_factories.items():
-                if arg_value is not None:
-                    powershell_arguments.append(f'-{arg_name}')
-                    powershell_arguments.append(arg_factory(arg_value))
+        abs_script_path: Path = (HI_RESOURCE_PATH / 'CreateShortcut.ps1').resolve(strict=True).absolute()
+        powershell_arguments = [
+            'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
+        ]
 
-            subprocess.run(
-                powershell_arguments,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                universal_newlines=True, check=True
-            )
+        # Append keyword arguments to the powershell script if the value is not None
+        for arg_name, (arg_value, arg_factory) in arg_factories.items():
+            if arg_value is not None:
+                powershell_arguments.append(f'-{arg_name}')
+                powershell_arguments.append(arg_factory(arg_value))
+
+        subprocess.run(
+            powershell_arguments,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, check=True
+        )
 
 
 def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
