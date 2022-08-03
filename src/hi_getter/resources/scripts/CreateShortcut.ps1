@@ -88,7 +88,7 @@ param(
 if ( $Desktop -or $StartMenu) {
     $WshShell = New-Object -comObject WScript.Shell
 
-    Function New-Shortcut($Path) {
+    Function Save-Shortcut($Path) {
         $Shortcut = $WshShell.CreateShortcut($Path)
         $Shortcut.TargetPath = $Target
 
@@ -105,12 +105,12 @@ if ( $Desktop -or $StartMenu) {
 
     if ( $Desktop ) {
         $DesktopPath = [Environment]::GetFolderPath("Desktop")
-        New-Shortcut("$DesktopPath\$Name$Extension")
+        Save-Shortcut("$DesktopPath\$Name$Extension")
     }
 
     if ( $StartMenu ) {
         $StartMenuPath = [Environment]::GetFolderPath("StartMenu")
-        New-Shortcut("$StartMenuPath\Programs\$Name$Extension")
+        Save-Shortcut("$StartMenuPath\Programs\$Name$Extension")
     }
 
 }
