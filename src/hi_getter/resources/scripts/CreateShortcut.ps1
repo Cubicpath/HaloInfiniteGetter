@@ -77,7 +77,7 @@ param(
     [String]$Description,
     [String]$Icon,
     [String]$WorkingDirectory,
-    [String]$Extension = ".lnk",
+    [String]$Extension = '.lnk',
     [Boolean]$Desktop = $True,
     [Boolean]$StartMenu = $True
 )
@@ -87,12 +87,11 @@ param(
 # If neither Desktop nor StartMenu are enabled, skip functionality.
 if ( $Desktop -or $StartMenu) {
     $WshShell = New-Object -comObject WScript.Shell
+    $FileName = $Name + $Extension
 
     Function Save-Shortcut($Path) {
         $Shortcut = $WshShell.CreateShortcut($Path)
         $Shortcut.TargetPath = $Target
-
-        Write-Output $Path
 
         if ( $Arguments )        { $Shortcut.Arguments = $Arguments }
         if ( $Description )      { $Shortcut.Description = $Description }
@@ -100,17 +99,18 @@ if ( $Desktop -or $StartMenu) {
         if ( $WorkingDirectory ) { $Shortcut.Arguments = $WorkingDirectory }
 
         $Shortcut.Save()
+        Write-Output $Path
     }
 
 
     if ( $Desktop ) {
-        $DesktopPath = [Environment]::GetFolderPath("Desktop")
-        Save-Shortcut("$DesktopPath\$Name$Extension")
+        $DesktopPath = [Environment]::GetFolderPath('Desktop')
+        Save-Shortcut("$DesktopPath\$FileName")
     }
 
     if ( $StartMenu ) {
-        $StartMenuPath = [Environment]::GetFolderPath("StartMenu")
-        Save-Shortcut("$StartMenuPath\Programs\$Name$Extension")
+        $StartMenuPath = [Environment]::GetFolderPath('StartMenu')
+        Save-Shortcut("$StartMenuPath\Programs\$FileName")
     }
 
 }
