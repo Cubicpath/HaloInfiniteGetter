@@ -3,46 +3,46 @@
 ###################################################################################################
 
 <#
-  .SYNOPSIS
-  Creates Desktop and Start Menu shortcuts.
+    .SYNOPSIS
+    Creates Desktop and Start Menu shortcuts.
 
-  .DESCRIPTION
-  This CreateShortcut.ps1 script creates shortcut (.lnk) files.
-  This is implemented in PowerShell as accessing a WScript Shell is not convenient in Python.
+    .DESCRIPTION
+    This CreateShortcut.ps1 script creates shortcut (.lnk) files.
+    This is implemented in PowerShell as accessing a WScript Shell is not convenient in Python.
 
-  .PARAMETER Target
-  Target of the shortcut.
+    .PARAMETER Target
+    Target of the shortcut.
 
-  .PARAMETER Name
-  Name of the shortcut.
+    .PARAMETER Name
+    Name of the shortcut.
 
-  .PARAMETER Arguments
-  Command line arguments to pass to the target.
+    .PARAMETER Arguments
+    Command line arguments to pass to the target.
 
-  .PARAMETER Description
-  Description of the shortcut.
+    .PARAMETER Description
+    Description of the shortcut.
 
-  .PARAMETER Icon
-  Path to an icon to use for the shortcut.
+    .PARAMETER Icon
+    Path to an icon to use for the shortcut.
 
-  .PARAMETER WorkingDirectory
-  Working directory to start in when executing the shortcut.
+    .PARAMETER WorkingDirectory
+    Working directory to start in when executing the shortcut.
 
-  .PARAMETER Extension
-  The file extension to use for shortcut files.
-  ".lnk" and ".url" are the only extensions supprted by WScript.
+    .PARAMETER Extension
+    The file extension to use for shortcut files.
+    ".lnk" and ".url" are the only extensions supprted by WScript.
 
-  .PARAMETER Desktop
-  Whether to create a desktop shortcut.
+    .PARAMETER Desktop
+    Whether to create a desktop shortcut.
 
-  .PARAMETER StartMenu
-  Whether to create a start menu shortcut.
+    .PARAMETER StartMenu
+    Whether to create a start menu shortcut.
 
-  .INPUTS
-  None. You cannot pipe objects to CreateShortcut.ps1.
+    .INPUTS
+    None. You cannot pipe objects to CreateShortcut.ps1.
 
-  .OUTPUTS
-  System.Array. CreateShortcut.ps1 returns an array of strings containing a path to every shortcut created.
+    .OUTPUTS
+    System.Array. CreateShortcut.ps1 returns an array of strings containing a path to every shortcut created.
 
             -------------------------- EXAMPLE 1 --------------------------
 
@@ -60,11 +60,11 @@
             PS> CreateShortcut.ps1 "MyFile.exe" -Name "My Shortcut" -Desktop $False -StartMenu $False
 
 
-  .LINK
-  Repo: https://github.com/Cubicpath/HaloInfiniteGetter
+    .LINK
+    Repo: https://github.com/Cubicpath/HaloInfiniteGetter
 
-  .LINK
-  Source: https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/src/hi_getter/resources/CreateShortcut.ps1
+    .LINK
+    Source: https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/src/hi_getter/resources/CreateShortcut.ps1
 #>
 
 
@@ -88,6 +88,7 @@ param(
 if ( $Desktop -or $StartMenu) {
     $WshShell = New-Object -comObject WScript.Shell
     $FileName = $Name + $Extension
+
 
     Function Save-Shortcut($Path) {
         $Shortcut = $WshShell.CreateShortcut($Path)
