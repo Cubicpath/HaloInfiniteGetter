@@ -5,8 +5,9 @@
 param(
     [Parameter(Mandatory)]
     [String]$Target,
-    [String]$Arguments,
+    [Parameter(Mandatory)]
     [String]$Name,
+    [String]$Arguments,
     [String]$Description,
     [String]$Icon,
     [String]$WorkingDirectory,
@@ -15,28 +16,35 @@ param(
     [Boolean]$StartMenu = $True
 )
 
-echo $Extension
 
-$WshShell = New-Object -comObject WScript.Shell
+# Start creating shortcuts.
+# If neither Desktop nor StartMenu are enabled, skip functionality.
+if ( $Desktop -or $StartMenu) {
+    $WshShell = New-Object -comObject WScript.Shell
 
-Function CreateShortcut($Path) {
-    $Shortcut = $WshShell.CreateShortcut($Path)
-    $Shortcut.TargetPath = $Target
+    Function CreateShortcut($Path) {
+        $Shortcut = $WshShell.CreateShortcut($Path)
+        $Shortcut.TargetPath = $Target
 
-    if ( $Arguments )        { $Shortcut.Arguments = $Arguments }
-    if ( $Description )      { $Shortcut.Description = $Description }
-    if ( $Icon )             { $Shortcut.IconLocation = $Icon }
-    if ( $WorkingDirectory ) { $Shortcut.Arguments = $WorkingDirectory }
+        Write-Output $Path
 
-    $Shortcut.Save()
-}
+        if ( $Arguments )        { $Shortcut.Arguments = $Arguments }
+        if ( $Description )      { $Shortcut.Description = $Description }
+        if ( $Icon )             { $Shortcut.IconLocation = $Icon }
+        if ( $WorkingDirectory ) { $Shortcut.Arguments = $WorkingDirectory }
 
-if ( $Desktop ) {
-    $DesktopPath = [Environment]::GetFolderPath("Desktop")
-    CreateShortcut("$DesktopPath\$Name$Extension")
-}
+        $Shortcut.Save()
+    }
 
-if ( $StartMenu ) {
-    $StartMenuPath = [Environment]::GetFolderPath("StartMenu")
-    CreateShortcut("$StartMenuPath\Programs\$Name$Extension")
+
+    if ( $Desktop ) {
+        $DesktopPath = [Environment]::GetFolderPath("Desktop")
+        CreateShortcut("$DesktopPath\$Name$Extension")
+    }
+
+    if ( $StartMenu ) {
+        $StartMenuPath = [Environment]::GetFolderPath("StartMenu")
+        CreateShortcut("$StartMenuPath\Programs\$Name$Extension")
+    }
+
 }
