@@ -15,28 +15,32 @@ Styleguide
 
 ### Naming Conventions
 
-| Attribute Type       | Casing (Python)      |
-|----------------------|----------------------|
-| Qt slots and signals | camelCase            |
-| Classes              | PascalCase           |
-| MetaClasses          | PascalCase           |
-| Type Aliases         | PascalCase           |
-| Functions            | snake_case           |
-| Methods              | snake_case           |
-| Modules              | snake_case           |
-| Packages             | snake_case           |
-| Properties           | snake_case           |
-| Variables            | snake_case           |
-| Constants            | SCREAMING_SNAKE_CASE |
-| Generics             | PascalT_lower_co     |
+| Attribute Type       | Python               | PowerShell |
+|----------------------|----------------------|------------|
+| Qt slots and signals | camelCase            |            |
+| Classes              | PascalCase           | PascalCase |
+| MetaClasses          | PascalCase           |            |
+| Type Aliases         | PascalCase           |            |
+| Functions            | snake_case           | Verb-Noun  |
+| Methods              | snake_case           | PascalCase |
+| Modules              | snake_case           | PascalCase |
+| Packages             | snake_case           |            |
+| Parameters           | snake_case           | PascalCase |
+| Properties           | snake_case           | PascalCase |
+| Variables            | snake_case           | PascalCase |
+| Constants            | SCREAMING_SNAKE_CASE | PascalCase |
+| Generics             | PascalT_lower_co     |            |
 
-| Casing Type          | Examples                  |
+| Convention Type      | Examples                  |
 |----------------------|---------------------------|
+| lowercase            | foo, foobar, foobarbiz    |
+| UPPERCASE            | FOO, FOOBAR, FOOBARBIZ    |
 | camelCase            | foo, fooBar, fooBarBiz    |
 | PascalCase           | Foo, FooBar, FooBarBiz    |
 | snake_case           | foo, foo_bar, foo_bar_biz |
 | SCREAMING_SNAKE_CASE | FOO, FOO_BAR, FOO_BAR_BIZ |
 | PascalT_lower_co     | FT, BarT_co, FT_covar     |
+| Verb-Noun            | New-Shortcut, Get-Value   |
 
 
 ### Modules
