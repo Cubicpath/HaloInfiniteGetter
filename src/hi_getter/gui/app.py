@@ -339,9 +339,14 @@ class GetterApp(QApplication):
 
             theme: dict = theme.copy()
             if isinstance((path := theme.pop('path')), CommentValue):
-                path = Path(path.val)
+                path = path.val
 
-            if path.is_dir():
+            # Translate builtin theme locations
+            if isinstance(path, str) and path.startswith('builtin::'):
+                path = HI_RESOURCE_PATH / f'themes/{path.removeprefix("builtin::")}'
+
+            # Ensure path is a Path value that exists
+            if (path := Path(path)).is_dir():
                 search_path = f'hi_theme+{id}'
                 QDir.addSearchPath(search_path, str(path))
 
