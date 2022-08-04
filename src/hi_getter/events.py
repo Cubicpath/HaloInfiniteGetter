@@ -2,6 +2,7 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module used for Event subscription."""
+from __future__ import annotations
 
 __all__ = (
     'Event',
@@ -10,18 +11,34 @@ __all__ = (
 
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Optional
+from typing import Generic
+from typing import overload
+from typing import TypeAlias
+from typing import TypeVar
 
 from . import utils
 
 
 class Event:
-    """Normal event with no special abilities."""
+    """Normal event with no special abilities.
+
+    You can also use the >> operator to fire an :py:class:`Event` on an :py:class:`EventBus`. Ex::
+
+        Event() >> EventBus['foo']
+    """
     __slots__ = ()
 
     def __repr__(self) -> str:
         values = {attr: val for attr, val in ((attr, getattr(self, attr)) for attr in self.__slots__)}
         return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
+
+    def __rshift__(self, __bus: EventBus, /) -> None:
+        """Syntax sugar for __bus.fire(event)"""
+        __bus.fire(event=self)
+
+    def __rlshift__(self, __bus: EventBus, /) -> None:
+        """Right shift if the EventBus.__lshift__ dunder is not working."""
+        self >> __bus
 
     @property
     def name(self) -> str:
@@ -43,14 +60,19 @@ class Event:
         return doc.splitlines()[0]
 
 
+_ET_co = TypeVar('_ET_co', bound=Event, covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
+_EventPredicate: TypeAlias = Callable[[_ET_co], bool]
+_EventRunnable:  TypeAlias = Callable[[_ET_co], None]
+
+
 class _Subscribers(defaultdict[type[Event], list[tuple[
-    Callable[[Event], None] | Callable,  # Callable to run
-    Callable[[Event], bool] | None       # Optional predicate to run callable
-]]]):
+    _EventRunnable,          # Callable to run
+    _EventPredicate | None   # Optional predicate to run callable
+]]], Generic[_ET_co]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
     def __init__(self) -> None:
-        super().__init__(lambda: [])
+        super().__init__(list)
 
     def __repr__(self) -> str:
         """Amount of subscribers for every event, encased in parentheses."""
@@ -59,12 +81,12 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             repr_ += f'{event.__name__}[{len(self[event])}], '
         return f'({repr_.rstrip()})'
 
-    def add(self, event: type[Event], callable_pair: tuple[Callable[[Event], None] | Callable, Callable[[Event], bool] | None]) -> None:
+    def add(self, event: type[_ET_co], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list."""
-        if not callable(callable_pair[0]):
-            raise TypeError('subscriber is not callable.')
         if not issubclass(event, Event):
             raise TypeError(f'event is not subclass to {Event}.')
+        if not callable(callable_pair[0]):
+            raise TypeError('subscriber is not callable.')
         if callable_pair[1] is not None and not callable(callable_pair[1]):
             raise TypeError('subscriber predicate is defined but not callable.')
 
@@ -77,14 +99,19 @@ class _EventBusMeta(type):
     Maps :py:class:`EventBus` objects to :py:class:`str` ids
     and allows accessing those ids using subscripts on :py:class:`EventBus`.
     """
-    _id_bus_map: dict[str, 'EventBus'] = {}
+    _id_bus_map: dict[str, EventBus] = {}
 
     @classmethod
-    def __getitem__(mcs, id: str) -> Optional['EventBus']:
+    @overload
+    def __getitem__(mcs, _: type[Event] | str, /) -> EventBus | None:
+        """Exist to support Generic Typing on :py:class:`EventBus`."""
+
+    @classmethod
+    def __getitem__(mcs, id: str) -> EventBus | None:
         return mcs._id_bus_map.get(id.lower())
 
     @classmethod
-    def __setitem__(mcs, id: str, bus: 'EventBus') -> None:
+    def __setitem__(mcs, id: str, bus: EventBus) -> None:
         """Set an :py:class:`EventBus` from the bus map."""
         if not isinstance(id, str):
             raise TypeError(f'parameter {id=} is not of type {str}.')
@@ -98,24 +125,32 @@ class _EventBusMeta(type):
         del mcs._id_bus_map[id.lower()]
 
 
-# pylint: disable=deprecated-typing-alias
-class EventBus(metaclass=_EventBusMeta):
+class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
     """Object that keeps track of all :py:class:`Callable` subscriptions to :py:class:`Event`'s.
 
     An Event Bus is an event-driven structure that stores both events and functions. When an
     event is fired, all functions "subscribed" to the event or any of its parent events are called with
     the event as a parameter.
 
-    Callables with the "__no_event_arg__" dunder set to True are not passed an event argument.
-
     All :py:class:`EventBus`'s are stored in the class with a unique id.
     You can access created :py:class:`EventBus`'s with subscripts. ex::
 
-        EventBus['foo'] -> None
-        EventBus('foo') -> EventBus object at 0x000000001
-        EventBus['foo'] -> EventBus object at 0x000000001
-        del EventBus['foo']
-        EventBus['foo'] -> None
+        [Python Interactive Prompt]
+            EventBus['foo'] -> None
+            EventBus('foo') -> EventBus object at 0x000000001
+            EventBus['foo'] -> EventBus object at 0x000000001
+            del EventBus['foo']
+            EventBus['foo'] -> None
+
+    You can also use the << operator to fire an event, or an Event's >> operator. ex::
+
+        [Python Interactive Prompt]
+            # These fire an event
+            EventBus['foo'] << Event()
+            Event() >> EventBus['foo']
+
+            # This raises an error:
+            Event() << EventBus['foo']
     """
 
     def __init__(self, __id: str | None = None, /) -> None:
@@ -134,10 +169,14 @@ class EventBus(metaclass=_EventBusMeta):
         else:
             raise KeyError(f'EventBus id "{__id}" is already registered in {type(type(self)).__name__}')
 
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__} id='{self.id!r}'; Subscribers={self._subscribers!r}>"
+    def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
+        """Syntax sugar for self.fire(event)"""
+        self.fire(__event)
 
-    def clear(self, event: type[Event] | None = None) -> None:
+    def __repr__(self) -> str:
+        return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'
+
+    def clear(self, event: type[_ET_co] | None = None) -> None:
         """Clear event _subscribers of a given type.
 
         None is treated as a wildcard and deletes ALL event _subscribers.
@@ -149,7 +188,7 @@ class EventBus(metaclass=_EventBusMeta):
         else:
             self._subscribers.pop(event)
 
-    def fire(self, event: Event | type[Event]) -> None:
+    def fire(self, event: _ET_co | type[_ET_co]) -> None:
         """Fire all :py:class:`Callables` subscribed to the :py:class:`Event`'s :py:class:`type`.
 
         :py:class:`Event` subclasses call their parent's callables as well.
@@ -170,22 +209,13 @@ class EventBus(metaclass=_EventBusMeta):
                     # Check predicate if one is given
                     if e_callable_pair[1] is None or e_callable_pair[1](event):
 
-                        # Add event to args if dunder __no_event_arg__ does not evaluate to True
-                        event_args = (event,)
-                        if hasattr(e_callable_pair[0], '__no_event_arg__') and getattr(e_callable_pair[0], '__no_event_arg__') is True:
-                            event_args = ()
-
                         # Finally, call
-                        e_callable_pair[0](*event_args)
+                        e_callable_pair[0](event)
 
-    def subscribe(self, __callable: Callable, /, event: type[Event], event_predicate: Callable[[Event], bool] | None = None) -> None:
+    def subscribe(self, __callable: _EventRunnable, /, event: type[_ET_co], event_predicate: _EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.
-
-        If the :py:class:`Callable` as the attribute "__no_event_arg__" set to True,
-        no arguments are passed to the callable during execution. :py:class:`utils.DeferredCallable` has
-        this set to True during default initialization.
 
         :param __callable: Callable to run.
         :param event: Event to subscribe to.

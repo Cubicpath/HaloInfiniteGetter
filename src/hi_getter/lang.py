@@ -2,23 +2,93 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing code related to translation and language files."""
+from __future__ import annotations
 
 __all__ = (
+    'format_value',
+    'LANG_PATH',
     'Language',
+    'to_lang',
     'Translator',
 )
 
 import json
+import re
+from contextlib import AbstractContextManager
+from contextlib import contextmanager
 from pathlib import Path
 from string import ascii_letters
 from string import digits
 from typing import Annotated
 from typing import Any
+from typing import Final
 
 from .constants import *
 
-LANG_PATH: Path = HI_RESOURCE_PATH / 'lang'
+LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
+
+
+def format_value(value: str, *args, _language: Language = None) -> str:
+    """Format a str with positional arguments.
+
+    You can use {0} notation to refer to a specific positional argument.
+    If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
+
+    JSON strings ex::
+
+        {
+            "a": "{0} is the same as {0} using only one argument.",
+            "b": "{0} %s will not work and require 2 arguments",
+            "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
+        }
+    """
+    list_args:     list = list(args)
+    replaced:      set[str] = set()
+    pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
+    key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
+
+    for match in pos_param_ref.finditer(value):
+        match = match[0]
+        arg_val = args[int(match.strip('{}'))]
+        if match not in replaced:
+            replaced.add(match)
+            value = value.replace(match, arg_val)
+            list_args.remove(arg_val)
+
+    value = value % tuple(list_args)
+
+    replaced.clear()
+    if _language is not None:
+        for _ in range(50):
+            # Loop if a match is found, to recursively get translation key values.
+            # Limit of 50 to prevent an infinite loop.
+
+            found = False
+            for match in key_ref.finditer(value):
+                found = True
+                match = match[0]
+                if match not in replaced:
+                    replaced.add(match)
+                    value = value.replace(match, _language.get_raw(match.strip('{}')))
+
+            if not found:
+                # End loop if no inner translation keys are found.
+                break
+
+    return value
+
+
+def to_lang(language: str | Language) -> Language:
+    """Assert that a given value is a :py:class:`Language`."""
+    if not isinstance(language, Language):
+        language = str(language)  # Stringify non-language object
+
+    if isinstance(language, str):
+        # TODO: Move this to Language.from_tag
+        language = language.replace(' ', '-').replace('_', '-').strip()
+        language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
+    return language
 
 
 class Language:
@@ -58,16 +128,17 @@ class Language:
         self.tag:  str = ''
 
         sub_tags:  list[str] = []
+        err: Exception | None = None
 
         if primary is None and ext_lang is None and private_use is None:
-            raise ValueError('The primary and/or ext_lang and/or private_use subtag must be filled out.')
+            err = ValueError('The primary and/or ext_lang and/or private_use subtag must be filled out.')
 
         if primary is not None:
             primary = primary.lower()
 
             # RFC 5646 section 2.2.1.1 and 2.2.1.2
             if not primary.isalpha() or not 3 >= len(primary) >= 2:
-                raise ValueError(f'Primary language subtag "{primary}" is not valid.')
+                err = ValueError(f'Primary language subtag "{primary}" is not valid.')
 
             sub_tags.append(primary)
 
@@ -76,7 +147,7 @@ class Language:
 
             # RFC 5646 section 2.2.2.1
             if not ext_lang.isalpha() or not len(ext_lang) == 3:
-                raise ValueError(f'Extended language subtag "{ext_lang}" is not valid.')
+                err = ValueError(f'Extended language subtag "{ext_lang}" is not valid.')
 
             sub_tags.append(ext_lang)
 
@@ -85,7 +156,7 @@ class Language:
 
             # RFC 5646 section 2.2.3.2
             if not script.isalpha() or not len(script) == 4:
-                raise ValueError(f'Script subtag "{script}" is not valid.')
+                err = ValueError(f'Script subtag "{script}" is not valid.')
 
             sub_tags.append(script)
 
@@ -94,7 +165,7 @@ class Language:
 
             # ISO 3166-1 or UN M.49
             if not (len(region) == 2 and region.isalpha()) and not (len(region) == 5 and region[:2].isalpha() and region[2:].isnumeric()):
-                raise ValueError(f'Region subtag "{region}" is not valid.')
+                err = ValueError(f'Region subtag "{region}" is not valid.')
 
             sub_tags.append(region)
 
@@ -104,11 +175,11 @@ class Language:
 
                 # RFC 5646 section 2.2.5.4
                 if not (variant[0] in ascii_letters and 8 >= len(variant) >= 5) or not (variant[0] in digits and 8 >= len(variant) >= 4):
-                    raise ValueError(f'Variant subtag "{variant}" is not valid.')
+                    err = ValueError(f'Variant subtag "{variant}" is not valid.')
 
                 # RFC 5646 section 2.2.5.5
                 if variant in checked:
-                    raise ValueError(f'Variant subtag "{variant}" is repeated.')
+                    err = ValueError(f'Variant subtag "{variant}" is repeated.')
 
                 checked.append(variant)
                 sub_tags.append(variant)
@@ -119,15 +190,15 @@ class Language:
                 extension = extension.lower()
 
                 if not (len(singleton) == 1 and (singleton in digits or singleton in ascii_letters)):
-                    raise ValueError(f'Singleton subtag "{singleton}" is not valid.')
+                    err = ValueError(f'Singleton subtag "{singleton}" is not valid.')
 
                 # RFC 5646 section 2.2.6.3
                 if singleton in checked:
-                    raise ValueError(f'Singleton subtag "{singleton}" is repeated.')
+                    err = ValueError(f'Singleton subtag "{singleton}" is repeated.')
 
                 # RFC 5646 section 2.2.6.5
                 if not (extension.isalnum() and 8 >= len(extension) >= 2):
-                    raise ValueError(f'Extension subtag "{extension}" is not valid.')
+                    err = ValueError(f'Extension subtag "{extension}" is not valid.')
 
                 checked.append(singleton)
                 sub_tags.extend((singleton, extension))
@@ -145,17 +216,28 @@ class Language:
                         private_sub_tag = private_sub_tag.upper()
 
                 if not (private_sub_tag.isalnum() and 8 >= len(private_sub_tag) >= 1):
-                    raise ValueError(f'The private subtag "{private_sub_tag}" is not valid.')
+                    err = ValueError(f'The private subtag "{private_sub_tag}" is not valid.')
 
                 sub_tags.append(private_sub_tag)
 
         self.tag = '-'.join(sub_tags)
 
+        if err is not None:
+            raise ValueError(str(err)[:-1] + f' in language tag "{self.tag}".') from err
+
         for lang_file in LANG_PATH.iterdir():
             if lang_file.suffix == '.json' and lang_file.with_suffix('').name.lower() == self.tag.replace('-', '_').lower():
                 # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
-                new_data = json.loads(lang_file.read_text(encoding='utf8'))
-                self._data.update(new_data)
+
+                # Read the language file corresponding to this Language's tags.
+                file_data: dict[str, Any] = json.loads(lang_file.read_text(encoding='utf8'))
+
+                # Read the parent language file if it exists.
+                if (parent_lang := file_data['meta'].get('inherits_from')) is not None:
+                    self._data |= to_lang(parent_lang).data
+
+                # Overwrite inherited keys.
+                self._data |= file_data['keys']
                 break
 
     def __repr__(self) -> str:
@@ -165,14 +247,19 @@ class Language:
         return self.get_raw(key)
 
     @classmethod
-    def from_tag(cls, tag: str) -> 'Language':
+    def from_tag(cls, tag: str) -> Language:
         """Build a :py:class:`Language` object using a plain string tag.
 
-        Breaks tag into sub-tags and verifies compliancy with RFC 5646.
+        Breaks tag into sub-tags and verifies compliance with RFC 5646.
         """
         # TODO: Add functionality
 
-    def get(self, key: str, *args: Any, default: str | None = None) -> str | None:
+    @property
+    def data(self) -> dict[str, Any]:
+        """:returns: a copy of the internal key dictionary."""
+        return self._data.copy()
+
+    def get(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key and format with the given arguments if required.
 
         :param key: Key to get in JSON data.
@@ -181,15 +268,15 @@ class Language:
         """
         # Default value is key if not overridden
         default = default if default is not None else key
-        result = self._data.get(key, default)
+        result: str = self._data.get(key, default)
 
-        # Dont format default value
         if result is not default:
-            result = result % args
+            return format_value(result, *args, _language=self)
         else:
+            # Dont format default value
             quote = '"'
-            for arg1 in (f'%{str(arg0) if not isinstance(arg0, str) else quote + arg0 + quote}%' for arg0 in args):
-                result += arg1
+            for arg in (f'%{str(arg) if not isinstance(arg, str) else quote + arg + quote}%' for arg in args):
+                result += arg
 
         return result
 
@@ -207,15 +294,20 @@ class Translator:
     Usage::
         translate = Translator('en-US')
         translate('a.translation.key') -> american value
-        translate.language = 'de-GER' -> german value
+        translate.language = 'de-GER'
+        translate('a.translation.key') -> german value
     """
 
     def __init__(self, language: Language | str) -> None:
-        self._language = self._lang_to_lang(language)
+        self._language = to_lang(language)
 
-    def __call__(self, key: str, *args: Any, default: str | None = None) -> str:
+    def __bool__(self) -> bool:
+        """Return whether the Translator is available."""
+        return True
+
+    def __call__(self, key: str, *args: Any, **kwargs) -> str:
         """Syntax sugar for get_translation."""
-        return self.get_translation(key, *args, default=default if default is not None else key)
+        return self.get_translation(key, *args, **kwargs)
 
     @property
     def language(self) -> Language:
@@ -224,20 +316,19 @@ class Translator:
 
     @language.setter
     def language(self, value: Language | str) -> None:
-        self._language = self._lang_to_lang(value)
+        self._language = to_lang(value)
 
     def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
         """Get a translation key's value for the current language."""
-        return self.language.get(key, *args, default=default if default is not None else key)
+        return self.language.get(key, *args, default=default)
 
-    @staticmethod
-    def _lang_to_lang(language: Language | str) -> Language:
-        """Assert that a given value is a :py:class:`Language`."""
-        if not isinstance(language, Language):
-            language = str(language)  # Stringify non-language object
+    @contextmanager
+    def as_language(self, language: Language | str) -> AbstractContextManager[None]:
+        """Temporarily translate for a specific language using a context manager."""
+        # __enter__
+        old_lang = self._language
+        self.language = language
+        yield
 
-        if isinstance(language, str):
-            # TODO: Move this to Language.from_tag
-            language = language.replace(' ', '-').replace('_', '-').strip()
-            language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
-        return language
+        # __exit__
+        self._language = old_lang

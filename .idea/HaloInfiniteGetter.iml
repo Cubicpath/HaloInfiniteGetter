@@ -4,8 +4,6 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/hi_data" />
-      <excludeFolder url="file://$MODULE_DIR$/src/dyncommands.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/.pytest_cache" />
       <excludeFolder url="file://$MODULE_DIR$/.tox" />
       <excludeFolder url="file://$MODULE_DIR$/htmlcov" />
@@ -13,6 +11,8 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
     </content>
+    <content url="file://$USER_HOME$/.cache/hi_getter" />
+    <content url="file://$USER_HOME$/.config/hi_getter" />
     <orderEntry type="jdk" jdkName="Python 3.10 (HaloInfiniteGetter)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

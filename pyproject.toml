@@ -1,27 +1,78 @@
 [build-system]
-requires = ["setuptools>=42.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.7.1,<4"]
+build-backend = "flit_core.buildapi"
 
+# Flit project configuration.
+# ---------------------------
+[project]
+name = "hi_getter"
+authors = [{name = "Cubicpath", email = "cubicpath@pm.me"}]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+keywords = ["halo", "waypoint", "infinite", "gui", "app", "getter", "client", "unofficial", "HaloInfiniteGetter"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: User Interfaces",
+    "Typing :: Typed"
+]
+requires-python = ">=3.10"
+dynamic = ["version", "description"]
+dependencies = [
+    "PySide6_Essentials>=6.3.1",
+    "toml>=0.10.2"
+]
+
+[project.optional-dependencies]
+all = [
+    "python-dotenv>=0.20.0"
+]
+dev = [
+    "pylint>=2.14.4",
+    "colorama>=0.4.5",  # While this is a pylint dependency, colorama 0.4.5 is required for pylint to work with jobs=0.
+]
+
+[project.urls]
+"Source Code" = "https://github.com/Cubicpath/HaloInfiniteGetter"
+"Issue Tracker" = "https://github.com/Cubicpath/HaloInfiniteGetter/issues"
+
+[project.gui-scripts]
+hi_getter = "hi_getter.run:main"
+
+
+# Pylint configuration.
+# ---------------------
 [tool.pylint.'MASTER']
-jobs=0
-load-plugins=[
+jobs = 0
+load-plugins = [
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
     "pylint.extensions.typing"
 ]
-py-version="3.10"
+py-version = "3.10"
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
     "C",    # Conventions
     "R",    # Reformats
+    # These do not work with custom bitshifts that return None
+    "pointless-statement",      # W0104
+    "expression-not-assigned",  # W0106
+    # These don't work with the general design choices of the project
     "unnecessary-lambda",       # W0108
     "protected-access",         # W0212
     "wildcard-import",          # W0401
     "fixme",                    # W0511
     "unused-wildcard-import",   # W0614
     "redefined-builtin",        # W0622
-    # Does not work with (positional arguments with a default value) before a backslash and *args
+    # Doesn't work with (positional arguments with a default value) before a backslash and *args
     "keyword-arg-before-vararg",# W1113
     # These do not work with starred parameter names
     "missing-param-doc",        # W9015

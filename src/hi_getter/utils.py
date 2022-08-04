@@ -1,193 +1,224 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Utils for hi_getter."""
+"""Utility functions for hi_getter."""
+from __future__ import annotations
 
 __all__ = (
+    'create_shortcut',
     'current_requirement_licenses',
     'current_requirement_names',
     'current_requirement_versions',
-    'DeferredCallable',
     'dump_data',
     'get_parent_doc',
     'has_package',
+    'hide_windows_file',
     'patch_windows_taskbar_icon',
     'unique_values',
 )
 
-import json
-import os
-import sys
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+
+from .constants import *
 
 
-class DeferredCallable:
-    """A :py:class:`Callable` with args and kwargs stored for further execution.
+def bit_rep(__bool: bool, /) -> str:
+    """Return a string representing the bit value of a boolean."""
+    return str(int(__bool))
 
-    Supports deferred argument evaluation when using :py:class:`Callable`'s as arguments.
-    This allows the value of the stored arguments to dynamically change depending on
-    when the :py:class:`DeferredCallable` is executed.
+
+def create_shortcut(target: Path, arguments: str | None = None,
+                    name: str | None = None, description: str | None = None,
+                    icon: Path | None = None, working_dir: Path | None = None,
+                    desktop: bool = True, start_menu: bool = True,
+                    version: str | None = None, terminal: bool = True) -> None:
+    """Create a shortcut on the given path.
+
+    Notes:
+        * start_menu is ignored on macOS
+        * terminal is ignored by Windows
+        * working_dir is Windows only
+        * version is Linux only
+
+    Linux and macOS implementations are heavily based on pyshortcuts.
+
+    :param target: Target of the shortcut.
+    :param arguments: Command line arguments to pass to the target.
+    :param version: Version identifier of the target.
+    :param terminal: Whether to open the target with a terminal.
+    :param name: Name of the shortcut.
+    :param description: Description of the shortcut.
+    :param icon: Path to an icon to use for the shortcut.
+    :param working_dir: Working directory to start in when executing the shortcut.
+    :param desktop: Whether to create a desktop shortcut.
+    :param start_menu: Whether to create a start menu shortcut.
+    :raises ValueError: icon extension cannot be used as an icon for the given platform.
     """
-    __slots__ = ('__no_event_arg__', '_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
+    import shutil
+    import subprocess
+    import sys
 
-    def __init__(self, __callable: Callable = lambda: None, /, *args: Any | Callable,
-                 _extra_pos_args: int = -1,
-                 _call_funcs: bool = True,
-                 _call_types: bool = False,
-                 **kwargs: Any | Callable) -> None:
-        """Creates a new :py:class:`DeferredCallable`.
+    if not desktop and not start_menu:
+        return
 
-        :param __callable: Callable to store for later execution.
-        :param args: positional arguments to store
-        :param _extra_pos_args: Extra positional arguments to expect with self.run; -1 is wildcard.
-        :param _call_funcs: Whether to call non-type callables
-        :param _call_types: Whether to call class constructors
-        :param kwargs: keyword arguments to store
-        """
-        self.__no_event_arg__:  bool = _extra_pos_args < 1
-        self._extra_pos_args:   int = _extra_pos_args
-        self.call_funcs:        bool = _call_funcs
-        self.call_types:        bool = _call_types
-        self.callable:          Callable = __callable
-        self.args:              tuple[Any | Callable, ...] = args
-        self.kwargs:            dict[str, Any | Callable] = kwargs
+    target = target.resolve(strict=True).absolute()
+    name = 'Shortcut' if name is None else name
+    working_dir = Path.home() if working_dir is None else working_dir
 
-    def __call__(self, *args, **kwargs) -> Any:
-        """Syntax sugar for self.run()"""
-        return self.run(*args, **kwargs)
+    PLATFORM_SHORTCUT_DATA: dict[str, dict[str, ...]] = {
+        'darwin': {
+            'shortcut_ext': '.app',
+            'icon_exts': ('.icns',),
+        },
+        'linux': {
+            'shortcut_ext': '.desktop',
+            'icon_exts': ('.ico', '.svg', '.png'),
+        },
+        'win32': {
+            'shortcut_ext': '.lnk',
+            'icon_exts': ('.ico', '.exe'),
+        }
+    }
 
-    def __repr__(self) -> str:
-        """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
-        args, kwargs = self.args, self.kwargs
-        return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
+    data = PLATFORM_SHORTCUT_DATA.get(sys.platform)
 
-    def run(self, *args: Any | Callable, **kwargs: Any | Callable) -> Any:
-        """Run the stored :py:class:`Callable`.
+    if not data:
+        return
 
-        Takes any additional arguments and temporarily adds to the stored arguments before execution.
+    if icon and icon.suffix not in data['icon_exts']:
+        raise ValueError(f'Icon must be one of {data["icon_exts"]} for {sys.platform}')
 
-        :param args: positional arguments to pass to callable.
-        :param kwargs: keyword arguments to pass callable.
-        :raises RuntimeError: Internal callable was not expecting the amount of positional arguments given.
-        :raises ValueError: Amount of positional arguments given is not equal to the expected amount defined during object initialization.
-        """
-        if 0 <= self._extra_pos_args != len(args):
-            raise ValueError(f'Amount of args given ({len(args)}) is not equal to the expected amount ({self._extra_pos_args})')
+    platform = sys.platform.lower()
+    if platform == 'darwin':
+        # macOS doesn't support start menu shortcuts, so return if not creating a desktop shortcut
+        if not desktop:
+            return
 
-        # Add additional arguments from local args
-        args = self.args + args
-        kwargs |= self.kwargs  # PEP 0584
+        # Create the desktop directory if it doesn't exist
+        if not (desktop_path := get_desktop_path()).is_dir():
+            desktop_path.mkdir(parents=True)
 
-        # Evaluate all callable arguments
-        args = tuple(arg() if callable(arg) and (
-                (isinstance(arg, type) and self.call_types) or
-                (not isinstance(arg, type) and self.call_funcs)
-        ) else arg for arg in args)
+        # Create the shortcut folders, replacing if it already exists
+        dest = (desktop_path / name).with_suffix(data['shortcut_ext'])
+        if dest.exists():
+            shutil.rmtree(dest)
 
-        kwargs = {key: val() if callable(val) and (
-                (isinstance(val, type) and self.call_types) or
-                (not isinstance(val, type) and self.call_funcs)
-        ) else val for key, val in kwargs.items()}
+        dest.mkdir(parents=True)
+        (dest / 'Contents').mkdir()
+        (dest / 'Contents/MacOS').mkdir()
+        (dest / 'Contents/Resources').mkdir()
 
-        try:
-            return self.callable(*args, **kwargs)
-        except TypeError as e:
-            if ' positional argument but ' in str(e):
-                raise RuntimeError(f'{str(e).split(" ", maxsplit=1)[0]} was not expecting additional args, '
-                                   f'{type(self).__name__}._extra_call_args may not be set correctly.') from e
+        # Add macOS shortcut data
+        with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
+            plist.writelines([
+                    '<?xml version="1.0" encoding="UTF-8"?>\n',
+                    '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
+                    '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
+                    '<plist version="1.0">\n',
+                    '  <dict>\n',
+                    f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
+                    f'  <key>CFBundleName</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
+                    '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
+                    '  </dict>\n',
+                    '</plist>\n',
+            ])
 
+        with (dest / f'Contents/MacOS/{name}').open('w', encoding='utf8') as shortcut_script:
+            shortcut_script.writelines([
+                '#!/bin/bash\n',
+                # These exports are not used if the script is ran from the terminal
+                f'export SCRIPT={target}\n',
+            ])
+            if arguments is not None:
+                shortcut_script.write(f'export ARGS=\'{arguments}\'\n')
 
-def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
-    """Dump data to path as a file."""
-    default_encoding = 'utf8'
-    path = Path(path)
-    if not path.parent.exists():
-        os.makedirs(path.parent)
+            if not terminal:
+                shortcut_script.write(f'$SCRIPT{" $ARGS" if arguments else ""}')
+            else:
+                osa_script = f'{target} {arguments}'.replace(' ', '\\ ')
+                shortcut_script.writelines([
+                    'osascript - e \'tell application "Terminal"\n',
+                    f'do script "\'{osa_script}\'"\n',
+                    'end tell\n',
+                    '\'\n',
+                ])
 
-    if isinstance(data, str):
-        # Write strings at text files
-        path.write_text(data, encoding=encoding or default_encoding)
-    elif isinstance(data, bytes):
-        # Decode bytes if provided with encoding, else write as data
-        if encoding is not None:
-            data = data.decode(encoding=encoding)
-            path.write_text(data, encoding=encoding)
-        else:
-            path.write_bytes(data)
-    elif isinstance(data, dict):
-        # Write dictionaries as json files
-        with path.open('w', encoding=encoding or default_encoding) as file:
-            json.dump(data, file, indent=2)
+            shortcut_script.write('\n')
 
+        # Change permissions to allow execution
+        (dest / f'Contents/MacOS/{name}').chmod(0o755)  # rwxr-xr-x
 
-def get_parent_doc(__type: type, /) -> str | None:
-    """Get the nearest parent documentation using the given :py:class:`type`'s mro."""
-    doc = None
-    for parent in __type.__mro__:
-        doc = parent.__doc__
-        if doc:
-            break
-    return doc
+        # Add the icon
+        if icon:
+            shutil.copy(icon, (dest / f'Contents/Resources/{name}').with_suffix(icon.suffix))
 
+    elif platform.startswith('linux'):
+        entry_values: dict[str, object] = {
+            'Encoding': 'UTF-8',
+            'Version': version,
+            'Type': 'Application',
+            'Exec': f'{target} {arguments}',
+            'Terminal': terminal,
+            'Icon': icon,
+            'Name': name,
+            'Comment': description,
+        }
 
-def patch_windows_taskbar_icon(app_id: str = '') -> None:
-    """Override Python's default Windows taskbar icon with the custom one set by the app window."""
-    if sys.platform == 'win32':
-        from ctypes import windll
-        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        for (do, path) in (
+                (desktop, get_desktop_path()),
+                (start_menu, get_start_menu_path())
+        ):
+            if do:
+                # Create the directory if it doesn't exist
+                path = get_desktop_path()
+                if not path.is_dir():
+                    path.mkdir(parents=True)
 
+                # Create the .desktop file
+                dest = (path / name).with_suffix(data['shortcut_ext'])
+                with dest.open('w', encoding='utf8') as shortcut_script:
+                    shortcut_script.write('[Desktop Entry]\n')
+                    shortcut_script.writelines([
+                        f'{k}={v}' for k, v in entry_values.items() if v is not None
+                    ])
 
-def has_package(package: str) -> bool:
-    """Returns whether the given package name is installed in the current environment.
+                # Change permissions to allow execution
+                dest.chmod(0o755)  # rwxr-xr-x
 
-    :param package: Package name to search; hyphen-insensitive
-    """
-    from pkg_resources import WorkingSet
+    elif platform == 'win32':
+        arg_factories: dict[str, tuple[object, Callable]] = {
+            'Target': (target, quote_str),
+            'Arguments': (arguments, quote_str),
+            'Name': (name, quote_str),
+            'Description': (description, quote_str),
+            'Icon': (icon, quote_str),
+            'WorkingDirectory': (working_dir, quote_str),
+            'Extension': (data['shortcut_ext'], quote_str),
+            'Desktop': (desktop, bit_rep),
+            'StartMenu': (start_menu, bit_rep)
+        }
 
-    for pkg in WorkingSet():
-        if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
-            return True
-    return False
+        abs_script_path: Path = (HI_RESOURCE_PATH / 'scripts/CreateShortcut.ps1').resolve(strict=True).absolute()
+        powershell_arguments = [
+            'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
+        ]
 
+        # Append keyword arguments to the powershell script if the value is not None
+        # Every argument is in the form of -<keyword>:<value> with value being represented as a quoted string or raw integer.
+        powershell_arguments.extend([
+            f'-{key}:{factory(value)}' for (key, (value, factory)) in arg_factories.items() if value is not None
+        ])
 
-def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
-    """Return the current requirement names for the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: list of package names.
-    """
-    from importlib.metadata import requires
-
-    req_names = []
-    for requirement in requires(package):
-        if not include_extras and '; extra' in requirement:
-            continue
-
-        split_char = 0
-        for char in requirement:
-            if not char.isalnum() and char not in ('-', '_'):
-                break
-            split_char += 1
-
-        req_names.append(requirement[:split_char])
-
-    return req_names
-
-
-def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
-    """Return the current versions for the requirements of the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping package names to their version string.
-    """
-    from importlib.metadata import version
-    return {name: version(name) for name in current_requirement_names(package, include_extras)}
+        subprocess.run(
+            powershell_arguments,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, check=True
+        )
 
 
 def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
@@ -224,8 +255,295 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
     return result
 
 
+def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
+    """Return the current requirement names for the given package.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: list of package names.
+    """
+    from importlib.metadata import requires
+
+    req_names = []
+    for requirement in requires(package):
+        if not include_extras and '; extra' in requirement:
+            continue
+        # Don't include testing extras
+        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
+            continue
+
+        split_char = 0
+        for char in requirement:
+            if not char.isalnum() and char not in ('-', '_'):
+                break
+            split_char += 1
+
+        req_names.append(requirement[:split_char])
+
+    return req_names
+
+
+def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
+    """Return the current versions of the installed requirements for the given package.
+
+    :param package: Package name to search
+    :param include_extras: Whether to include packages installed with extras
+    :return: dict mapping package names to their version string.
+    """
+    from importlib.metadata import version
+
+    return {name: version(name) for name in current_requirement_names(package, include_extras) if has_package(name)}
+
+
+def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
+    """Dump data to path as a file."""
+    import json
+    import os
+
+    default_encoding = 'utf8'
+    path = Path(path)
+    if not path.parent.exists():
+        os.makedirs(path.parent)
+
+    if isinstance(data, str):
+        # Write strings at text files
+        path.write_text(data, encoding=encoding or default_encoding)
+    elif isinstance(data, bytes):
+        # Decode bytes if provided with encoding, else write as data
+        if encoding is not None:
+            data = data.decode(encoding=encoding)
+            path.write_text(data, encoding=encoding)
+        else:
+            path.write_bytes(data)
+    elif isinstance(data, dict):
+        # Write dictionaries as json files
+        with path.open(mode='w', encoding=encoding or default_encoding) as file:
+            json.dump(data, file, indent=2)
+
+
+def get_desktop_path() -> Path | None:
+    """Cross-platform utility to obtain the path to the desktop.
+
+    This function is cached after the first call.
+
+    * On Windows, this returns the path found in the registry, or the default ~/Desktop if the registry could not be read from.
+
+    * On Linux and macOS, this returns the DESKTOP value in ~/.config/user-dirs.dirs file, or the default ~/Desktop.
+
+    :return: Path to the user's desktop or None if not found.
+    """
+    import os
+    import sys
+
+    # Assume that once found, the desktop path does not change
+    if hasattr(get_desktop_path, '__cached__'):
+        return get_desktop_path.__cached__
+
+    platform: str = sys.platform.lower()
+    desktop:  Path | None = None
+
+    if platform == 'win32':
+        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        desktop = Path.home() / 'Desktop'
+
+        try:
+            val = get_winreg_value(shell_folder_key, 'Desktop')
+
+            # Make sure the path is resolved
+            desktop = Path(val).resolve(strict=True).absolute()
+
+        except (ImportError, OSError):
+            pass  # Return the default windows path if the registry couldn't be read.
+
+    elif platform.startswith('linux') or platform == 'darwin':
+        home: Path = Path.home() or Path(os.getenv('HOME', None))
+        desktop: Path = home / 'Desktop'
+
+        # If desktop is defined in user's config, use that
+        dir_file: Path = home / '.config/user-dirs.dirs'
+        if dir_file.is_file():
+            with dir_file.open(mode='r', encoding='utf8') as f:
+                text: list[str] = f.readlines()
+
+            for line in text:
+                # Read the DESKTOP variable's value and evaluate it
+                if 'DESKTOP' in line:
+                    line = line.replace('$HOME', str(home))[:-1]
+                    config_val = line.split('=')[1].strip('\'\"')
+                    desktop = Path(config_val).resolve(strict=True).absolute()
+
+    get_desktop_path.__cached__ = desktop
+    return desktop
+
+
+def get_parent_doc(__type: type, /) -> str | None:
+    """Get the nearest parent documentation using the given :py:class:`type`'s mro.
+
+    :return The closest docstring for an object's class, None if not found.
+    """
+    doc = None
+    for parent in __type.__mro__:
+        doc = parent.__doc__
+        if doc:
+            break
+    return doc
+
+
+def get_start_menu_path() -> Path | None:
+    """Cross-platform utility to obtain the path to the Start Menu or equivalent.
+
+    This function is cached after the first call.
+
+    * On Windows, this returns the main Start Menu folder, so it is recommended that you use the "Programs" sub-folder for adding shortcuts.
+
+    * On Linux, this returns the ~/.local/share/applications directory.
+
+    * On macOS, this returns None.
+
+    :return: Path to the Start Menu or None if not found.
+    """
+    import os
+    import sys
+
+    # Assume that once found, the start menu path does not change
+    if hasattr(get_start_menu_path, '__cached__'):
+        return get_start_menu_path.__cached__
+
+    platform:   str = sys.platform.lower()
+    start_menu: Path | None = None
+
+    if platform == 'win32':
+        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        start_menu = Path.home() / 'AppData/Roaming/Microsoft/Windows/Start Menu'
+
+        try:
+            val = get_winreg_value(shell_folder_key, 'Start Menu')
+
+            # Make sure the path is resolved
+            start_menu = Path(val).resolve(strict=True).absolute()
+
+        except (ImportError, OSError):
+            pass  # Return the default windows path if the registry couldn't be read.
+
+    elif platform.startswith('linux'):
+        home: Path = Path.home() or Path(os.getenv('HOME', None))
+
+        start_menu = home / '.local/share/applications'
+
+    get_start_menu_path.__cached__ = start_menu
+    return start_menu
+
+
+def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list | None:
+    """Get a value from the Windows registry.
+
+    :param key_name: The registry key to read. The parent key must be the name of a defined winreg constant.
+    :param value_name: The value to read.
+    :return: The value, or None if not found.
+    :raises AttributeError: If the parent_key is not a defined winreg constant.
+    :raises ImportError: If winreg is not available.
+    :raises OSError: If the registry key could not be read.
+    """
+    from os.path import expandvars
+
+    try:
+        import winreg
+    except ImportError as e:
+        raise ImportError('winreg is required to use this function.') from e
+
+    parent_key: int = getattr(winreg, key_name.split('\\')[0])
+    sub_key:    str = '\\'.join(key_name.split('\\')[1:])
+    if not isinstance(parent_key, int):
+        raise AttributeError('parent_key is not a defined winreg constant.')
+
+    reg_key = winreg.OpenKey(parent_key, sub_key, 0, winreg.KEY_QUERY_VALUE)
+    val, reg_type = winreg.QueryValueEx(reg_key, value_name)
+
+    reg_key.Close()
+
+    # Expand environment variables
+    if reg_type == winreg.REG_EXPAND_SZ:
+        val = expandvars(val)
+
+    return val
+
+
+def has_package(package: str) -> bool:
+    """Check if the given package is available.
+
+    :param package: Package name to search; hyphen-insensitive
+    :return: Whether the given package name is installed to the current environment.
+    """
+    from pkg_resources import WorkingSet
+
+    for pkg in WorkingSet():
+        if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
+            return True
+    return False
+
+
+def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | None:
+    """Hide an existing Windows file. If not running windows, do nothing.
+
+    Use unhide kwarg to reverse the operation
+
+    :param file_path: Absolute or relative path to hide.
+    :param unhide: Unhide a hidden file in Windows.
+    :return: None if not on Windows, else if the function succeeds, the return value is nonzero.
+    """
+    import sys
+
+    # Resolve string path to use with kernel32
+    file_path = str(Path(file_path).resolve())
+    if sys.platform == 'win32':
+        from ctypes import windll
+
+        # File flags are a 32-bit bitarray, the "hidden" attribute is the 2nd least significant bit
+        FILE_ATTRIBUTE_HIDDEN = 0b00000000000000000000000000000010
+
+        # bitarray for boolean flags representing file attributes
+        current_attributes: int = windll.kernel32.GetFileAttributesW(file_path)
+        if not unhide:
+            # Add hide attribute to bitarray using bitwise OR
+            # 0b00000000 -> 0b00000010 ---- 0b00000110 -> 0b00000110
+            merged_attributes: int = current_attributes | FILE_ATTRIBUTE_HIDDEN
+            return windll.kernel32.SetFileAttributesW(file_path, merged_attributes)
+        else:
+            # Remove hide attribute from bitarray if it exists
+            # Check with bitwise AND; Remove with bitwise XOR
+            # 0b00000100 -> 0b00000100 ---- 0b00000110 -> 0b00000100
+            # Only Truthy returns (which contain the hidden attribute) will subtract from the bitarray
+            is_hidden = bool(current_attributes & FILE_ATTRIBUTE_HIDDEN)
+            if is_hidden:
+                subtracted_attributes: int = current_attributes ^ FILE_ATTRIBUTE_HIDDEN
+                return windll.kernel32.SetFileAttributesW(file_path, subtracted_attributes)
+
+
+def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
+    """Override Python's default Windows taskbar icon with the custom one set by the app window.
+
+    See https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid for more information.
+
+    :param app_id: Pointer to the AppUserModelID to assign to the current process.
+    :return: None if not on Windows, S_OK if this function succeeds. Otherwise, it returns an HRESULT error code.
+    """
+    import sys
+
+    if sys.platform == 'win32':
+        from ctypes import windll
+        return windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+
+
+def quote_str(__str: str, /) -> str:
+    """Encapsulate a string in double-quotes."""
+    return f'"{__str}"'
+
+
 def unique_values(data: Iterable) -> set:
-    """Recursively get all values in any Iterables. For Mappings, ignore keys and only remember values."""
+    """Recursively get all values in any Iterables. For Mappings, ignore keys and only remember values.
+
+    :return Set containing all unique non-iterable values.
+    """
     new: set = set()
     if isinstance(data, Mapping):
         # Loop through Mapping values

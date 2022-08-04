@@ -1,10 +1,12 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Initialize values and runs the application."""
+"""Initialize values and runs the application. :py:func:`main` acts as an entry-point."""
+from __future__ import annotations
 
 __all__ = (
-    'run',
+    'DEFAULT_SETTINGS',
+    'main',
 )
 
 import os
@@ -16,76 +18,66 @@ import toml
 from PySide6.QtCore import *
 
 from ._version import __version__
-from .client import Client
 from .constants import *
+from .exceptions import ExceptionHook
 from .gui import *
 from .tomlfile import *
 from .utils import *
 
-SETTINGS_PATH: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
+_DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
+_LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
+_SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
-DEFAULT_SETTINGS: Final[dict] = {
-    'language': 'en-US',
-    'gui': {
-        'window': {
-            'x_size': make_comment_val(900, 'Minimum value of 100'),
-            'y_size': make_comment_val(500, 'Minimum value of 100')
-        },
-        'themes': {
-            'selected': 'light',
-            'dark': {
-                'display_name': 'Breeze Dark',
-                'path': HI_RESOURCE_PATH / 'themes/dark'
-            },
-            'light': {
-                'display_name': 'Breeze Light',
-                'path': HI_RESOURCE_PATH / 'themes/light'
-            }
-        },
-        'media_output': {
-            'aspect_ratio_mode': make_comment_val(1, '0: Ignore | 1: Keep | 2: Expanding'),
-            'transformation_mode': make_comment_val(0, '0: Fast | 1: Smooth')
-        },
-        'text_output': {
-            'line_wrap_mode': make_comment_val(1, '0: No Wrap | 1: Widget | 2: Fixed Pixel | 4: Fixed Column')
-        }
-    }
-}
-"""Default settings to use in config."""
+# Read default settings file
+DEFAULT_SETTINGS: Final[TomlTable] = toml.loads(
+    _DEFAULTS_FILE.read_text(encoding='utf8').replace(
+        '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
+    ), decoder=PathTomlDecoder()
+)
 
 
 def _create_paths() -> None:
-    """Create files and paths if they do not exist."""
+    """Create files and directories if they do not exist."""
     for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
         if not dir_path.is_dir():
             os.makedirs(dir_path)
-    if not SETTINGS_PATH.is_file():
-        with SETTINGS_PATH.open(mode='w', encoding='utf8') as file:
-            toml.dump(DEFAULT_SETTINGS, file, encoder=BetterTomlEncoder())
+
+    if not _LAUNCHED_FILE.is_file():
+        # Create first-launch marker
+        _LAUNCHED_FILE.touch()
+        hide_windows_file(_LAUNCHED_FILE)
+
+    if not _SETTINGS_FILE.is_file():
+        # Write default_settings to user's SETTINGS_FILE
+        with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
+            toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
 
 
-def run(*args, **kwargs) -> int:
-    """Run the program.
+def main(*args, **kwargs) -> int:
+    """Run the program. GUI script entrypoint.
 
     Args are passed to a QApplication instance.
     Kwargs are handled here.
     """
+    # Check if launched marker exists
+    first_launch = not _LAUNCHED_FILE.is_file()
+
     _create_paths()
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
 
-    APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(SETTINGS_PATH, default=DEFAULT_SETTINGS))
-    APP.load_themes()
+    with ExceptionHook():
+        APP:        Final[GetterApp] = GetterApp(list(args), TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS), first_launch=first_launch)
+        APP.load_env(verbose=True)
 
-    CLIENT:     Final[Client] = kwargs.pop('client', Client())
-    SIZE:       Final[QSize] = QSize(
-        # Size to use, with a minimum of 100x100.
-        max(kwargs.pop('x_size', APP.settings['gui/window/x_size']), 100),
-        max(kwargs.pop('y_size', APP.settings['gui/window/y_size']), 100)
-    )
-    WINDOW:     Final[AppWindow] = AppWindow(CLIENT, APP, SIZE)
-    WINDOW.show()
-    return APP.exec()
+        SIZE:       Final[QSize] = QSize(
+            # Size to use, with a minimum of 100x100.
+            max(kwargs.pop('x_size', APP.settings['gui/window/x_size']), 100),
+            max(kwargs.pop('y_size', APP.settings['gui/window/y_size']), 100)
+        )
+        WINDOW:     Final[AppWindow] = AppWindow(SIZE)
+        WINDOW.show()
+        return APP.exec()
 
 
 if __name__ == '__main__':
-    run(sys.argv)
+    main(*sys.argv)

@@ -1,13 +1,39 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="2">
+            <item index="0" class="java.lang.String" itemvalue="3.10" />
+            <item index="1" class="java.lang.String" itemvalue="3.11" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="PyMissingTypeHintsInspection" enabled="true" level="INFORMATION" enabled_by_default="true">
       <scope name="Source and Distribution" level="WEAK WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="PySide6" />
+          </list>
+        </value>
+      </option>
     </inspection_tool>
     <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="ignoredErrors">
         <list>
           <option value="N806" />
+        </list>
+      </option>
+      <option name="ignoredBaseClasses">
+        <list>
+          <option value="unittest.TestCase" />
+          <option value="unittest.case.TestCase" />
+          <option value="shiboken6.Shiboken.Object" />
         </list>
       </option>
     </inspection_tool>
@@ -22,6 +48,8 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="PySide6.QtGui.triggered.connect" />
+          <option value="PySide6.QtNetwork.QNetworkAccessManager.finished" />
+          <option value="PySide6.QtNetwork.QNetworkReply.finished" />
           <option value="PySide6.QtWidgets.activated.connect" />
           <option value="PySide6.QtWidgets.returnPressed.connect" />
           <option value="PySide6.QtWidgets.QTextBrowser.anchorClicked" />
