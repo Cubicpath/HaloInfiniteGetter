@@ -30,10 +30,10 @@ def bit_rep(__bool: bool, /) -> str:
 
 
 def create_shortcut(target: Path, arguments: str | None = None,
-                    version: str | None = None, terminal: bool = True,
                     name: str | None = None, description: str | None = None,
                     icon: Path | None = None, working_dir: Path | None = None,
-                    desktop: bool = True, start_menu: bool = True) -> None:
+                    desktop: bool = True, start_menu: bool = True,
+                    version: str | None = None, terminal: bool = True) -> None:
     """Create a shortcut on the given path.
 
     Notes:
@@ -129,16 +129,16 @@ def create_shortcut(target: Path, arguments: str | None = None,
             'StartMenu': (start_menu, bit_rep)
         }
 
-        abs_script_path: Path = (HI_RESOURCE_PATH / 'CreateShortcut.ps1').resolve(strict=True).absolute()
+        abs_script_path: Path = (HI_RESOURCE_PATH / 'scripts/CreateShortcut.ps1').resolve(strict=True).absolute()
         powershell_arguments = [
             'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
         ]
 
         # Append keyword arguments to the powershell script if the value is not None
-        for arg_name, (arg_value, arg_factory) in arg_factories.items():
-            if arg_value is not None:
-                powershell_arguments.append(f'-{arg_name}')
-                powershell_arguments.append(arg_factory(arg_value))
+        # Every argument is in the form of -<keyword>:<value> with value being represented as a quoted string or raw integer.
+        powershell_arguments.extend([
+            f'-{key}:{factory(value)}' for (key, (value, factory)) in arg_factories.items() if value is not None
+        ])
 
         subprocess.run(
             powershell_arguments,
