@@ -59,6 +59,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
     if not desktop and not start_menu:
         return
 
+    target = target.resolve(strict=True).absolute()
     name = 'Shortcut' if name is None else name
     working_dir = Path.home() if working_dir is None else working_dir
 
@@ -90,6 +91,17 @@ def create_shortcut(target: Path, arguments: str | None = None,
         ...
 
     elif platform.startswith('linux'):
+        entry_values: dict[str, object] = {
+            'Encoding': 'UTF-8',
+            'Version': version,
+            'Type': 'Application',
+            'Exec': f'{target} {arguments}',
+            'Terminal': terminal,
+            'Icon': icon,
+            'Name': name,
+            'Comment': description,
+        }
+
         for (do, path) in (
                 (desktop, get_desktop_path()),
                 (start_menu, get_start_menu_path())
@@ -101,19 +113,13 @@ def create_shortcut(target: Path, arguments: str | None = None,
                     path.mkdir(parents=True)
 
                 # Create the .desktop file
-                dest = (path / f'{name}').with_suffix(data['shortcut_ext'])
-                with dest.open('w', encoding='utf8') as f:
-                    f.writelines([
-                        '[Desktop Entry]',
-                        'Encoding=UTF-8',
-                        f'Version={version}',
-                        'Type=Application',
-                        f'Exec={target} {arguments}',
-                        f'Terminal={terminal}',
-                        f'Icon={icon}',
-                        f'Name={name}',
-                        f'Comment={description}',
+                dest = (path / name).with_suffix(data['shortcut_ext'])
+                with dest.open('w', encoding='utf8') as shortcut_script:
+                    shortcut_script.write('[Desktop Entry]\n')
+                    shortcut_script.writelines([
+                        f'{k}={v}' for k, v in entry_values.items() if v is not None
                     ])
+
                 dest.chmod(0o755)  # rwxr-xr-x
 
     elif platform == 'win32':
