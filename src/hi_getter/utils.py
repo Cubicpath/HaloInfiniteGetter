@@ -98,11 +98,11 @@ def create_shortcut(target: Path, arguments: str | None = None,
             return
 
         # Create the desktop directory if it doesn't exist
-        if not (desktop := get_desktop_path()).is_dir():
-            desktop.mkdir(parents=True)
+        if not (desktop_path := get_desktop_path()).is_dir():
+            desktop_path.mkdir(parents=True)
 
         # Create the shortcut folders, replacing if it already exists
-        dest = (desktop / name).with_suffix(data['shortcut_ext'])
+        dest = (desktop_path / name).with_suffix(data['shortcut_ext'])
         if dest.exists():
             shutil.rmtree(dest)
 
@@ -133,7 +133,6 @@ def create_shortcut(target: Path, arguments: str | None = None,
                 '#!/bin/bash\n',
                 # These exports are not used if the script is ran from the terminal
                 f'export SCRIPT={target}\n',
-                f'export ARGS=\'{arguments}\'\n',
             ])
             if arguments is not None:
                 shortcut_script.write(f'export ARGS=\'{arguments}\'\n')
@@ -371,7 +370,7 @@ def get_desktop_path() -> Path | None:
                 if 'DESKTOP' in line:
                     line = line.replace('$HOME', str(home))[:-1]
                     config_val = line.split('=')[1].strip('\'\"')
-                    desktop = Path(config_val)
+                    desktop = Path(config_val).resolve(strict=True).absolute()
 
     get_desktop_path.__cached__ = desktop
     return desktop
