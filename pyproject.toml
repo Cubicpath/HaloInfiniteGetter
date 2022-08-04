@@ -35,8 +35,7 @@ all = [
     "python-dotenv>=0.20.0"
 ]
 dev = [
-    "pylint>=2.14.4",
-    "colorama>=0.4.5",  # While this is a pylint dependency, colorama 0.4.5 is required for pylint to work with jobs=0.
+    "pylint>=2.14.5",
 ]
 
 [project.urls]
