@@ -184,7 +184,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
                 with dest.open('w', encoding='utf8') as shortcut_script:
                     shortcut_script.write('[Desktop Entry]\n')
                     shortcut_script.writelines([
-                        f'{k}={v}' for k, v in entry_values.items() if v is not None
+                        f'{k}={v}\n' for k, v in entry_values.items() if v is not None
                     ])
 
                 # Change permissions to allow execution
