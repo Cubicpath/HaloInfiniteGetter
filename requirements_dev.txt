@@ -3,4 +3,3 @@
 
 # Linting
 pylint==2.14.5
-colorama==0.4.5
