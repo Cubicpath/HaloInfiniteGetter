@@ -97,7 +97,7 @@ if ( $Desktop -or $StartMenu) {
         if ( $Arguments )        { $Shortcut.Arguments = $Arguments }
         if ( $Description )      { $Shortcut.Description = $Description }
         if ( $Icon )             { $Shortcut.IconLocation = $Icon }
-        if ( $WorkingDirectory ) { $Shortcut.Arguments = $WorkingDirectory }
+        if ( $WorkingDirectory ) { $Shortcut.WorkingDirectory = $WorkingDirectory }
 
         $Shortcut.Save()
         Write-Output $Path
