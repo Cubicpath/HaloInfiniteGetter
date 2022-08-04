@@ -41,6 +41,8 @@ def create_shortcut(target: Path, arguments: str | None = None,
         * terminal is ignored by Windows
         * start_menu is ignored on macOS
 
+    Linux and macOS implementations are heavily based on pyshortcuts.
+
     :param target: Target of the shortcut.
     :param arguments: Command line arguments to pass to the target.
     :param version: Version identifier of the target.
@@ -53,6 +55,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
     :param start_menu: Whether to create a start menu shortcut.
     :raises ValueError: icon extension cannot be used as an icon for the given platform.
     """
+    import shutil
     import subprocess
     import sys
 
@@ -88,7 +91,65 @@ def create_shortcut(target: Path, arguments: str | None = None,
 
     platform = sys.platform.lower()
     if platform == 'darwin':
-        ...
+        # macOS doesn't support start menu shortcuts, so return if not creating a desktop shortcut
+        if not desktop:
+            return
+
+        # Create the desktop directory if it doesn't exist
+        if not (desktop := get_desktop_path()).is_dir():
+            desktop.mkdir(parents=True)
+
+        # Create the shortcut folders, replacing if it already exists
+        dest = (desktop / name).with_suffix(data['shortcut_ext'])
+        if dest.exists():
+            shutil.rmtree(dest)
+
+        dest.mkdir(parents=True)
+        (dest / 'Contents').mkdir()
+        (dest / 'Contents/MacOS').mkdir()
+        (dest / 'Contents/Resources').mkdir()
+
+        # Add macOS shortcut data
+        with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
+            plist.writelines([
+                    '<?xml version="1.0" encoding="UTF-8"?>\n',
+                    '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
+                    '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
+                    '<plist version="1.0">\n',
+                    '  <dict>\n',
+                    f'  <key>CFBundleGetInfoString</key> <string>{description:s}</string>\n',
+                    f'  <key>CFBundleName</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
+                    '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
+                    '  </dict>\n',
+                    '</plist>\n',
+            ])
+
+        with (dest / f'Contents/MacOS/{name}').open('w', encoding='utf8') as shortcut_script:
+            shortcut_script.writelines([
+                '#!/bin/bash\n',
+                # These exports are not used if the script is ran from the terminal
+                f'export SCRIPT={target}\n',
+                f'export ARGS=\'{arguments}\'\n',
+            ])
+
+            if not terminal:
+                shortcut_script.write('$SCRIPT $ARGS')
+            else:
+                osa_script = f'{target} {arguments}'.replace(' ', '\\ ')
+                shortcut_script.writelines([
+                    'osascript - e \'tell application "Terminal"\n',
+                    f'do script "\'{osa_script}\'"\n',
+                    'end tell\n',
+                    '\'\n',
+                ])
+
+            shortcut_script.write('\n')
+
+        (dest / f'Contents/MacOS/{name}').chmod(0o755)  # rwxr-xr-x
+        if icon:
+            shutil.copy(icon, (dest / f'Contents/Resources/{name}').with_suffix(icon.suffix))
 
     elif platform.startswith('linux'):
         entry_values: dict[str, object] = {
