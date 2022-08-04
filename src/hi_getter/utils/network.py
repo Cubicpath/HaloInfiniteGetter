@@ -1,7 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Utils for the HaloInfiniteGetter networking."""
+"""Utilities for networking."""
 from __future__ import annotations
 
 __all__ = (

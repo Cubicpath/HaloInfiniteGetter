@@ -29,9 +29,10 @@ from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..network import *
 from ..tomlfile import *
-from ..utils import has_package
-from .utils import icon_from_bytes
-from .utils import set_or_swap_icon
+from ..utils.gui import icon_from_bytes
+from ..utils.gui import set_or_swap_icon
+from ..utils.package import has_package
+from ..utils.network import http_code_map
 
 
 def app() -> GetterApp:

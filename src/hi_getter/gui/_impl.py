@@ -51,17 +51,17 @@ from ..events import EventBus
 from ..exceptions import ExceptionEvent
 from ..models import DeferredCallable
 from ..models import DistributedCallable
-from ..network.utils import decode_url
-from ..network.utils import encode_url_params
-from ..network.utils import http_code_map
 from ..tomlfile import TomlEvents
-from ..utils import create_shortcut
-from ..utils import current_requirement_licenses
-from ..utils import current_requirement_versions
+from ..utils.gui import delete_layout_widgets
+from ..utils.gui import init_objects
+from ..utils.gui import scroll_to_top
+from ..utils.network import decode_url
+from ..utils.network import encode_url_params
+from ..utils.network import http_code_map
+from ..utils.package import current_requirement_licenses
+from ..utils.package import current_requirement_versions
+from ..utils.system import create_shortcut
 from .app import app
-from .utils import delete_layout_widgets
-from .utils import init_objects
-from .utils import scroll_to_top
 
 PARENT_PACKAGE: Final[str] = __package__.split('.', maxsplit=1)[0]
 

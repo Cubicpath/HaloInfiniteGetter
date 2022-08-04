@@ -1,33 +1,23 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Utility functions for hi_getter."""
+"""System utility functions."""
 from __future__ import annotations
 
 __all__ = (
     'create_shortcut',
-    'current_requirement_licenses',
-    'current_requirement_names',
-    'current_requirement_versions',
-    'dump_data',
-    'get_parent_doc',
-    'has_package',
+    'get_desktop_path',
+    'get_start_menu_path',
+    'get_winreg_value',
     'hide_windows_file',
     'patch_windows_taskbar_icon',
-    'unique_values',
 )
 
 from collections.abc import Callable
-from collections.abc import Iterable
-from collections.abc import Mapping
 from pathlib import Path
 
-from .constants import *
-
-
-def bit_rep(__bool: bool, /) -> str:
-    """Return a string representing the bit value of a boolean."""
-    return str(int(__bool))
+from .common import bit_rep
+from .common import quote_str
 
 
 def create_shortcut(target: Path, arguments: str | None = None,
@@ -203,7 +193,8 @@ def create_shortcut(target: Path, arguments: str | None = None,
             'StartMenu': (start_menu, bit_rep)
         }
 
-        abs_script_path: Path = (HI_RESOURCE_PATH / 'scripts/CreateShortcut.ps1').resolve(strict=True).absolute()
+        # HI_RESOURCE_PATH script location
+        abs_script_path: Path = (Path(__file__).parent / 'resources/scripts/CreateShortcut.ps1').resolve(strict=True).absolute()
         powershell_arguments = [
             'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
         ]
@@ -219,106 +210,6 @@ def create_shortcut(target: Path, arguments: str | None = None,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             universal_newlines=True, check=True
         )
-
-
-def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, tuple[str, str]]:
-    """Return the current licenses for the requirements of the given package.
-
-    CANNOT get license file from a package with an editable installation.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping a package nams to a tuple containing the license name and contents.
-    """
-    from importlib.metadata import metadata
-    from pkg_resources import get_distribution
-
-    result = {}
-    for requirement in ([package] + current_requirement_names(package, include_extras)):
-        dist = get_distribution(requirement)
-        name = dist.project_name.replace("-", "_")
-        license_text = None
-
-        info_path = Path(dist.location) / f'{name}-{dist.version}.dist-info'
-        if not info_path.is_dir():
-            egg_path = info_path.with_name(f'{name}.egg-info')
-            if egg_path.is_dir():
-                info_path = egg_path
-
-        for file in info_path.iterdir():
-            f_name = file.name.lower()
-            if 'license' in f_name:
-                license_text = file.read_text(encoding='utf8')
-
-        result[name] = (metadata(name).get('License', 'UNKNOWN'), license_text)
-
-    return result
-
-
-def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
-    """Return the current requirement names for the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: list of package names.
-    """
-    from importlib.metadata import requires
-
-    req_names = []
-    for requirement in requires(package):
-        if not include_extras and '; extra' in requirement:
-            continue
-        # Don't include testing extras
-        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
-            continue
-
-        split_char = 0
-        for char in requirement:
-            if not char.isalnum() and char not in ('-', '_'):
-                break
-            split_char += 1
-
-        req_names.append(requirement[:split_char])
-
-    return req_names
-
-
-def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
-    """Return the current versions of the installed requirements for the given package.
-
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
-    :return: dict mapping package names to their version string.
-    """
-    from importlib.metadata import version
-
-    return {name: version(name) for name in current_requirement_names(package, include_extras) if has_package(name)}
-
-
-def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None = None) -> None:
-    """Dump data to path as a file."""
-    import json
-    import os
-
-    default_encoding = 'utf8'
-    path = Path(path)
-    if not path.parent.exists():
-        os.makedirs(path.parent)
-
-    if isinstance(data, str):
-        # Write strings at text files
-        path.write_text(data, encoding=encoding or default_encoding)
-    elif isinstance(data, bytes):
-        # Decode bytes if provided with encoding, else write as data
-        if encoding is not None:
-            data = data.decode(encoding=encoding)
-            path.write_text(data, encoding=encoding)
-        else:
-            path.write_bytes(data)
-    elif isinstance(data, dict):
-        # Write dictionaries as json files
-        with path.open(mode='w', encoding=encoding or default_encoding) as file:
-            json.dump(data, file, indent=2)
 
 
 def get_desktop_path() -> Path | None:
@@ -376,19 +267,6 @@ def get_desktop_path() -> Path | None:
     return desktop
 
 
-def get_parent_doc(__type: type, /) -> str | None:
-    """Get the nearest parent documentation using the given :py:class:`type`'s mro.
-
-    :return The closest docstring for an object's class, None if not found.
-    """
-    doc = None
-    for parent in __type.__mro__:
-        doc = parent.__doc__
-        if doc:
-            break
-    return doc
-
-
 def get_start_menu_path() -> Path | None:
     """Cross-platform utility to obtain the path to the Start Menu or equivalent.
 
@@ -426,7 +304,7 @@ def get_start_menu_path() -> Path | None:
             pass  # Return the default windows path if the registry couldn't be read.
 
     elif platform.startswith('linux'):
-        home: Path = Path.home() or Path(os.getenv('HOME', None))
+        home: Path = Path(os.getenv('HOME', None)) or Path.home()
 
         start_menu = home / '.local/share/applications'
 
@@ -466,20 +344,6 @@ def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list
         val = expandvars(val)
 
     return val
-
-
-def has_package(package: str) -> bool:
-    """Check if the given package is available.
-
-    :param package: Package name to search; hyphen-insensitive
-    :return: Whether the given package name is installed to the current environment.
-    """
-    from pkg_resources import WorkingSet
-
-    for pkg in WorkingSet():
-        if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
-            return True
-    return False
 
 
 def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | None:
@@ -532,28 +396,3 @@ def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
     if sys.platform == 'win32':
         from ctypes import windll
         return windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-
-
-def quote_str(__str: str, /) -> str:
-    """Encapsulate a string in double-quotes."""
-    return f'"{__str}"'
-
-
-def unique_values(data: Iterable) -> set:
-    """Recursively get all values in any Iterables. For Mappings, ignore keys and only remember values.
-
-    :return Set containing all unique non-iterable values.
-    """
-    new: set = set()
-    if isinstance(data, Mapping):
-        # Loop through Mapping values
-        for value in data.values():
-            new.update(unique_values(value))
-    elif isinstance(data, Iterable) and not isinstance(data, str):
-        # Loop through Iterable values
-        for value in data:
-            new.update(unique_values(value))
-    else:
-        # Finally, get value
-        new.add(data)
-    return new

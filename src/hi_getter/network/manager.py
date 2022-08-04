@@ -22,10 +22,10 @@ from PySide6.QtCore import *
 from PySide6.QtNetwork import *
 
 from ..models import DeferredCallable
+from ..utils.network import dict_to_query
+from ..utils.network import encode_url_params
+from ..utils.network import query_to_dict
 from .structures import CaseInsensitiveDict
-from .utils import dict_to_query
-from .utils import encode_url_params
-from .utils import query_to_dict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 

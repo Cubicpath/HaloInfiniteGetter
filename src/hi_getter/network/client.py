@@ -23,14 +23,14 @@ from PySide6.QtNetwork import *
 from PySide6.QtWidgets import *
 
 from ..constants import *
-from ..utils import dump_data
-from ..utils import hide_windows_file
-from ..utils import unique_values
+from ..utils.common import dump_data
+from ..utils.common import unique_values
+from ..utils.network import decode_url
+from ..utils.network import guess_json_utf
+from ..utils.network import is_error_status
+from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 from .structures import CaseInsensitiveDict
-from .utils import decode_url
-from .utils import guess_json_utf
-from .utils import is_error_status
 
 TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'

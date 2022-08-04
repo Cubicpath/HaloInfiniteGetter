@@ -5,10 +5,8 @@
 
 __all__ = (
     'Client',
-    'http_code_map',
     'NetworkSession',
 )
 
 from .client import Client
 from .manager import NetworkSession
-from .utils import http_code_map

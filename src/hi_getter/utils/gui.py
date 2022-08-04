@@ -1,14 +1,13 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Module containing utils for GUI elements."""
+"""Utilities for GUI elements."""
 from __future__ import annotations
 
 __all__ = (
     'delete_layout_widgets',
     'icon_from_bytes',
     'init_objects',
-    'return_arg',
     'scroll_to_top',
     'set_or_swap_icon',
 )
@@ -16,20 +15,13 @@ __all__ = (
 from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
-from typing import TypeVar
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..lang import Translator
-
-_PT = TypeVar('_PT')
-
-
-def return_arg(__arg: _PT, /) -> _PT:
-    """Return the singular positional argument unchanged."""
-    return __arg
+from .common import return_arg
 
 
 def delete_layout_widgets(layout: QLayout) -> None:
