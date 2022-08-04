@@ -38,9 +38,10 @@ def create_shortcut(target: Path, arguments: str | None = None,
     """Create a shortcut on the given path.
 
     Notes:
-        * version is Linux only
-        * terminal is ignored by Windows
         * start_menu is ignored on macOS
+        * terminal is ignored by Windows
+        * working_dir is Windows only
+        * version is Linux only
 
     Linux and macOS implementations are heavily based on pyshortcuts.
 
@@ -118,7 +119,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
                     '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
                     '<plist version="1.0">\n',
                     '  <dict>\n',
-                    f'  <key>CFBundleGetInfoString</key> <string>{description:s}</string>\n',
+                    f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
                     f'  <key>CFBundleName</key> <string>{name}</string>\n',
                     f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
                     f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
@@ -134,9 +135,11 @@ def create_shortcut(target: Path, arguments: str | None = None,
                 f'export SCRIPT={target}\n',
                 f'export ARGS=\'{arguments}\'\n',
             ])
+            if arguments is not None:
+                shortcut_script.write(f'export ARGS=\'{arguments}\'\n')
 
             if not terminal:
-                shortcut_script.write('$SCRIPT $ARGS')
+                shortcut_script.write(f'$SCRIPT{" $ARGS" if arguments else ""}')
             else:
                 osa_script = f'{target} {arguments}'.replace(' ', '\\ ')
                 shortcut_script.writelines([
@@ -148,7 +151,10 @@ def create_shortcut(target: Path, arguments: str | None = None,
 
             shortcut_script.write('\n')
 
+        # Change permissions to allow execution
         (dest / f'Contents/MacOS/{name}').chmod(0o755)  # rwxr-xr-x
+
+        # Add the icon
         if icon:
             shutil.copy(icon, (dest / f'Contents/Resources/{name}').with_suffix(icon.suffix))
 
@@ -182,6 +188,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
                         f'{k}={v}' for k, v in entry_values.items() if v is not None
                     ])
 
+                # Change permissions to allow execution
                 dest.chmod(0o755)  # rwxr-xr-x
 
     elif platform == 'win32':
