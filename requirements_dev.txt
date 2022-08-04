@@ -2,5 +2,5 @@
 -r requirements.txt
 
 # Linting
-pylint==2.14.4
+pylint==2.14.5
 colorama==0.4.5
