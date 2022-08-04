@@ -30,7 +30,7 @@
     "errors.package_install_failure.title": "Package Failed to Install",
     "errors.settings.import_failure.description": "Could not import settings from \"%s\". Make sure both the file and the parent folder exist, and that the file contains valid TOML.",
     "errors.settings.import_failure.title": "Import Error",
-    "questions.create_shortcut.description": "Please choose the locations you would like the shortcut to be in.",
+    "questions.create_shortcut.description": "Please choose the location you would like the shortcut to be in.",
     "questions.create_shortcut.title": "Shortcut Creation Tool",
 
     "gui.exception_reporter.clear": "Clear",
@@ -81,7 +81,7 @@
     "gui.menus.tools.create_shortcut": "Create Desktop Shortcut",
     "gui.menus.tools.create_shortcut.only_desktop": "Desktop",
     "gui.menus.tools.create_shortcut.only_start_menu": "Start Menu",
-    "gui.menus.tools.create_shortcut.both": "Desktop & Start Menu",
+    "gui.menus.tools.create_shortcut.both": "Both",
     "gui.menus.tools.exception_reporter": "Open Exception Reporter",
     "gui.status.default": "No current exceptions...",
     "gui.status_bar.title": "Status Bar",
