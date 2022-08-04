@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'create_shortcut',
     'current_requirement_licenses',
     'current_requirement_names',
     'current_requirement_versions',

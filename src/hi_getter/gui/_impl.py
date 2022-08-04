@@ -23,7 +23,6 @@ __all__ = (
 )
 
 import json
-import os
 import string
 import sys
 import traceback
@@ -31,7 +30,6 @@ import webbrowser
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Sequence
-from contextlib import redirect_stdout
 from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
@@ -57,9 +55,9 @@ from ..network.utils import decode_url
 from ..network.utils import encode_url_params
 from ..network.utils import http_code_map
 from ..tomlfile import TomlEvents
+from ..utils import create_shortcut
 from ..utils import current_requirement_licenses
 from ..utils import current_requirement_versions
-from ..utils import has_package
 from .app import app
 from .utils import delete_layout_widgets
 from .utils import init_objects
@@ -454,7 +452,7 @@ class ToolsContextMenu(QMenu):
 
         shortcut_tool: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DesktopIcon),
-            app().translator('gui.menus.tools.desktop_shortcut'), self, triggered=self.create_shortcut
+            app().translator('gui.menus.tools.create_shortcut'), self, triggered=self.create_app_shortcut
         )
 
         exception_reporter: QAction = QAction(
@@ -470,24 +468,37 @@ class ToolsContextMenu(QMenu):
             self.addSection(section)
             self.addActions(actions)
 
-    def create_shortcut(self) -> None:
+    @staticmethod
+    def create_app_shortcut() -> None:
         """Create shortcut for starting program."""
         exec_path = Path(sys.executable)
 
-        if not has_package('pyshortcuts'):
-            app().missing_package_dialog('pyshortcuts', 'Creating Shortcuts', self)
-        if has_package('pyshortcuts'):  # Not the same as else, during the dialog, the package may be dynamically installed by user.
-            from pyshortcuts import make_shortcut
+        desktop_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.only_desktop'))
+        start_menu_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.only_start_menu'))
+        both_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.both'))
 
-            name = exec_path.with_suffix('').name
-            if not name.endswith('w'):
-                name += 'w'
-            shortcut_path = f'{exec_path.with_name(f"{name}{exec_path.suffix}")} -m {PARENT_PACKAGE}'
+        if (response := app().show_dialog(
+            'questions.create_shortcut', None, [
+                    (desktop_button, QMessageBox.AcceptRole),
+                    (start_menu_button, QMessageBox.AcceptRole),
+                    (both_button, QMessageBox.AcceptRole),
+                    QMessageBox.StandardButton.Cancel
+            ], default_button=QMessageBox.StandardButton.Cancel
+        )).role == QMessageBox.RejectRole:
+            return
 
-            with redirect_stdout(open(os.devnull, mode='w', encoding='utf8')):
-                make_shortcut(script=shortcut_path, name=app().translator('app.name'),
-                              description=app().translator('app.description'),
-                              icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False, desktop=True, startmenu=True)
+        do_desktop = response.button == desktop_button or response.button == both_button
+        do_start_menu = response.button == start_menu_button or response.button == both_button
+
+        name = exec_path.with_suffix('').name
+        if not name.endswith('w'):
+            name += 'w'
+        shortcut_path = exec_path.with_name(f'{name}{exec_path.suffix}')
+
+        create_shortcut(target=shortcut_path, arguments=f'-m {PARENT_PACKAGE}',
+                        name=app().translator('app.name'), description=app().translator('app.description'),
+                        icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False,
+                        desktop=do_desktop, start_menu=do_start_menu)
 
 
 #######################################################################

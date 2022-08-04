@@ -64,7 +64,7 @@
     Repo: https://github.com/Cubicpath/HaloInfiniteGetter
 
     .LINK
-    Source: https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/src/hi_getter/resources/CreateShortcut.ps1
+    Source: https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/src/hi_getter/resources/scripts/CreateShortcut.ps1
 #>
 
 
