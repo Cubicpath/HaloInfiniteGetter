@@ -29,7 +29,7 @@ LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 
-def format_value(value: str, *args, _language: Language = None) -> str:
+def format_value(value: str, *args, _language: Language = None, _key_eval: bool = True) -> str:
     """Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
@@ -58,8 +58,8 @@ def format_value(value: str, *args, _language: Language = None) -> str:
 
     value = value % tuple(list_args)
 
-    replaced.clear()
-    if _language is not None:
+    if _key_eval and _language is not None:
+        replaced.clear()
         for _ in range(50):
             # Loop if a match is found, to recursively get translation key values.
             # Limit of 50 to prevent an infinite loop.
@@ -259,19 +259,20 @@ class Language:
         """:returns: a copy of the internal key dictionary."""
         return self._data.copy()
 
-    def get(self, key: str, *args: Any, default: str | None = None) -> str:
+    def get(self, key: str, *args: Any, default: str | None = None, key_eval: bool = True) -> str:
         """Get a translation key and format with the given arguments if required.
 
         :param key: Key to get in JSON data.
         :param args: Formatting arguments; packed into tuple and used with str modulus.
         :param default: Default string if key doesn't exist. (Is not formatted)
+        :param key_eval: If False, don't recursively evaluate translation keys.
         """
         # Default value is key if not overridden
         default = default if default is not None else key
         result: str = self._data.get(key, default)
 
         if result is not default:
-            return format_value(result, *args, _language=self)
+            return format_value(result, *args, _language=self, _key_eval=key_eval)
         else:
             # Dont format default value
             quote = '"'
@@ -318,9 +319,9 @@ class Translator:
     def language(self, value: Language | str) -> None:
         self._language = to_lang(value)
 
-    def get_translation(self, key: str, *args: Any, default: str | None = None) -> str:
+    def get_translation(self, key: str, *args: Any, **kwargs) -> str:
         """Get a translation key's value for the current language."""
-        return self.language.get(key, *args, default=default)
+        return self.language.get(key, *args, **kwargs)
 
     @contextmanager
     def as_language(self, language: Language | str) -> AbstractContextManager[None]:
