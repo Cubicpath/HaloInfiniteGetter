@@ -62,6 +62,7 @@ from ..utils.package import current_requirement_licenses
 from ..utils.package import current_requirement_versions
 from ..utils.system import create_shortcut
 from .app import app
+from .app import tr
 
 PARENT_PACKAGE: Final[str] = __package__.split('.', maxsplit=1)[0]
 
@@ -106,7 +107,7 @@ class ExceptionLogger(QPushButton):
         self.exception_log.clear()
         self.severity = 0
         self.setText('')
-        self.label.setText(app().translator('gui.status.default'))
+        self.label.setText(tr('gui.status.default'))
 
     def remove_exception(self, index: int) -> None:
         """Remove an exception from the log and update the current severity."""
@@ -303,24 +304,24 @@ class FileContextMenu(QMenu):
 
         open_explorer: QAction = QAction(
             app().get_theme_icon('dialog_open') or app().icon_store['folder'],
-            app().translator('gui.menus.file.open'), self, triggered=DeferredCallable(
+            tr('gui.menus.file.open'), self, triggered=DeferredCallable(
                 webbrowser.open, f'file:///{HI_CACHE_PATH}'
             )
         )
 
         flush_cache: QAction = QAction(
             app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
-            app().translator('gui.menus.file.flush'), self, triggered=self.flush_cache
+            tr('gui.menus.file.flush'), self, triggered=self.flush_cache
         )
 
         import_from: QAction = QAction(
             app().icon_store['import'],
-            app().translator('gui.menus.file.import'), self, triggered=self.import_data
+            tr('gui.menus.file.import'), self, triggered=self.import_data
         )
 
         export_to: QAction = QAction(
             app().icon_store['export'],
-            app().translator('gui.menus.file.export'), self, triggered=self.export_data
+            tr('gui.menus.file.export'), self, triggered=self.export_data
         )
 
         section_map = {
@@ -373,38 +374,38 @@ class HelpContextMenu(QMenu):
 
         github_view: QAction = QAction(
             app().icon_store['github'],
-            app().translator('gui.menus.help.github'), self, triggered=DeferredCallable(
+            tr('gui.menus.help.github'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
             )
         )
 
         create_issue: QAction = QAction(
             app().icon_store['github'],
-            app().translator('gui.menus.help.issue'), self, triggered=DeferredCallable(
+            tr('gui.menus.help.issue'), self, triggered=DeferredCallable(
                 webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
             )
         )
 
         about_view: QAction = QAction(
             app().get_theme_icon('message_question') or app().icon_store['about'],
-            app().translator('gui.menus.help.about'), self, triggered=self.open_about
+            tr('gui.menus.help.about'), self, triggered=self.open_about
         )
 
         about_qt_view: QAction = QAction(
             app().get_theme_icon('message_question') or app().icon_store['about'],
-            app().translator('gui.menus.help.about_qt'), self, triggered=DeferredCallable(
-                QMessageBox(self).aboutQt, self, app().translator('about.qt.title')
+            tr('gui.menus.help.about_qt'), self, triggered=DeferredCallable(
+                QMessageBox(self).aboutQt, self, tr('about.qt.title')
             )
         )
 
         license_view: QAction = QAction(
             app().icon_store['copyright'],
-            app().translator('gui.menus.help.license'), self, triggered=self.license_window.show
+            tr('gui.menus.help.license'), self, triggered=self.license_window.show
         )
 
         readme: QAction = QAction(
             app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
-            app().translator('gui.menus.help.readme'), self, triggered=self.readme_window.show
+            tr('gui.menus.help.readme'), self, triggered=self.readme_window.show
         )
 
         section_map = {
@@ -435,7 +436,7 @@ class HelpContextMenu(QMenu):
         :return: Package version list seperated by newlines.
         """
         return '\n'.join(
-            app().translator(
+            tr(
                 'about.app.package_version',
                 package, version
             ) for package, version in current_requirement_versions(PARENT_PACKAGE, include_extras=True).items()
@@ -452,12 +453,12 @@ class ToolsContextMenu(QMenu):
 
         shortcut_tool: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DesktopIcon),
-            app().translator('gui.menus.tools.create_shortcut'), self, triggered=self.create_app_shortcut
+            tr('gui.menus.tools.create_shortcut'), self, triggered=self.create_app_shortcut
         )
 
         exception_reporter: QAction = QAction(
             parent.exception_reporter.logger.icon(),
-            app().translator('gui.menus.tools.exception_reporter'), self, triggered=parent.exception_reporter.show
+            tr('gui.menus.tools.exception_reporter'), self, triggered=parent.exception_reporter.show
         )
 
         section_map = {
@@ -473,9 +474,9 @@ class ToolsContextMenu(QMenu):
         """Create shortcut for starting program."""
         exec_path = Path(sys.executable)
 
-        desktop_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.only_desktop'))
-        start_menu_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.only_start_menu'))
-        both_button = QPushButton(app().translator('gui.menus.tools.create_shortcut.both'))
+        desktop_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_desktop'))
+        start_menu_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_start_menu'))
+        both_button = QPushButton(tr('gui.menus.tools.create_shortcut.both'))
 
         if (response := app().show_dialog(
             'questions.create_shortcut', None, [
@@ -496,7 +497,7 @@ class ToolsContextMenu(QMenu):
         shortcut_path = exec_path.with_name(f'{name}{exec_path.suffix}')
 
         create_shortcut(target=shortcut_path, arguments=f'-m {PARENT_PACKAGE}',
-                        name=app().translator('app.name'), description=app().translator('app.description'),
+                        name=tr('app.name'), description=tr('app.description'),
                         icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False,
                         desktop=do_desktop, start_menu=do_start_menu)
 
@@ -521,7 +522,7 @@ class AppWindow(QMainWindow):
 
         self.current_image:  QPixmap | None = None
         self.detached:       dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.change_title(app().translator('app.name') + f' v{__version__}')
+        self.change_title(tr('app.name') + f' v{__version__}')
         self.resize(size)
 
         self.settings_window = SettingsWindow(self, QSize(420, 600))
@@ -600,7 +601,7 @@ class AppWindow(QMainWindow):
                     logger.reporter.raise_
                 ))
             }
-        }, translator=app().translator)
+        }, translator=tr)
 
         app().init_translations({
             menu_bar.setWindowTitle: 'gui.menu_bar.title',
@@ -651,9 +652,9 @@ class AppWindow(QMainWindow):
                 self.detached['media'] = window = setup_detached_window(
                     'media',
                     self.media_frame, toggle_media_detach,
-                    app().translator('gui.outputs.image.detached')
+                    tr('gui.outputs.image.detached')
                 )
-                self.image_detach_button.setText(app().translator('gui.outputs.reattach'))
+                self.image_detach_button.setText(tr('gui.outputs.reattach'))
                 window.resizeEvent = DeferredCallable(self.resize_image)
                 window.show()
             else:
@@ -662,7 +663,7 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(0, self.media_frame)
-                self.image_detach_button.setText(app().translator('gui.outputs.detach'))
+                self.image_detach_button.setText(tr('gui.outputs.detach'))
 
         def toggle_text_detach() -> None:
             """Handler for detaching and reattaching the text output."""
@@ -670,9 +671,9 @@ class AppWindow(QMainWindow):
                 self.detached['text'] = window = setup_detached_window(
                     'text',
                     self.text_frame, toggle_text_detach,
-                    app().translator('gui.outputs.text.detached')
+                    tr('gui.outputs.text.detached')
                 )
-                self.text_detach_button.setText(app().translator('gui.outputs.reattach'))
+                self.text_detach_button.setText(tr('gui.outputs.reattach'))
                 window.show()
             else:
                 window = self.detached['text']
@@ -680,11 +681,11 @@ class AppWindow(QMainWindow):
                 window.close()
 
                 self.outputs.insertWidget(-1, self.text_frame)
-                self.text_detach_button.setText(app().translator('gui.outputs.detach'))
+                self.text_detach_button.setText(tr('gui.outputs.detach'))
 
         def clear_current_pixmap() -> None:
             """Clear the current image from the media output."""
-            self.image_size_label.setText(app().translator('gui.outputs.image.label_empty'))
+            self.image_size_label.setText(tr('gui.outputs.image.label_empty'))
             self.clear_picture.setDisabled(True)
             self.copy_picture.setDisabled(True)
             self.media_output.scene().clear()
@@ -692,7 +693,7 @@ class AppWindow(QMainWindow):
 
         def clear_current_text() -> None:
             """Clear the current text from the text output."""
-            self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
+            self.text_size_label.setText(tr('gui.outputs.text.label_empty'))
             self.clear_text.setDisabled(True)
             self.copy_text.setDisabled(True)
             self.text_output.setDisabled(True)
@@ -942,7 +943,7 @@ class AppWindow(QMainWindow):
         self.copy_picture.setDisabled(False)
         self.current_image = QPixmap()
         self.current_image.loadFromData(data)
-        self.image_size_label.setText(app().translator(
+        self.image_size_label.setText(tr(
             'gui.outputs.image.label',
             self.current_image.size().width(), self.current_image.size().height(),  # Image dimensions
             display_size, display_unit                                              # Size in given unit
@@ -966,7 +967,7 @@ class AppWindow(QMainWindow):
         if len(data) <= BYTE_UNITS['MiB'] * 8:
             output = data
         else:
-            output = app().translator(
+            output = tr(
                 'gui.outputs.text.errors.too_large',
                 app().client.os_path(search_path)
             )
@@ -980,7 +981,7 @@ class AppWindow(QMainWindow):
                 output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                 replaced.add(match)
 
-        self.text_size_label.setText(app().translator(
+        self.text_size_label.setText(tr(
             'gui.outputs.text.label',
             len(data.splitlines()), len(data),  # Line and character count
             display_size, display_unit          # Size in given unit
@@ -1000,13 +1001,13 @@ class AppWindow(QMainWindow):
         self.text_output.setDisabled(False)
         self.text_output.clear()
 
-        error: str = app().translator(
+        error: str = tr(
             'gui.outputs.text.errors.http',
             app().client.api_root + search_path,  # Search path
             data, http_code_map[data][0],         # Error code and phrase
             http_code_map[data][1]                # Error description
         )
-        self.text_size_label.setText(app().translator('gui.outputs.text.label_empty'))
+        self.text_size_label.setText(tr('gui.outputs.text.label_empty'))
         self.text_output.setPlainText(error)
 
     def resize_image(self) -> None:
@@ -1032,7 +1033,7 @@ class AppWindow(QMainWindow):
 
         if app().first_launch:
             readme = ReadmeViewer()
-            readme.setWindowTitle(app().translator('gui.readme_viewer.title_first_launch'))
+            readme.setWindowTitle(tr('gui.readme_viewer.title_first_launch'))
             readme.show()
             app().show_dialog('information.first_launch', self)
         elif not self.shown_key_warning and app().client.token is None:
@@ -1067,12 +1068,12 @@ class SettingsWindow(QWidget):
         super().__init__()
         self.app_window = parent
 
-        self.setWindowTitle(app().translator('gui.settings.title'))
+        self.setWindowTitle(tr('gui.settings.title'))
         self.setWindowIcon(app().icon_store['settings'])
         self.resize(size)
         self.setFixedWidth(self.width())
 
-        # Create a app().translator DeferredCallable with every tuple acting as arguments.
+        # Create a tr DeferredCallable with every tuple acting as arguments.
         EventBus['settings'].subscribe(
             DeferredCallable(app().show_dialog, 'errors.settings.import_failure', self, description_args=(app().settings.path,)),
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import'
@@ -1090,7 +1091,7 @@ class SettingsWindow(QWidget):
 
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
-            file_path = Path(QFileDialog.getOpenFileName(self, app().translator('gui.settings.import'),
+            file_path = Path(QFileDialog.getOpenFileName(self, tr('gui.settings.import'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
                 if app().settings.import_from(file_path):
@@ -1098,7 +1099,7 @@ class SettingsWindow(QWidget):
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""
-            file_path = Path(QFileDialog.getSaveFileName(self, app().translator('gui.settings.export'),
+            file_path = Path(QFileDialog.getSaveFileName(self, tr('gui.settings.export'),
                                                          str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
             if str(file_path) != '.':
                 app().settings.export_to(file_path)
@@ -1259,7 +1260,7 @@ class SettingsWindow(QWidget):
                     'gui.settings.text.line_wrap.fixed_column'
                 )
             }
-        }, translator=app().translator)
+        }, translator=tr)
 
         app().init_translations({
             self.setWindowTitle: 'gui.settings.title',
@@ -1357,7 +1358,7 @@ class ExceptionReporter(QWidget):
 
         self.selected: int = 0
         self.logger:   ExceptionLogger = logger
-        self.setWindowTitle(app().translator('gui.exception_reporter.title'))
+        self.setWindowTitle(tr('gui.exception_reporter.title'))
         self.setWindowIcon(self.logger.icon())
         self.resize(QSize(750, 400))
         self._init_ui()
@@ -1483,7 +1484,7 @@ class ExceptionReporter(QWidget):
                 self.trace_back_viewer.setDisabled
             ), False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
-                app().translator, 'gui.exception_reporter.traceback_view',
+                tr, 'gui.exception_reporter.traceback_view',
                 type(error.exception).__name__, error.exception, traceback.format_tb(error.traceback)[0]
             )))
 
@@ -1512,7 +1513,7 @@ class LicenseViewer(QWidget):
         Has a fixed size of 750x380.
         """
         super().__init__(*args, **kwargs)
-        self.setWindowTitle(app().translator('gui.license_viewer.title'))
+        self.setWindowTitle(tr('gui.license_viewer.title'))
         self.setWindowIcon(app().icon_store['copyright'])
         self.resize(QSize(750, 550))
         self.current_license_index = 0
@@ -1528,8 +1529,8 @@ class LicenseViewer(QWidget):
         self.license_label:       QLabel = QLabel(self)
         self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}', self)
         self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
-        self.next_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.next'), clicked=self.next_license)
-        self.prev_license_button: QPushButton = QPushButton(app().translator('gui.license_viewer.previous'), clicked=self.prev_license)
+        self.next_license_button: QPushButton = QPushButton(tr('gui.license_viewer.next'), clicked=self.next_license)
+        self.prev_license_button: QPushButton = QPushButton(tr('gui.license_viewer.previous'), clicked=self.prev_license)
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
@@ -1574,9 +1575,9 @@ class LicenseViewer(QWidget):
 
     def view_package(self, package: str) -> None:
         """Views the license data of the given package name."""
-        license_text = self.LICENSE_DATA[package][1] or app().translator('gui.license_viewer.not_found')
+        license_text = self.LICENSE_DATA[package][1] or tr('gui.license_viewer.not_found')
         self.current_license_index = tuple(self.LICENSE_DATA).index(package)
-        self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" {app().translator("gui.license_viewer.license")}')
+        self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" {tr("gui.license_viewer.license")}')
         self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')
 
         output = license_text
@@ -1607,7 +1608,7 @@ class ReadmeViewer(QWidget):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.setWindowTitle(app().translator('gui.readme_viewer.title'))
+        self.setWindowTitle(tr('gui.readme_viewer.title'))
         self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton))
         self.resize(QSize(750, 750))
         self.readme_viewer: ExternalTextBrowser

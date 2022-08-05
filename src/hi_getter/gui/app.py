@@ -8,6 +8,7 @@ __all__ = (
     'app',
     'GetterApp',
     'Theme',
+    'tr',
 )
 
 import json
@@ -16,6 +17,7 @@ import sys
 from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 from typing import NamedTuple
 
 from PySide6.QtCore import *
@@ -38,6 +40,17 @@ from ..utils.network import http_code_map
 def app() -> GetterApp:
     """:return: GetterApp.instance()"""
     return GetterApp.instance()
+
+
+def tr(key: str, *args: Any, **kwargs: Any) -> str:
+    """Alias for app().translator().
+
+    :param key: Translation keys to translate.
+    :param args: Arguments to format key with.
+    :keyword default: Default value to return if key is not found.
+    :return: Translated text.
+    """
+    return app().translator(key, *args, **kwargs)
 
 
 class _DialogResponse(NamedTuple):
