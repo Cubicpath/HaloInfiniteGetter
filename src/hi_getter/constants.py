@@ -8,6 +8,7 @@ __all__ = (
     'BYTE_UNITS',
     'HI_CACHE_PATH',
     'HI_CONFIG_PATH',
+    'HI_PACKAGE_NAME',
     'HI_PATH_PATTERN',
     'HI_RESOURCE_PATH',
     'HI_SAMPLE_RESOURCE',
@@ -41,6 +42,9 @@ SUPPORTED_IMAGE_MIME_TYPES: Final[tuple[str, ...]] = (
 """Tuple containing all image mime types supported by application."""
 
 # Strings
+
+HI_PACKAGE_NAME:    Final[str] = __package__.split('.', maxsplit=1)[0]
+"""The base package name for this application, for use in sub-packages."""
 
 HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
 """Example resource. Is pre-filled in the search bar."""
