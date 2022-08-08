@@ -12,16 +12,19 @@ __all__ = (
     'set_or_swap_icon',
 )
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
+from typing import TypeAlias
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from ..lang import Translator
 from .common import return_arg
+
+_Translator: TypeAlias = Callable[[str], str]
 
 
 def delete_layout_widgets(layout: QLayout) -> None:
@@ -39,7 +42,7 @@ def icon_from_bytes(data: bytes) -> QIcon:
 
 
 # noinspection PyUnresolvedReferences
-def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Translator | None = None) -> None:
+def init_objects(object_data: dict[QObject, dict[str, Any]], translator: _Translator = return_arg) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
 
     Translation key strings are evaluated using the given translator, if provided.
@@ -58,10 +61,6 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: Transla
     :param object_data: Dictionary containing data used to initialize basic QObject values.
     :param translator: Translator used for translation key evaluation.
     """
-    if not translator:
-        # If translator is unavailable, return any string/key unchanged.
-        translator = return_arg
-
     # Initialize widget attributes
     for obj, data in object_data.items():
         special_keys = ('items', 'size', 'text',)
