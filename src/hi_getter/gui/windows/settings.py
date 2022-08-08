@@ -1,10 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Module containing implementation of all GUI elements.
-
-Yes, putting this into one file is hideous, but it's the only supported way to completely prevent circular imports.
-"""
+"""Settings window implementation."""
 from __future__ import annotations
 
 __all__ = (

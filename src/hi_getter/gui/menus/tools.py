@@ -1,7 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Module containing the Tools menu implementation."""
+"""Tools menu implementation."""
 from __future__ import annotations
 
 __all__ = (

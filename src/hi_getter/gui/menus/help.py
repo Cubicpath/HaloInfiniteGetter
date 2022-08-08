@@ -1,7 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Module containing the Help menu implementation."""
+"""Help menu implementation."""
 from __future__ import annotations
 
 __all__ = (

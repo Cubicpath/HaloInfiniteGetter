@@ -1,7 +1,7 @@
 ###################################################################################################
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
-"""Module containing the File menu implementation."""
+"""File menu implementation."""
 from __future__ import annotations
 
 __all__ = (
