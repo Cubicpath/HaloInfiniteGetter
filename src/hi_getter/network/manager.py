@@ -431,6 +431,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -454,6 +456,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -477,6 +481,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -499,6 +505,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -521,6 +529,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
@@ -543,6 +553,8 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
         :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
+        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
         :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
