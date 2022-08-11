@@ -8,8 +8,6 @@ __all__ = (
     'LicenseViewer',
 )
 
-from typing import Final
-
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -25,7 +23,10 @@ from ..widgets import ExternalTextBrowser
 # noinspection PyArgumentList
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
-    LICENSE_DATA: Final[dict[str, tuple[str, str]]] = current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True)
+    license_data: list[tuple[str, str, str]] = []
+    for pkg, license in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
+        for title, text in license:
+            license_data.append((pkg, title, text))
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
@@ -47,14 +48,14 @@ class LicenseViewer(QWidget):
 
     def _init_ui(self) -> None:
         self.license_label:       QLabel = QLabel(self)
-        self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}', self)
+        self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.license_data)}', self)
         self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
         self.next_license_button: QPushButton = QPushButton(tr('gui.license_viewer.next'), clicked=self.next_license)
         self.prev_license_button: QPushButton = QPushButton(tr('gui.license_viewer.previous'), clicked=self.prev_license)
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
-        self.view_package(HI_PACKAGE_NAME)
+        self.view_current_index()
 
         layout = QVBoxLayout(self)
         top = QHBoxLayout()
@@ -78,7 +79,7 @@ class LicenseViewer(QWidget):
     def next_license(self) -> None:
         """View the next license."""
         self.current_license_index += 1
-        if self.current_license_index + 1 > len(self.LICENSE_DATA):
+        if self.current_license_index + 1 > len(self.license_data):
             self.current_license_index = 0
         self.view_current_index()
 
@@ -86,19 +87,16 @@ class LicenseViewer(QWidget):
         """View the previous license."""
         self.current_license_index -= 1
         if self.current_license_index < 0:
-            self.current_license_index = len(self.LICENSE_DATA) - 1
+            self.current_license_index = len(self.license_data) - 1
         self.view_current_index()
 
     def view_current_index(self) -> None:
         """Views the license data at the current index."""
-        self.view_package(tuple(self.LICENSE_DATA)[self.current_license_index])
+        current_data: tuple[str, str, str] = self.license_data[self.current_license_index]
 
-    def view_package(self, package: str) -> None:
-        """Views the license data of the given package name."""
-        license_text = self.LICENSE_DATA[package][1] or tr('gui.license_viewer.not_found')
-        self.current_license_index = tuple(self.LICENSE_DATA).index(package)
-        self.license_label.setText(f'{package} -- "{self.LICENSE_DATA[package][0]}" {tr("gui.license_viewer.license")}')
-        self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.LICENSE_DATA)}')
+        license_text = current_data[2] or tr('gui.license_viewer.not_found')
+        self.license_label.setText(f'{current_data[0]} -- "{current_data[1]}" {tr("gui.license_viewer.license")}')
+        self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.license_data)}')
 
         output = license_text
         replaced = set()
