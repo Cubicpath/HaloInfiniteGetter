@@ -27,6 +27,7 @@ class LicenseViewer(QWidget):
     for pkg, license in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
         for title, text in license:
             license_data.append((pkg, title, text))
+    license_data = sorted(license_data, key=lambda x: x[0].lower())
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
@@ -111,7 +112,6 @@ class LicenseViewer(QWidget):
         index = self.license_dropdown.currentIndex() + 1
         if index + 1 > self.license_dropdown.count():
             index = 0
-        self.license_dropdown.setCurrentIndex(index)
         self.view_index(index)
 
     def prev_license(self) -> None:
