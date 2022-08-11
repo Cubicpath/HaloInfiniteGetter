@@ -15,8 +15,6 @@ __all__ = (
 def current_requirement_licenses(package: str, recursive: bool = False, include_extras: bool = False) -> dict[str, list[tuple[str, str]]]:
     """Return the current licenses for the requirements of the given package.
 
-    CANNOT get license file from a package with an editable installation.
-
     :param package: Package name to search.
     :param recursive: Whether to get the requirements of the requirements of the given package.
     :param include_extras: Whether to include packages installed with extras.
@@ -47,12 +45,20 @@ def current_requirement_licenses(package: str, recursive: bool = False, include_
         # Find the license file(s)
         license_files: list[Path] = [
             item for item in info_path.iterdir() if (
-                item.is_file() and any(keyword in item.name.lower() for keyword in ('license', 'licence', 'copying', 'copyright', 'notice'))
+                item.is_file() and any(keyword in item.name.lower() for keyword in ('license', 'licence', 'copying', 'copyright', 'notice', 'author'))
             )
         ]
 
+        # If the distribution has no 'License' field, get the distribution's Trove classifier
+        dist_license: str = metadata(name).get('License')
+        if not dist_license:
+            for classifier in metadata(name).get_all('Classifier'):
+                if classifier.startswith('License'):
+                    # Ex: 'License :: OSI Approved :: MIT License'
+                    dist_license = classifier.split('::')[-1].strip()
+                    break
+
         # If there are multiple license/notice files, the title contains the filename.
-        dist_license: str = metadata(name).get('License', 'UNKNOWN')
         for file in license_files:
             license_name: str = dist_license if len(license_files) == 1 else f'{dist_license} - {file.name}'
             licenses.append((license_name, file.read_text(encoding='utf8')))

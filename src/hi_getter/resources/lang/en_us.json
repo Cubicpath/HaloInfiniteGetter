@@ -45,7 +45,7 @@
     "gui.license_viewer.current_index": "%s of %s",
     "gui.license_viewer.license": "License",
     "gui.license_viewer.next": "Next",
-    "gui.license_viewer.not_found": "LICENSE TEXT NOT FOUND -- COULD BE DUE TO EDITABLE INSTALLATION",
+    "gui.license_viewer.not_found": "LICENSE TEXT NOT FOUND",
     "gui.license_viewer.previous": "Previous",
     "gui.license_viewer.title": "License Viewer",
     "gui.outputs.clear": "Clear",
