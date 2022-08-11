@@ -24,14 +24,6 @@ from ..widgets import ExternalTextBrowser
 # noinspection PyArgumentList
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
-    # We can assume the requirements don't change, so we can cache the license data.
-    license_data: list[tuple[str, str, str]] = []
-    for pkg, license in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
-        for title, text in license:
-            license_data.append((pkg, title, text))
-
-    # Sort the license data by package name
-    license_data = sorted(license_data, key=lambda x: x[0].lower())
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
@@ -48,6 +40,16 @@ class LicenseViewer(QWidget):
         self.license_text_edit:   ExternalTextBrowser
         self.next_license_button: QPushButton
         self.prev_license_button: QPushButton
+
+        # We can assume the requirements don't change, so we can cache the license data.
+        self.license_data: list[tuple[str, str, str]] = []
+        for pkg, licenses in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
+            for title, text in licenses:
+                self.license_data.append((pkg, title, text))
+
+        # Sort the license data by package name
+        self.license_data = sorted(self.license_data, key=lambda x: x[0].lower())
+
         self._init_ui()
 
     def _init_ui(self) -> None:
