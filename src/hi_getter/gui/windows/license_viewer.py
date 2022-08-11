@@ -38,14 +38,10 @@ class LicenseViewer(QWidget):
         self.next_license_button: QPushButton
         self.prev_license_button: QPushButton
 
-        # We can assume the requirements don't change, so we can cache the license data.
         self.license_data: list[tuple[str, str, str]] = []
-        for pkg, licenses in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
+        for pkg, licenses in current_requirement_licenses(HI_PACKAGE_NAME, recursive=True, include_extras=True).items():
             for title, text in licenses:
                 self.license_data.append((pkg, title, text))
-
-        # Sort the license data by package name
-        self.license_data = sorted(self.license_data, key=lambda x: x[0].lower())
 
         self._init_ui()
 

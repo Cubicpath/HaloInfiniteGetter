@@ -12,13 +12,14 @@ __all__ = (
 )
 
 
-def current_requirement_licenses(package: str, include_extras: bool = False) -> dict[str, list[tuple[str, str]]]:
+def current_requirement_licenses(package: str, recursive: bool = False, include_extras: bool = False) -> dict[str, list[tuple[str, str]]]:
     """Return the current licenses for the requirements of the given package.
 
     CANNOT get license file from a package with an editable installation.
 
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
+    :param package: Package name to search.
+    :param recursive: Whether to get the requirements of the requirements of the given package.
+    :param include_extras: Whether to include packages installed with extras.
     :return: dict mapping a package name to a list of license title and content pairs.
     """
     from importlib.metadata import metadata
@@ -28,9 +29,9 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
     from pkg_resources import get_distribution
 
     result: dict[str, list[tuple[str, str]]] = {}
-    for requirement in ([package] + current_requirement_names(package, include_extras)):
+    for requirement in ([package] + current_requirement_names(package, recursive, include_extras)):
         try:
-            dist:     Distribution = get_distribution(requirement)
+            dist: Distribution = get_distribution(requirement)
         except DistributionNotFound:
             continue
 
@@ -61,44 +62,58 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
     return result
 
 
-def current_requirement_names(package: str, include_extras: bool = False) -> list[str]:
+def current_requirement_names(package: str, recursive: bool = False, include_extras: bool = False) -> list[str]:
     """Return the current requirement names for the given package.
 
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
+    :param package: Package name to search.
+    :param recursive: Whether to get the requirements of the requirements of the given package.
+    :param include_extras: Whether to include packages installed with extras.
     :return: list of package names.
     """
+    from importlib.metadata import PackageNotFoundError
     from importlib.metadata import requires
 
-    req_names = []
-    for requirement in requires(package):
+    req_names: set[str] = set()
+    try:
+        # Get the requirements for the given package, translating None to an empty tuple to allow iteration.
+        requirements = requires(package) or ()
+    except PackageNotFoundError:
+        # If the package is not installed, return an empty list.
+        return []
+
+    for requirement in requirements:
         if not include_extras and '; extra' in requirement:
             continue
+
         # Don't include testing extras
         if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
             continue
 
-        split_char = 0
-        for char in requirement:
+        # Get the requirement's name
+        split_pos: int = 0
+        for split_pos, char in enumerate(requirement):
             if not char.isalnum() and char not in ('-', '_'):
                 break
-            split_char += 1
+        name = requirement[:split_pos]
 
-        req_names.append(requirement[:split_char])
+        req_names.add(name)
+        if recursive:
+            req_names.update(current_requirement_names(requirement[:split_pos], recursive, include_extras))
 
-    return req_names
+    return sorted(req_names, key=lambda req: req.lower())
 
 
-def current_requirement_versions(package: str, include_extras: bool = False) -> dict[str, str]:
+def current_requirement_versions(package: str, recursive: bool = False, include_extras: bool = False) -> dict[str, str]:
     """Return the current versions of the installed requirements for the given package.
 
-    :param package: Package name to search
-    :param include_extras: Whether to include packages installed with extras
+    :param package: Package name to search.
+    :param recursive: Whether to get the requirements of the requirements of the given package.
+    :param include_extras: Whether to include packages installed with extras.
     :return: dict mapping package names to their version string.
     """
     from importlib.metadata import version
 
-    return {name: version(name) for name in current_requirement_names(package, include_extras) if has_package(name)}
+    return {name: version(name) for name in current_requirement_names(package, recursive, include_extras) if has_package(name)}
 
 
 def has_package(package: str) -> bool:
