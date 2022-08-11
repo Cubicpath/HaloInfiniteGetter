@@ -13,7 +13,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
-from ...utils.gui import scroll_to_top
+from ...utils.gui import scroll_to_top, init_objects
 from ...utils.package import current_requirement_licenses
 from ..app import app
 from ..app import tr
@@ -36,10 +36,9 @@ class LicenseViewer(QWidget):
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.license_viewer.title'))
         self.setWindowIcon(app().icon_store['copyright'])
-        self.resize(QSize(750, 550))
-        self.current_license_index = 0
+        self.resize(QSize(750, 800))
 
-        self.license_label:       QLabel
+        self.license_dropdown:    QComboBox
         self.license_index_label: QLabel
         self.license_text_edit:   ExternalTextBrowser
         self.next_license_button: QPushButton
@@ -47,11 +46,44 @@ class LicenseViewer(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.license_label:       QLabel = QLabel(self)
-        self.license_index_label: QLabel = QLabel(f'{self.current_license_index + 1} of {len(self.license_data)}', self)
+        self.license_dropdown:    QComboBox = QComboBox(self)
+        self.license_index_label: QLabel = QLabel(self)
         self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
-        self.next_license_button: QPushButton = QPushButton(tr('gui.license_viewer.next'), clicked=self.next_license)
-        self.prev_license_button: QPushButton = QPushButton(tr('gui.license_viewer.previous'), clicked=self.prev_license)
+        self.next_license_button: QPushButton = QPushButton(self)
+        self.prev_license_button: QPushButton = QPushButton(self)
+
+        init_objects({
+            self.license_dropdown: {
+                'size': {'fixed': (300, 26)},
+                'activated': lambda i: self.view_index(i),
+                'items': (
+                    f'{pkg[0]}/{pkg[1]}' for pkg in self.license_data
+                )
+            },
+            self.license_index_label: {
+                'size': {'maximum': (50, None)},
+                'text': tr(
+                    'gui.license_viewer.current_index', self.license_dropdown.currentIndex() + 1, len(self.license_data)
+                )
+            },
+            self.license_text_edit: {
+                'font': QFont('consolas', 11),
+                'openExternalLinks': True,
+            },
+            self.next_license_button: {
+                'size': {'fixed': (100, None)},
+                'clicked': self.next_license,
+            },
+            self.prev_license_button: {
+                'size': {'fixed': (100, None)},
+                'clicked': self.prev_license,
+            }
+        })
+
+        app().init_translations({
+            self.next_license_button.setText: 'gui.license_viewer.next',
+            self.prev_license_button.setText: 'gui.license_viewer.previous',
+        })
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
@@ -59,45 +91,51 @@ class LicenseViewer(QWidget):
 
         layout = QVBoxLayout(self)
         top = QHBoxLayout()
+        top_right = QHBoxLayout()
 
         layout.addLayout(top)
-        top.addWidget(self.license_label)
-        top.addWidget(self.prev_license_button)
-        top.addWidget(self.next_license_button)
-        top.addWidget(self.license_index_label)
+        top.addWidget(self.license_dropdown)
+        top.addLayout(top_right)
+        top_right.setAlignment(Qt.AlignRight)
+        top_right.addWidget(self.prev_license_button)
+        top_right.addWidget(self.next_license_button)
+        top_right.addWidget(self.license_index_label)
         layout.addWidget(self.license_text_edit)
 
         cursor = self.license_text_edit.textCursor()
         cursor.clearSelection()
         cursor.select(QTextCursor.SelectionType.Document)
-        self.next_license_button.setMaximumWidth(100)
-        self.prev_license_button.setMaximumWidth(100)
-        self.license_index_label.setMaximumWidth(50)
-        self.license_text_edit.setFont(QFont('consolas', 11))
-        self.license_text_edit.setOpenExternalLinks(True)
 
     def next_license(self) -> None:
         """View the next license."""
-        self.current_license_index += 1
-        if self.current_license_index + 1 > len(self.license_data):
-            self.current_license_index = 0
-        self.view_current_index()
+        index = self.license_dropdown.currentIndex() + 1
+        if index + 1 > self.license_dropdown.count():
+            index = 0
+        self.license_dropdown.setCurrentIndex(index)
+        self.view_index(index)
 
     def prev_license(self) -> None:
         """View the previous license."""
-        self.current_license_index -= 1
-        if self.current_license_index < 0:
-            self.current_license_index = len(self.license_data) - 1
+        index = self.license_dropdown.currentIndex() - 1
+        if index < 0:
+            index = self.license_dropdown.count() - 1
+        self.view_index(index)
+
+    def view_index(self, index: int) -> None:
+        """View the license at the given index."""
+        self.license_dropdown.setCurrentIndex(index)
         self.view_current_index()
 
     def view_current_index(self) -> None:
         """Views the license data at the current index."""
-        current_data: tuple[str, str, str] = self.license_data[self.current_license_index]
+        current_data: tuple[str, str, str] = self.license_data[self.license_dropdown.currentIndex()]
 
         license_text = current_data[2] or tr('gui.license_viewer.not_found')
-        self.license_label.setText(f'{current_data[0]} -- "{current_data[1]}" {tr("gui.license_viewer.license")}')
-        self.license_index_label.setText(f'{self.current_license_index + 1} of {len(self.license_data)}')
+        self.license_index_label.setText(tr(
+            'gui.license_viewer.current_index', self.license_dropdown.currentIndex() + 1, len(self.license_data)
+        ))
 
+        # Use Regex & HTML to make links clickable
         output = license_text
         replaced = set()
         for match in HI_URL_PATTERN.finditer(license_text):
@@ -109,6 +147,7 @@ class LicenseViewer(QWidget):
         stripped_output = ''
         for line in output.splitlines():
             stripped_output += line.strip() + '\n'
+
         stripped_output = stripped_output.strip()
         self.license_text_edit.setHtml(
             f'<body style="white-space: pre-wrap">'
