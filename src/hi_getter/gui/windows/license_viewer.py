@@ -26,10 +26,7 @@ class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
 
     def __init__(self, *args, **kwargs) -> None:
-        """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
-
-        Has a fixed size of 750x800.
-        """
+        """Create a new LicenseViewer."""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.license_viewer.title'))
         self.setWindowIcon(app().icon_store['copyright'])
