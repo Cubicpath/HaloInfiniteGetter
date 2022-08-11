@@ -278,8 +278,6 @@ class GetterApp(QApplication):
             description_args=(package, reason, exec_path)
         ).role == QMessageBox.AcceptRole
 
-        install_button.deleteLater()
-
         if consent_to_install:
             try:
                 # Install the package

@@ -24,11 +24,16 @@ def current_requirement_licenses(package: str, include_extras: bool = False) -> 
     from importlib.metadata import metadata
     from pathlib import Path
     from pkg_resources import Distribution
+    from pkg_resources import DistributionNotFound
     from pkg_resources import get_distribution
 
     result: dict[str, list[tuple[str, str]]] = {}
     for requirement in ([package] + current_requirement_names(package, include_extras)):
-        dist:     Distribution = get_distribution(requirement)
+        try:
+            dist:     Distribution = get_distribution(requirement)
+        except DistributionNotFound:
+            continue
+
         name:     str = dist.project_name.replace('-', '_')
         licenses: list[tuple[str, str]] = []
 

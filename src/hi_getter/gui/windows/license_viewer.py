@@ -13,7 +13,8 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
-from ...utils.gui import scroll_to_top, init_objects
+from ...utils.gui import init_objects
+from ...utils.gui import scroll_to_top
 from ...utils.package import current_requirement_licenses
 from ..app import app
 from ..app import tr
@@ -23,16 +24,19 @@ from ..widgets import ExternalTextBrowser
 # noinspection PyArgumentList
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
+    # We can assume the requirements don't change, so we can cache the license data.
     license_data: list[tuple[str, str, str]] = []
     for pkg, license in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
         for title, text in license:
             license_data.append((pkg, title, text))
+
+    # Sort the license data by package name
     license_data = sorted(license_data, key=lambda x: x[0].lower())
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new LicenseViewer. Gets license from the HI_RESOURCE_PATH/LICENSE file
 
-        Has a fixed size of 750x380.
+        Has a fixed size of 750x800.
         """
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.license_viewer.title'))
