@@ -91,25 +91,16 @@ class AppWindow(QMainWindow):
             menu.move(self.cursor().pos())
             menu.show()
 
-        (
-            menu_bar, status_bar,
-            file, settings, tools, help_,
-            logger
-        ) = (
-            QToolBar(self), QToolBar(self),
-            QAction(self), QAction(self), QAction(self), QAction(self),
-            ExceptionLogger(self),
-        )
-
         init_objects({
-            status_bar: {
+            (menu_bar := QToolBar(self)): {},
+            (status_bar := QToolBar(self)): {
                 'movable': False,
             },
-            file: {
+            (file := QAction(self)): {
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, FileContextMenu)
             },
-            settings: {
+            (settings := QAction(self)): {
                 'menuRole': QAction.MenuRole.PreferencesRole,
                 'triggered': DistributedCallable((
                     self.settings_window.show,
@@ -117,15 +108,15 @@ class AppWindow(QMainWindow):
                     self.settings_window.raise_
                 ))
             },
-            tools: {
+            (tools := QAction(self)): {
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, ToolsContextMenu)
             },
-            help_: {
+            (help := QAction(self)): {
                 'menuRole': QAction.MenuRole.AboutRole,
                 'triggered': DeferredCallable(context_menu_handler, HelpContextMenu)
             },
-            logger: {
+            (logger := ExceptionLogger(self)): {
                 'size': {'fixed': (None, 20)},
                 'clicked': DistributedCallable((
                     logger.reporter.show,
@@ -141,7 +132,7 @@ class AppWindow(QMainWindow):
             file.setText: 'gui.menus.file',
             settings.setText: 'gui.menus.settings',
             tools.setText: 'gui.menus.tools',
-            help_.setText: 'gui.menus.help',
+            help.setText: 'gui.menus.help',
             logger.label.setText: 'gui.status.default'
         })
 
@@ -151,7 +142,7 @@ class AppWindow(QMainWindow):
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
 
         EventBus['exceptions'].subscribe(lambda e: logger.label.setText(f'{e.exception}...'), ExceptionEvent)
-        for action in (file, settings, tools, help_):
+        for action in (file, settings, tools, help):
             menu_bar.addSeparator()
             menu_bar.addAction(action)
 
