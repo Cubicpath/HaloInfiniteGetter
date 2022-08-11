@@ -162,7 +162,11 @@ class GetterApp(QApplication):
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
-        self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
+        try:
+            self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
+        except KeyError:
+            self.settings['gui/themes/selected'] = 'legacy'
+            self.setStyleSheet(self._legacy_style)
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
                     buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButtons | None = None,
@@ -345,7 +349,12 @@ class GetterApp(QApplication):
         """
         Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
 
-        for id, theme in self.settings['gui/themes'].items():
+        try:
+            themes = self.settings['gui/themes']
+        except KeyError:
+            self.settings['gui/themes'] = themes = {}
+
+        for id, theme in themes.items():
             if not isinstance(theme, dict):
                 continue
 
