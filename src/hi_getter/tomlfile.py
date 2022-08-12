@@ -22,8 +22,7 @@ from typing import Any
 from typing import Final
 from typing import TypeAlias
 
-import toml.decoder
-import toml.encoder
+import toml
 from toml.decoder import CommentValue
 
 from .events import *

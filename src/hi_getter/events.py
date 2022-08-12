@@ -16,7 +16,7 @@ from typing import overload
 from typing import TypeAlias
 from typing import TypeVar
 
-from . import utils
+from .utils.common import get_parent_doc
 
 
 class Event:
@@ -56,7 +56,7 @@ class Event:
         """
         doc = self.__doc__
         if doc is None and isinstance(self, Event) and type(self) is not Event:
-            doc = utils.get_parent_doc(type(self))
+            doc = get_parent_doc(type(self))
         return doc.splitlines()[0]
 
 

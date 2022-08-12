@@ -27,7 +27,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ..constants import *
-from ..events import *
+from ..events import EventBus
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
