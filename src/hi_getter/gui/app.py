@@ -18,8 +18,10 @@ from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
+from typing import Final
 from typing import NamedTuple
 
+import toml
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -35,6 +37,18 @@ from ..utils.gui import icon_from_bytes
 from ..utils.gui import set_or_swap_icon
 from ..utils.package import has_package
 from ..utils.network import http_code_map
+from ..utils.system import hide_windows_file
+
+_DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
+_LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
+_SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
+
+# Read default settings file
+DEFAULT_SETTINGS: Final[TomlTable] = toml.loads(
+    _DEFAULTS_FILE.read_text(encoding='utf8').replace(
+        '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
+    ), decoder=PathTomlDecoder()
+)
 
 
 def app() -> GetterApp:
@@ -51,6 +65,23 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
     :return: Translated text.
     """
     return app().translator(key, *args, **kwargs)
+
+
+def _create_paths() -> None:
+    """Create files and directories if they do not exist."""
+    for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
+        if not dir_path.is_dir():
+            dir_path.mkdir(parents=True)
+
+    if not _LAUNCHED_FILE.is_file():
+        # Create first-launch marker
+        _LAUNCHED_FILE.touch()
+        hide_windows_file(_LAUNCHED_FILE)
+
+    if not _SETTINGS_FILE.is_file():
+        # Write default_settings to user's SETTINGS_FILE
+        with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
+            toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
 
 
 class _DialogResponse(NamedTuple):
@@ -83,24 +114,22 @@ class GetterApp(QApplication):
     :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() method or the app() function.
     """
 
-    # PyCharm detects dict literals in __init__ as a dict[str, EventBus], for no explicable reason.
+    # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker
-    def __init__(self, argv: Sequence[str], settings: TomlFile, first_launch: bool = False) -> None:
+    def __init__(self, argv: Sequence[str]) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
-        self._first_launch: bool = first_launch
-        self._legacy_style: str = self.styleSheet()  # Set legacy style before it is overridden
+        self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
+        self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
         self.client:          Client = Client(self)
         self.icon_store:      dict[str, QIcon] = {}
         self.session:         NetworkSession = NetworkSession(self)
-        self.settings:        TomlFile = settings
+        self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS)
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self.translator:      Translator = Translator(settings['language'])
-
-        # TODO: cache platform() call early on separate thread
+        self.translator:      Translator = Translator(self.settings['language'])
 
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
