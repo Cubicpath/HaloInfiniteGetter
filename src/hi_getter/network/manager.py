@@ -28,6 +28,9 @@ from ..utils.network import query_to_dict
 from .structures import CaseInsensitiveDict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
+_StringPair:           TypeAlias = dict[str, str] | list[tuple[str, str]]
+_KnownHeaderValues:    TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
+_HeaderValue:          TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
 
 
 class NetworkSession:
@@ -112,7 +115,7 @@ class NetworkSession:
             if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
                 warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
 
-    def _translate_header_value(self, header: str, value: Any) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
+    def _translate_header_value(self, header: str, value: _KnownHeaderValues) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
         """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
 
         Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
@@ -241,16 +244,16 @@ class NetworkSession:
         return self.manager.cookieJar().insertCookie(cookie)
 
     def request(self, method: str, url: QUrl | str,
-                params: dict[str, str] | list[tuple[str, str]] | None = None,
-                data: bytes | dict[str, str] | list[tuple[str, str]] | None = None,
-                headers: dict[str, Any] | list[tuple[str, Any]] | None = None,
-                cookies: dict[str, str] | list[tuple[str, str]] | None = None,
+                params: _StringPair | None = None,
+                data: bytes | _StringPair | None = None,
+                headers: _HeaderValue | None = None,
+                cookies: _StringPair | None = None,
                 # TODO: Finish requests-like implementation
                 # files: dict[str, Any] | None = None,
                 # auth: tuple[str, str] | None = None,
                 timeout: float | tuple[float, float] | None = 30.0,
                 allow_redirects: bool = True,
-                proxies: dict[str, str] | list[tuple[str, str]] | None = None,
+                proxies: _StringPair | None = None,
                 # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
                 # stream: bool | None = None,
                 verify: bool | str | None = None,
@@ -260,19 +263,47 @@ class NetworkSession:
         """Send an HTTP request to the given URL with the given data.
 
         :param method: HTTP method/verb to use for the request. Case-sensitive.
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :param params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :param data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :param headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+
+        :param url: URL to send the request to. Case-sensitive.
+            Could be a string or QUrl.
+
+        :param params: URL parameters to attach to the URL. Case-sensitive.
+            If url is a QUrl, overrides the QUrl's query.
+
+        :param data: Bytes to send in the request body.
+            If a string-pair, will be encoded to bytes as a form-encoded request body.
+            Incompatible with the json and files parameters.
+
+        :param headers: Headers to use for the request.
+            Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+
         :param cookies: Cookies to use for the request. Case-sensitive.
-        :param timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value is
-        the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
-        :param allow_redirects: If False, do not follow any redirect requests.
-        :param proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :param verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :param cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :param json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+
+        :param timeout: Timeouts for the request.
+            If a single float, both the connect and read timeout will be set to this value.
+            If a tuple, the first value is the connect timeout and the second value is the read timeout.
+            If None or 0, no timeout will be set.
+
+        :param allow_redirects:
+            If False, do not follow any redirect requests.
+
+        :param proxies: String-pairs mapping protocol to the URL of the proxy.
+            Supported protocols are 'ftp', 'http', 'socks5'.
+
+        :param verify: Whether to verify SSL certificates.
+            If False, ignore all SSL errors.
+            If a string, interpret verify as a path to the CA bundle to verify certificates against.
+
+        :param cert: Client certificate information.
+            If a string, interpret cert as a path to a certificate to use for SSL client authentication.
+            If a tuple, interpret cert as a (cert, key) pair.
+
+        :param json: JSON data to send in the request body.
+            Automatically encodes to bytes and updates Content-Type header.
+            Incompatible with the data and files parameters.
+
         :param finished: Consumer to call when the request finishes, with request supplied as an argument.
+
         :return: QNetworkReply object, which is not guaranteed to be finished.
         :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
         """
@@ -284,7 +315,7 @@ class NetworkSession:
         cookies = {} if cookies is None else cookies
 
         # Translate dictionary-compatible tuple pair lists to dictionaries
-        # Ex: [('name', 'value'), ('key': 'value')] -> {'name': 'value', 'key': 'value'}
+        # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
         for tuple_list in ('params', 'data', 'headers', 'cookies', 'proxies'):
             if isinstance(vars()[tuple_list], list):
                 vars()[tuple_list] = {key: value for key, value in vars()[tuple_list]}
@@ -426,20 +457,21 @@ class NetworkSession:
         GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
         by web browsers to download HTML pages, images, and other resources.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
-        :return: QNetworkReply object, which is not guaranteed to be finished."""
+
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         method: str = 'GET'
         self._check_method_kwargs(method, **kwargs)
 
@@ -451,20 +483,21 @@ class NetworkSession:
         HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
         This is useful for checking if a resource exists, or for getting the size of a resource before downloading it.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
-        :return: QNetworkReply object, which is not guaranteed to be finished."""
+
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         method: str = 'HEAD'
         self._check_method_kwargs(method, **kwargs)
 
@@ -476,20 +509,21 @@ class NetworkSession:
         POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
         This makes it very common for servers to accept POST requests for a multitude of things.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
-        :return: QNetworkReply object, which is not guaranteed to be finished."""
+
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         method: str = 'POST'
         self._check_method_kwargs(method, **kwargs)
 
@@ -500,20 +534,21 @@ class NetworkSession:
 
         PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
-        :return: QNetworkReply object, which is not guaranteed to be finished."""
+
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         method: str = 'PUT'
         self._check_method_kwargs(method, **kwargs)
 
@@ -524,20 +559,21 @@ class NetworkSession:
 
         DELETE is used to delete a specified resource.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
-        :return: QNetworkReply object, which is not guaranteed to be finished."""
+
+        :return: QNetworkReply object, which is not guaranteed to be finished.
+        """
         method: str = 'DELETE'
         self._check_method_kwargs(method, **kwargs)
 
@@ -548,19 +584,19 @@ class NetworkSession:
 
         PATCH is used to send a partial update of an existing resource.
 
-        :param url: URL to send the request to. Could be a string or QUrl. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. If url is a QUrl, overrides the QUrl's query. Case-sensitive.
-        :keyword data: Bytes to send in the request body. If a string-pair, will be encoded to bytes as a form-encoded request body.
-        :keyword headers: Headers to use for the request. Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request. If a single float, both the connect and read timeout will be set to this value. If a tuple, the first value
-        is the connect timeout and the second value is the read timeout. If None or 0, no timeout will be set.
+        :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy. Supported protocols are 'ftp', 'http', 'socks5'.
-        :keyword verify: If False, ignore all SSL errors. If a string, interpret verify as a path to the CA bundle to verify certificates against.
-        :keyword cert: If a string, interpret cert as a path to a certificate to use for SSL client authentication. Else, interpret cert as a (cert, key) pair.
-        :keyword json: JSON data to send in the request body. Automatically encodes to bytes and updates Content-Type header. Do NOT use with data param.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
         :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
         method: str = 'PATCH'
