@@ -16,6 +16,7 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
+from ...utils import init_objects
 from ..app import app
 from ..app import tr
 
@@ -28,27 +29,33 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
-        open_explorer: QAction = QAction(
-            app().get_theme_icon('dialog_open') or app().icon_store['folder'],
-            tr('gui.menus.file.open'), self, triggered=DeferredCallable(
-                webbrowser.open, f'file:///{HI_CACHE_PATH}'
-            )
-        )
+        init_objects({
+            (open_explorer := QAction(self)): {
+                'text': tr('gui.menus.file.open'),
+                'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
+                'triggered': DeferredCallable(
+                    webbrowser.open, f'file:///{HI_CACHE_PATH}'
+                )
+            },
 
-        flush_cache: QAction = QAction(
-            app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
-            tr('gui.menus.file.flush'), self, triggered=self.flush_cache
-        )
+            (flush_cache := QAction(self)): {
+                'text': tr('gui.menus.file.flush'),
+                'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
+                'triggered': self.flush_cache
+            },
 
-        import_from: QAction = QAction(
-            app().icon_store['import'],
-            tr('gui.menus.file.import'), self, triggered=self.import_data
-        )
+            (import_from := QAction(self)): {
+                'text': tr('gui.menus.file.import'),
+                'icon': app().icon_store['import'],
+                'triggered': self.import_data
+            },
 
-        export_to: QAction = QAction(
-            app().icon_store['export'],
-            tr('gui.menus.file.export'), self, triggered=self.export_data
-        )
+            (export_to := QAction(self)): {
+                'text': tr('gui.menus.file.export'),
+                'icon': app().icon_store['export'],
+                'triggered': self.export_data
+            },
+        })
 
         section_map = {
             'Files': (open_explorer, flush_cache, import_from, export_to)
