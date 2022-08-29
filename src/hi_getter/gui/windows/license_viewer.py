@@ -60,20 +60,24 @@ class LicenseViewer(QWidget):
                     f'{pkg[0]}/{pkg[1]}' for pkg in self.license_data
                 )
             },
+
             self.license_index_label: {
                 'size': {'maximum': (50, None)},
                 'text': tr(
                     'gui.license_viewer.current_index', self.license_dropdown.currentIndex() + 1, len(self.license_data)
                 )
             },
+
             self.license_text_edit: {
                 'font': QFont('consolas', 11),
                 'openExternalLinks': True,
             },
+
             self.next_license_button: {
                 'size': {'fixed': (100, None)},
                 'clicked': self.next_license,
             },
+
             self.prev_license_button: {
                 'size': {'fixed': (100, None)},
                 'clicked': self.prev_license,

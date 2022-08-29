@@ -107,13 +107,16 @@ class AppWindow(QMainWindow):
 
         init_objects({
             (menu_bar := QToolBar(self)): {},
+
             (status_bar := QToolBar(self)): {
                 'movable': False,
             },
+
             (file := QAction(self)): {
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, FileContextMenu)
             },
+
             (settings := QAction(self)): {
                 'menuRole': QAction.MenuRole.PreferencesRole,
                 'triggered': DistributedCallable((
@@ -122,14 +125,17 @@ class AppWindow(QMainWindow):
                     self.settings_window.raise_
                 ))
             },
+
             (tools := QAction(self)): {
                 'menuRole': QAction.MenuRole.ApplicationSpecificRole,
                 'triggered': DeferredCallable(context_menu_handler, ToolsContextMenu)
             },
+
             (help := QAction(self)): {
                 'menuRole': QAction.MenuRole.AboutRole,
                 'triggered': DeferredCallable(context_menu_handler, HelpContextMenu)
             },
+
             (logger := ExceptionLogger(self)): {
                 'size': {'fixed': (None, 20)},
                 'clicked': DistributedCallable((
@@ -175,11 +181,14 @@ class AppWindow(QMainWindow):
             :param handler: Callable to execute when closed, to reattach the frame to the parent window.
             :param title: The window title.
             """
-            window = QMainWindow()
-            window.setWindowTitle(title if title is not None else self.windowTitle())
-            window.setCentralWidget(frame)
-            window.setMinimumHeight(200)
-            window.setMinimumWidth(300)
+            init_objects({
+                (window := QMainWindow()): {
+                    'windowTitle': title if title is not None else self.windowTitle(),
+                    'centralWidget': frame,
+                    'size': {'minimum': (300, 200)}
+                }
+            })
+
             window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
             return window
 
@@ -251,19 +260,20 @@ class AppWindow(QMainWindow):
                 self.input_field.setCurrentIndex(self.input_field.count() - 1)
             self.use_input()
 
-        # Define base widgets
+        # Define widget attributes
+        # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
+        # This works in the standard AST, but is a seemingly arbitrary limitation set by the interpreter.
+        # See: https://stackoverflow.com/questions/64055314/why-cant-pythons-walrus-operator-be-used-to-set-instance-attributes#answer-66617839
         (
             self.input_field, self.image_size_label, self.text_size_label,
             self.image_detach_button, self.text_detach_button, self.clear_picture, self.copy_picture,
-            self.clear_text, self.copy_text, get_button, scan_button,
-            self.media_frame, self.text_frame, self.media_output, self.text_output,
-            subdomain_field, root_folder_field
+            self.clear_text, self.copy_text, self.media_frame, self.text_frame,
+            self.media_output, self.text_output,
         ) = (
             HistoryComboBox(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QFrame(self), QFrame(self), QGraphicsView(self), ExternalTextBrowser(self),
-            PasteLineEdit(self), PasteLineEdit(self)
+            QPushButton(self), QPushButton(self), QFrame(self), QFrame(self),
+            QGraphicsView(self), ExternalTextBrowser(self)
         )
 
         init_objects({
@@ -304,11 +314,11 @@ class AppWindow(QMainWindow):
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
                 'clicked':  DeferredCallable(app().clipboard().setText, self.text_output.toPlainText)
             },
-            get_button: {
+            (get_button := QPushButton(self)): {
                 'size': {'maximum': (40, None)},
                 'clicked': self.use_input
             },
-            scan_button: {
+            (scan_button := QPushButton(self)): {
                 'size': {'maximum': (55, None)},
                 'clicked': DeferredCallable(self.use_input, scan=True)
             },
@@ -320,11 +330,11 @@ class AppWindow(QMainWindow):
             self.input_field.lineEdit(): {
                 'returnPressed': self.use_input
             },
-            subdomain_field: {
+            (subdomain_field := PasteLineEdit(self)): {
                 'text': app().client.sub_host, 'disabled': True,
                 'size': {'fixed': (125, None)}
             },
-            root_folder_field: {
+            (root_folder_field := PasteLineEdit(self)): {
                 'text': app().client.parent_path, 'disabled': True,
                 'size': {'fixed': (28, None)}
             },
@@ -538,6 +548,7 @@ class AppWindow(QMainWindow):
         if self.current_image is not None:
             new = self.current_image.copy()
             self.media_output.scene().clear()  # Clear buffer, otherwise causes memory leak
+
             if self.current_image.size() != self.media_output.viewport().size():
                 # Create a new image from the copied source image, scaled to fit the window.
                 new = new.scaled(
@@ -545,6 +556,7 @@ class AppWindow(QMainWindow):
                     Qt.AspectRatioMode(app().settings['gui/media_output/aspect_ratio_mode']),
                     Qt.TransformationMode(app().settings['gui/media_output/transformation_mode'])
                 )
+
             # Add image to buffer
             self.media_output.scene().addPixmap(new)
 
@@ -559,6 +571,7 @@ class AppWindow(QMainWindow):
             readme.setWindowTitle(tr('gui.readme_viewer.title_first_launch'))
             readme.show()
             app().show_dialog('information.first_launch', self)
+
         elif not self.shown_key_warning and app().client.token is None:
             app().show_dialog('warnings.empty_token', self)
             self.__class__.shown_key_warning = True

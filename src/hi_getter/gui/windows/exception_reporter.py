@@ -68,25 +68,29 @@ class ExceptionReporter(QWidget):
         self.scroll_widget = QWidget(self.scroll_area)
         self.scroll_widget.setLayout(QVBoxLayout())
         self.scroll_widget.layout().setAlignment(Qt.AlignTop)
-        self.scroll_area.setWidget(self.scroll_widget)
 
         init_objects({
             self.scroll_area: {
+                'widget': self.scroll_widget,
                 'widgetResizable': True
             },
+
             clear_all_button: {
                 'clicked': self.clear_all_exceptions
             },
+
             self.trace_back_viewer: {
                 'disabled': True,
                 'font': QFont('consolas', 10),
                 'lineWrapMode': QTextEdit.NoWrap
             },
+
             self.clear_button: {
                 'disabled': True,
                 'size': {'maximum': (self.report_button.width() // 1, None)},
                 'clicked': self.clear_current_exception
             },
+
             self.report_button: {
                 'disabled': True,
                 'clicked': self.report_current_exception

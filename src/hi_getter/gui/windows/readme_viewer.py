@@ -16,6 +16,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
 from ..widgets import ExternalTextBrowser
@@ -39,21 +40,30 @@ class ReadmeViewer(QWidget):
 
     def _init_ui(self) -> None:
         self.readme_viewer = ExternalTextBrowser(self)
-        close_button = QPushButton("Close", self, clicked=self.close)
 
-        self.readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func
+        init_objects({
+            (close_button := QPushButton(self)): {
+                'size': {'minimum': (None, 40)},
+                'font': QFont(close_button.font().family(), 16),
+                'clicked': self.close
+            },
+
+            self.readme_viewer: {
+                'font': QFont(self.readme_viewer.font().family(), 10),
+                'openExternalLinks': True
+            }
+        })
+
+        app().init_translations({
+            close_button.setText: 'gui.readme_viewer.close'
+        })
 
         layout = QVBoxLayout(self)
-        self.setLayout(layout)
-
         layout.addWidget(self.readme_viewer)
         layout.addWidget(close_button)
 
-        self.readme_viewer.setOpenExternalLinks(True)
+        self.readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func
         self.readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')
-        self.readme_viewer.setFont(QFont(self.readme_viewer.font().family(), 10))
-        close_button.setMinimumHeight(40)
-        close_button.setFont(QFont(close_button.font().family(), 16))
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Manually signal the readme_viewer for garbage collection."""

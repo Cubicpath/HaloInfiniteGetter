@@ -61,6 +61,7 @@
     "gui.outputs.text.errors.too_large": "Resource is too large to load. You can view it with another application by opening its cached file.\n\nCached location:\n%s",
     "gui.outputs.text.label": "Text Output: %i lines; %i characters (%.4f %s)",
     "gui.outputs.text.label_empty": "Text Output:",
+    "gui.readme_viewer.close": "Close",
     "gui.readme_viewer.title": "README Viewer",
     "gui.readme_viewer.title_first_launch": "----- {gui.readme_viewer.title} ----- FIRST LAUNCH -----",
 

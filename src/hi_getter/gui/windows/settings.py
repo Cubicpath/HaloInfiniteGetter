@@ -102,68 +102,58 @@ class SettingsWindow(QWidget):
             del app().client.token
             self.token_clear_button.setDisabled(True)
 
-        # Define base widgets
+        # Define widget attributes
+        # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
+        # This works in the standard AST, but is a seemingly arbitrary limitation set by the interpreter.
+        # See: https://stackoverflow.com/questions/64055314/why-cant-pythons-walrus-operator-be-used-to-set-instance-attributes#answer-66617839
         (
-            theme_label, aspect_ratio_label, transformation_label, line_wrap_label,
-            save_button, reload_button, import_button, export_button, open_editor_button,
-            key_show_button, key_copy_button, self.key_set_button, self.token_clear_button,
+            self.key_set_button, self.token_clear_button,
             self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown, self.line_wrap_dropdown,
             self.key_field
         ) = (
-            QLabel(self), QLabel(self), QLabel(self), QLabel(self),
-            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
-            QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
+            QPushButton(self), QPushButton(self),
             QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
             PasteLineEdit(self)
         )
 
-        for subscribe_params in (
-                (DeferredCallable(self.app_window.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
-                (lambda val: self.app_window.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
-                (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
-                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
-                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
-                (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
-        ): EventBus['settings'].subscribe(*subscribe_params)
-
         init_objects({
             # Labels
-            theme_label: {
+            (theme_label := QLabel(self)): {
                 'size': {'maximum': (85, None)}
             },
-            aspect_ratio_label: {
+            (aspect_ratio_label := QLabel(self)): {
                 'size': {'maximum': (90, None)}
             },
-            transformation_label: {
+            (transformation_label := QLabel(self)): {
                 'size': {'maximum': (90, None)}
             },
-            line_wrap_label: {
+            (line_wrap_label := QLabel(self)): {
                 'size': {'maximum': (90, None)}
             },
 
             # Buttons
-            save_button: {
+            (save_button := QPushButton(self)): {
                 'disabled': True,
                 'size': {'maximum': (50, None)},
                 'clicked': app().settings.save
             },
-            reload_button: {
+            (reload_button := QPushButton(self)): {
                 'size': {'maximum': (60, None)},
                 'clicked': app().settings.reload
             },
-            import_button: {
+            (import_button := QPushButton(self)): {
                 'clicked': import_settings
             },
-            export_button: {
+            (export_button := QPushButton(self)): {
                 'clicked': export_settings
             },
-            open_editor_button: {
+            (open_editor_button := QPushButton(self)): {
                 'clicked': DeferredCallable(webbrowser.open, lambda: app().settings.path)
             },
-            key_show_button: {
+            (key_show_button := QPushButton(self)): {
                 'clicked': toggle_key_visibility
             },
-            key_copy_button: {
+            (key_copy_button := QPushButton(self)): {
                 'clicked': DeferredCallable(app().clipboard().setText, lambda: app().client.wpauth)
             },
             self.key_set_button: {
@@ -249,6 +239,15 @@ class SettingsWindow(QWidget):
             self.key_set_button.setText: 'gui.settings.auth.set',
             self.token_clear_button.setText: 'gui.settings.auth.clear_token'
         })
+
+        for subscribe_params in (
+                (DeferredCallable(self.app_window.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
+                (lambda val: self.app_window.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
+                (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
+                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
+                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
+                (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
+        ): EventBus['settings'].subscribe(*subscribe_params)
 
         # Define layouts
         layout = QGridLayout(self)  # Main layout

@@ -14,6 +14,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from ...utils.gui import init_objects
 from .paste_line_edit import PasteLineEdit
 
 
@@ -23,9 +24,14 @@ class HistoryComboBox(QComboBox):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.setEditable(True)
-        self.setDuplicatesEnabled(False)
-        self.setLineEdit(self.line_edit_class(parent=self))
+
+        init_objects({
+            self: {
+                'editable': True,
+                'duplicatesEnabled': False,
+                'lineEdit': self.line_edit_class(parent=self)
+            }
+        })
 
     # noinspection PyTypeChecker
     def addItem(self, text: str, **kwargs) -> None:
