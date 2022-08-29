@@ -146,6 +146,7 @@ class NetworkSession:
             case 'QDateTime':
                 value = QDateTime()
                 if isinstance(old_value, (datetime.datetime, datetime.date, datetime.time)):
+
                     # Translate datetime objects to a string
                     if not isinstance(old_value, datetime.datetime):
                         date: datetime.date = datetime.datetime.now().date() if isinstance(old_value, datetime.time) else old_value
@@ -153,21 +154,25 @@ class NetworkSession:
                         old_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
 
                     old_value = old_value.isoformat()
+
                 # Translate string to QDateTime object
                 value.fromString(str(old_value), Qt.DateFormat.ISODateWithMs)
 
             case 'QNetworkCookie':
                 cookie_list: list[QNetworkCookie] = list()
                 match old_value[0] if old_value else None:
+
                     # Translate dictionaries
                     case Mapping():
                         for cookie in old_value:
                             for name, _value in cookie.items():
                                 cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
+
                     # Translate tuples, lists, etc. that contain two strings (name and value)
                     case Sequence():
                         for cookie in old_value:
                             cookie_list.append(QNetworkCookie(cookie[0].encode('utf8'), cookie[1].encode('utf8')))
+
                 value = cookie_list
 
             case 'QStringListModel':
@@ -176,6 +181,7 @@ class NetworkSession:
             case 'QUrl':
                 if not isinstance(old_value, QUrl):
                     value = QUrl(str(old_value))
+
         return value
 
     def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None) -> bool:
@@ -210,7 +216,7 @@ class NetworkSession:
 
             # 2 args -- Delete all cookies with the given domain and path.
             elif path is not None:
-                if path is None:
+                if domain is None:
                     raise ValueError('Must specify domain if specifying path')
 
                 return cookie.domain() == domain and cookie.path() == path
