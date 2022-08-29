@@ -16,7 +16,7 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
-from ...utils import init_objects
+from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
 
@@ -54,7 +54,7 @@ class FileContextMenu(QMenu):
                 'text': tr('gui.menus.file.export'),
                 'icon': app().icon_store['export'],
                 'triggered': self.export_data
-            },
+            }
         })
 
         section_map = {

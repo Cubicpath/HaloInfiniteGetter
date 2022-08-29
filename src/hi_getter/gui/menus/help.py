@@ -19,6 +19,7 @@ from PySide6.QtWidgets import *
 from ..._version import __version_info__
 from ...constants import *
 from ...models import DeferredCallable
+from ...utils.gui import init_objects
 from ...utils.package import current_requirement_versions
 from ..app import app
 from ..app import tr
@@ -51,41 +52,49 @@ class HelpContextMenu(QMenu):
         self.license_window = LicenseViewer()
         self.readme_window = ReadmeViewer()
 
-        github_view: QAction = QAction(
-            app().icon_store['github'],
-            tr('gui.menus.help.github'), self, triggered=DeferredCallable(
-                webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
-            )
-        )
+        init_objects({
+            (github_view := QAction(self)): {
+                'text': tr('gui.menus.help.github'),
+                'icon': app().icon_store['github'],
+                'triggered': DeferredCallable(
+                    webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
+                )
+            },
 
-        create_issue: QAction = QAction(
-            app().icon_store['github'],
-            tr('gui.menus.help.issue'), self, triggered=DeferredCallable(
-                webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
-            )
-        )
+            (create_issue := QAction(self)): {
+                'text': tr('gui.menus.help.issue'),
+                'icon': app().icon_store['github'],
+                'triggered': DeferredCallable(
+                    webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
+                )
+            },
 
-        about_view: QAction = QAction(
-            app().get_theme_icon('message_question') or app().icon_store['about'],
-            tr('gui.menus.help.about'), self, triggered=self.open_about
-        )
+            (about_view := QAction(self)): {
+                'text': tr('gui.menus.help.about'),
+                'icon': app().get_theme_icon('message_question') or app().icon_store['about'],
+                'triggered': self.open_about
+            },
 
-        about_qt_view: QAction = QAction(
-            app().get_theme_icon('message_question') or app().icon_store['about'],
-            tr('gui.menus.help.about_qt'), self, triggered=DeferredCallable(
-                QMessageBox(self).aboutQt, self, tr('about.qt.title')
-            )
-        )
+            (about_qt_view := QAction(self)): {
+                'text': tr('gui.menus.help.about_qt'),
+                'icon': app().get_theme_icon('message_question') or app().icon_store['about'],
+                'triggered': DeferredCallable(
+                    QMessageBox(self).aboutQt, self, tr('about.qt.title')
+                )
+            },
 
-        license_view: QAction = QAction(
-            app().icon_store['copyright'],
-            tr('gui.menus.help.license'), self, triggered=self.license_window.show
-        )
+            (license_view := QAction(self)): {
+                'text': tr('gui.menus.help.license'),
+                'icon': app().icon_store['copyright'],
+                'triggered': self.license_window.show
+            },
 
-        readme: QAction = QAction(
-            app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
-            tr('gui.menus.help.readme'), self, triggered=self.readme_window.show
-        )
+            (readme := QAction(self)): {
+                'text': tr('gui.menus.help.readme'),
+                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
+                'triggered': self.readme_window.show
+            }
+        })
 
         section_map = {
             'Github': (github_view, create_issue),

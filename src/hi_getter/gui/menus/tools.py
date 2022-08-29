@@ -16,6 +16,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...utils.gui import init_objects
 from ...utils.system import create_shortcut
 from ..app import app
 from ..app import tr
@@ -65,15 +66,19 @@ class ToolsContextMenu(QMenu):
         """Create a new :py:class:`ToolsContextMenu`."""
         super().__init__(parent)
 
-        shortcut_tool: QAction = QAction(
-            self.style().standardIcon(QStyle.SP_DesktopIcon),
-            tr('gui.menus.tools.create_shortcut'), self, triggered=create_app_shortcut
-        )
+        init_objects({
+            (shortcut_tool := QAction(self)): {
+                'text': tr('gui.menus.tools.create_shortcut'),
+                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'triggered': create_app_shortcut
+            },
 
-        exception_reporter: QAction = QAction(
-            parent.exception_reporter.logger.icon(),
-            tr('gui.menus.tools.exception_reporter'), self, triggered=parent.exception_reporter.show
-        )
+            (exception_reporter := QAction(self)): {
+                'text': tr('gui.menus.tools.exception_reporter'),
+                'icon': parent.exception_reporter.logger.icon(),
+                'triggered': parent.exception_reporter.show
+            }
+        })
 
         section_map = {
             'Tools': (shortcut_tool, exception_reporter)
