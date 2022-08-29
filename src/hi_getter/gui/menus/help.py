@@ -6,6 +6,7 @@ from __future__ import annotations
 
 __all__ = (
     'HelpContextMenu',
+    'package_versions',
 )
 
 import sys
@@ -21,6 +22,17 @@ from ...models import DeferredCallable
 from ...utils.package import current_requirement_versions
 from ..app import app
 from ..app import tr
+
+
+def package_versions() -> str:
+    """Generate the package version list for use in the about message.
+
+    :return: Package version list separated by newlines.
+    """
+    return '\n'.join(
+        tr('about.app.package_version', package, version) for
+        package, version in current_requirement_versions(HI_PACKAGE_NAME, include_extras=True).items()
+    )
 
 
 # noinspection PyArgumentList
@@ -92,19 +104,6 @@ class HelpContextMenu(QMenu):
             description_args=(
                 *__version_info__, platform(), sys.implementation.name,
                 sys.version.split('[', maxsplit=1)[0],
-                self.package_versions()
+                package_versions()
             )
-        )
-
-    @staticmethod
-    def package_versions() -> str:
-        """Generate the package version list for use in the about message.
-
-        :return: Package version list seperated by newlines.
-        """
-        return '\n'.join(
-            tr(
-                'about.app.package_version',
-                package, version
-            ) for package, version in current_requirement_versions(HI_PACKAGE_NAME, include_extras=True).items()
         )

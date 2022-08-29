@@ -37,6 +37,20 @@ from .exception_reporter import ExceptionReporter
 from .readme_viewer import ReadmeViewer
 
 
+def size_label_for(data: bytes) -> str:
+    """Return the best display unit to describe the given data's size.
+
+    Ex: Bytes, KiB, MiB, GiB, TiB
+    """
+    display_unit = 'Bytes'
+    for size_label in BYTE_UNITS:
+        if len(data) >= (BYTE_UNITS[size_label] // 2):
+            display_unit = size_label
+        else:
+            break
+    return display_unit
+
+
 # noinspection PyArgumentList
 class AppWindow(QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
@@ -443,23 +457,9 @@ class AppWindow(QMainWindow):
             else:
                 app().client.get_hi_data(search_path)
 
-    @staticmethod
-    def size_label_for(data: bytes) -> str:
-        """Return the best display unit to describe the given data's size.
-
-        Ex: Bytes, KiB, MiB, GiB, TiB
-        """
-        display_unit = 'Bytes'
-        for size_label in BYTE_UNITS:
-            if len(data) >= (BYTE_UNITS[size_label] // 2):
-                display_unit = size_label
-            else:
-                break
-        return display_unit
-
     def update_image(self, _: str, data: bytes) -> None:
         """Update the image output with the given data."""
-        display_unit: str = self.size_label_for(data)
+        display_unit: str = size_label_for(data)
         display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
 
         self.clear_picture.setDisabled(False)
@@ -483,7 +483,7 @@ class AppWindow(QMainWindow):
         self.text_output.setDisabled(False)
         self.text_output.clear()
 
-        display_unit: str = self.size_label_for(data.encode('utf8', errors='ignore'))
+        display_unit: str = size_label_for(data.encode('utf8', errors='ignore'))
         display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
 
         # Load up to 8 MiB of text data

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'create_app_shortcut',
     'ToolsContextMenu',
 )
 
@@ -20,6 +21,42 @@ from ..app import app
 from ..app import tr
 
 
+def create_app_shortcut() -> None:
+    """Create shortcut for starting program."""
+    exec_path = Path(sys.executable)
+
+    desktop_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_desktop'))
+    start_menu_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_start_menu'))
+    both_button = QPushButton(tr('gui.menus.tools.create_shortcut.both'))
+
+    # Show dialog, return early if user presses cancel
+    if (response := app().show_dialog(
+        'questions.create_shortcut', None, [
+                (desktop_button, QMessageBox.AcceptRole),
+                (start_menu_button, QMessageBox.AcceptRole),
+                (both_button, QMessageBox.AcceptRole),
+                QMessageBox.StandardButton.Cancel
+        ], default_button=QMessageBox.StandardButton.Cancel
+    )).role == QMessageBox.RejectRole:
+        return
+
+    # If response is affirmative, mark which shortcuts to create
+    do_desktop = response.button == desktop_button or response.button == both_button
+    do_start_menu = response.button == start_menu_button or response.button == both_button
+
+    # Get the windowless Python executable name (append w)
+    name = exec_path.with_suffix('').name
+    if not name.endswith('w'):
+        name += 'w'
+    shortcut_path = exec_path.with_name(f'{name}{exec_path.suffix}')
+
+    # Create shortcut to launch this package, with proper kwargs
+    create_shortcut(target=shortcut_path, arguments=f'-m {HI_PACKAGE_NAME}',
+                    name=tr('app.name'), description=tr('app.description'),
+                    icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False,
+                    desktop=do_desktop, start_menu=do_start_menu)
+
+
 # noinspection PyArgumentList
 class ToolsContextMenu(QMenu):
     """Context menu for tools."""
@@ -30,7 +67,7 @@ class ToolsContextMenu(QMenu):
 
         shortcut_tool: QAction = QAction(
             self.style().standardIcon(QStyle.SP_DesktopIcon),
-            tr('gui.menus.tools.create_shortcut'), self, triggered=self.create_app_shortcut
+            tr('gui.menus.tools.create_shortcut'), self, triggered=create_app_shortcut
         )
 
         exception_reporter: QAction = QAction(
@@ -45,35 +82,3 @@ class ToolsContextMenu(QMenu):
         for section, actions in section_map.items():
             self.addSection(section)
             self.addActions(actions)
-
-    @staticmethod
-    def create_app_shortcut() -> None:
-        """Create shortcut for starting program."""
-        exec_path = Path(sys.executable)
-
-        desktop_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_desktop'))
-        start_menu_button = QPushButton(tr('gui.menus.tools.create_shortcut.only_start_menu'))
-        both_button = QPushButton(tr('gui.menus.tools.create_shortcut.both'))
-
-        if (response := app().show_dialog(
-            'questions.create_shortcut', None, [
-                    (desktop_button, QMessageBox.AcceptRole),
-                    (start_menu_button, QMessageBox.AcceptRole),
-                    (both_button, QMessageBox.AcceptRole),
-                    QMessageBox.StandardButton.Cancel
-            ], default_button=QMessageBox.StandardButton.Cancel
-        )).role == QMessageBox.RejectRole:
-            return
-
-        do_desktop = response.button == desktop_button or response.button == both_button
-        do_start_menu = response.button == start_menu_button or response.button == both_button
-
-        name = exec_path.with_suffix('').name
-        if not name.endswith('w'):
-            name += 'w'
-        shortcut_path = exec_path.with_name(f'{name}{exec_path.suffix}')
-
-        create_shortcut(target=shortcut_path, arguments=f'-m {HI_PACKAGE_NAME}',
-                        name=tr('app.name'), description=tr('app.description'),
-                        icon=HI_RESOURCE_PATH / 'icons/hi.ico', terminal=False,
-                        desktop=do_desktop, start_menu=do_start_menu)
