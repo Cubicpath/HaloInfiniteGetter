@@ -68,8 +68,8 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
         :param __callable: Callable to store for later execution.
         :param args: positional arguments to store
         :param _extra_pos_args: Extra positional arguments to expect with self.run.
-        :param _call_funcs: Whether to call non-type callables
-        :param _call_types: Whether to call class constructors
+        :param _call_funcs: Whether to call (non-type) callable arguments
+        :param _call_types: Whether to call class constructor arguments
         :param kwargs: keyword arguments to store
         """
         self._extra_pos_args:   int = _extra_pos_args

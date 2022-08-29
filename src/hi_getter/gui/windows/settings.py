@@ -40,7 +40,7 @@ class SettingsWindow(QWidget):
         self.resize(size)
         self.setFixedWidth(self.width())
 
-        # Create a tr DeferredCallable with every tuple acting as arguments.
+        # Show an error dialog on import failure
         EventBus['settings'].subscribe(
             DeferredCallable(app().show_dialog, 'errors.settings.import_failure', self, description_args=(app().settings.path,)),
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import'
