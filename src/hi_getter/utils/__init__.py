@@ -10,14 +10,22 @@ __all__ = (
     'current_requirement_licenses',
     'current_requirement_names',
     'current_requirement_versions',
+    'decode_url',
     'delete_layout_widgets',
+    'dict_to_cookie_list',
+    'dict_to_query',
     'dump_data',
+    'encode_url_params',
     'get_parent_doc',
+    'guess_json_utf',
     'has_package',
     'hide_windows_file',
+    'http_code_map',
     'icon_from_bytes',
     'init_objects',
+    'is_error_status',
     'patch_windows_taskbar_icon',
+    'query_to_dict',
     'quote_str',
     'return_arg',
     'scroll_to_top',
@@ -36,6 +44,14 @@ from .gui import icon_from_bytes
 from .gui import init_objects
 from .gui import scroll_to_top
 from .gui import set_or_swap_icon
+from .network import decode_url
+from .network import dict_to_cookie_list
+from .network import dict_to_query
+from .network import encode_url_params
+from .network import guess_json_utf
+from .network import http_code_map
+from .network import is_error_status
+from .network import query_to_dict
 from .package import current_requirement_licenses
 from .package import current_requirement_names
 from .package import current_requirement_versions

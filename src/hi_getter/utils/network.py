@@ -25,7 +25,7 @@ from PySide6.QtNetwork import *
 
 # pylint: disable=not-an-iterable
 http_code_map = {status.value: (status.phrase, status.description) for status in HTTPStatus}
-for _code, _description in {
+for _value, _description in {
         400: 'Your search path has malformed syntax or bad characters.',
         401: 'No permission -- Your API token is most likely invalid.',
         403: 'Request forbidden -- You cannot get this resource with or without an API token.',
@@ -33,8 +33,8 @@ for _code, _description in {
         405: 'Invalid method -- GET requests are not accepted for this resource.',
         406: 'Client does not support the given resource format.',
 }.items():
-    http_code_map[_code] = (http_code_map[_code][0], _description)
-    del _code, _description
+    http_code_map[_value] = (http_code_map[_value][0], _description)
+    del _value, _description
 
 
 def dict_to_cookie_list(cookie_values: dict[str, str]) -> list[QNetworkCookie]:
