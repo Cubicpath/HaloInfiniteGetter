@@ -6,6 +6,7 @@ from __future__ import annotations
 
 __all__ = (
     'ExceptionReporter',
+    'format_tb',
 )
 
 import traceback

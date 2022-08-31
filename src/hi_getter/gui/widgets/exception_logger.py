@@ -6,6 +6,7 @@ from __future__ import annotations
 
 __all__ = (
     'ExceptionLogger',
+    'LoggedException',
 )
 
 from datetime import datetime
@@ -17,14 +18,6 @@ from PySide6.QtWidgets import *
 from ...events import EventBus
 from ...exceptions import ExceptionEvent
 from ..app import tr
-
-
-class _LoggedException(NamedTuple):
-    """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
-    severity:  int | None = None
-    exception: Exception | None = None
-    traceback: TracebackType | None = None
-    timestamp: datetime | None = None
 
 
 # noinspection PyArgumentList
@@ -45,7 +38,7 @@ class ExceptionLogger(QPushButton):
         EventBus['exceptions'].subscribe(self.on_exception, ExceptionEvent)
 
         self.label:          QLabel = QLabel(self)
-        self.exception_log:  list[_LoggedException] = []
+        self.exception_log:  list[LoggedException] = []
         self.reporter:       ExceptionReporter = ExceptionReporter(self)
         self.severity:       int = 0
 
@@ -79,7 +72,7 @@ class ExceptionLogger(QPushButton):
         if self.severity < level:
             self.severity = level
 
-        self.exception_log.append(_LoggedException(level, event.exception, event.traceback, datetime.now()))
+        self.exception_log.append(LoggedException(level, event.exception, event.traceback, datetime.now()))
         self.sort_exceptions()
 
         logged = len(self.exception_log)
@@ -104,3 +97,11 @@ class ExceptionLogger(QPushButton):
         self._severity = value
         self.setIcon(self.style().standardIcon(self.level_icon_list[self.severity]))
         self.reporter.setWindowIcon(self.icon())
+
+
+class LoggedException(NamedTuple):
+    """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
+    severity:  int | None = None
+    exception: Exception | None = None
+    traceback: TracebackType | None = None
+    timestamp: datetime | None = None
