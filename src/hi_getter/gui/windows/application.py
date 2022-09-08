@@ -55,7 +55,6 @@ def size_label_for(size: int) -> str:
 # noinspection PyArgumentList
 class AppWindow(QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
-
     shown_key_warning: bool = False
 
     def __init__(self, size: QSize) -> None:

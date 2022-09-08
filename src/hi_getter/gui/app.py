@@ -99,10 +99,12 @@ class GetterApp(QApplication):
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker
-    def __init__(self, argv: Sequence[str]) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Create a new app with the given arguments and settings."""
-        super().__init__(argv)
-        self.load_env(verbose=True)  # Must load .env before Client is instantiated
+        from .windows import AppWindow
+
+        super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
+        self.load_env(verbose=True)   # Must load .env before Client is instantiated
 
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
@@ -131,6 +133,13 @@ class GetterApp(QApplication):
 
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
+
+        SIZE: Final[QSize] = QSize(
+            # Size to use, with a minimum of 100x100.
+            max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
+            max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
+        )
+        self.main_window: AppWindow = AppWindow(SIZE)
 
     @classmethod
     def instance(cls) -> GetterApp:
@@ -424,9 +433,3 @@ class GetterApp(QApplication):
         """List of themes sorted by their display name."""
         # noinspection PyTypeChecker
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)
-
-    @staticmethod
-    def quit() -> None:
-        """Quit the application."""
-        app().client.deleteLater()
-        QApplication.quit()

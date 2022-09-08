@@ -30,10 +30,10 @@ from .application import AppWindow
 class SettingsWindow(QWidget):
     """Window that provides user interaction with the application's settings."""
 
-    def __init__(self, parent: AppWindow, size: QSize) -> None:
+    def __init__(self, app_window: AppWindow, size: QSize) -> None:
         """Create a new settings window. Should only have one instance."""
         super().__init__()
-        self.app_window = parent
+        self.app_window = app_window
 
         self.setWindowTitle(tr('gui.settings.title'))
         self.setWindowIcon(app().icon_store['settings'])
