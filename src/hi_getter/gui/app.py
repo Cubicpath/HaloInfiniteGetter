@@ -119,6 +119,8 @@ class GetterApp(QApplication):
     def __init__(self, argv: Sequence[str]) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(argv)
+        self.load_env(verbose=True)  # Must load .env before Client is instantiated
+
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
