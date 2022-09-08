@@ -50,15 +50,14 @@ def current_requirement_licenses(package: str, recursive: bool = False, include_
         ]
 
         # If the distribution has no 'License' field, get the distribution's Trove classifier
-        dist_license: str = metadata(name).get('License')
-        if not dist_license:
+        if not (dist_license := metadata(name).get('License')):
             for classifier in metadata(name).get_all('Classifier'):
                 if classifier.startswith('License'):
                     # Ex: 'License :: OSI Approved :: MIT License'
                     dist_license = classifier.split('::')[-1].strip()
                     break
 
-        # If there are multiple license/notice files, the title contains the filename.
+        # If there are multiple license/notice files, the title contains the filename
         for file in license_files:
             license_name: str = dist_license if len(license_files) == 1 else f'{dist_license} - {file.name}'
             licenses.append((license_name, file.read_text(encoding='utf8')))
@@ -81,10 +80,10 @@ def current_requirement_names(package: str, recursive: bool = False, include_ext
 
     req_names: set[str] = set()
     try:
-        # Get the requirements for the given package, translating None to an empty tuple to allow iteration.
-        requirements = requires(package) or ()
+        # Get the requirements for the given package, translating None to an empty tuple to allow iteration
+        requirements: list[str] = requires(package) or []
     except PackageNotFoundError:
-        # If the package is not installed, return an empty list.
+        # If the package is not installed, return an empty list
         return []
 
     for requirement in requirements:
@@ -95,18 +94,24 @@ def current_requirement_names(package: str, recursive: bool = False, include_ext
         if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
             continue
 
-        # Get the requirement's name
-        split_pos: int = 0
+        # Get the package name from the requirement
+        # If no version identifier, assume the requirement string is the package name
+        name:        str = requirement
+        has_version: bool = False
+        split_pos:   int = 0
         for split_pos, char in enumerate(requirement):
             if not char.isalnum() and char not in ('-', '_'):
+                has_version = True
                 break
-        name = requirement[:split_pos]
+
+        if has_version:
+            name = requirement[:split_pos]
 
         req_names.add(name)
         if recursive:
-            req_names.update(current_requirement_names(requirement[:split_pos], recursive, include_extras))
+            req_names.update(current_requirement_names(name, recursive, include_extras))
 
-    return sorted(req_names, key=lambda req: req.lower())
+    return sorted(req_names, key=str.lower)
 
 
 def current_requirement_versions(package: str, recursive: bool = False, include_extras: bool = False) -> dict[str, str]:
@@ -125,7 +130,7 @@ def current_requirement_versions(package: str, recursive: bool = False, include_
 def has_package(package: str) -> bool:
     """Check if the given package is available.
 
-    :param package: Package name to search; hyphen-insensitive
+    :param package: Package name to search; hyphen-insensitive.
     :return: Whether the given package name is installed to the current environment.
     """
     from pkg_resources import WorkingSet
