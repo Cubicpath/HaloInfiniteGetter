@@ -67,23 +67,6 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
     return app().translator(key, *args, **kwargs)
 
 
-def _create_paths() -> None:
-    """Create files and directories if they do not exist."""
-    for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
-        if not dir_path.is_dir():
-            dir_path.mkdir(parents=True)
-
-    if not _LAUNCHED_FILE.is_file():
-        # Create first-launch marker
-        _LAUNCHED_FILE.touch()
-        hide_windows_file(_LAUNCHED_FILE)
-
-    if not _SETTINGS_FILE.is_file():
-        # Write default_settings to user's SETTINGS_FILE
-        with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
-            toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
-
-
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
     button: QAbstractButton = QMessageBox.NoButton
@@ -123,6 +106,9 @@ class GetterApp(QApplication):
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
 
+        # Create all files/directories that are needed for the app to run
+        self._create_paths()
+
         self.client:          Client = Client(self)
         self.icon_store:      dict[str, QIcon] = {}
         self.session:         NetworkSession = NetworkSession(self)
@@ -159,6 +145,22 @@ class GetterApp(QApplication):
         This is determined by checking if the .LAUNCHED file exists in the user's config folder.
         """
         return self._first_launch
+
+    def _create_paths(self) -> None:
+        """Create files and directories if they do not exist."""
+        for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
+            if not dir_path.is_dir():
+                dir_path.mkdir(parents=True)
+
+        if self.first_launch:
+            # Create first-launch marker
+            _LAUNCHED_FILE.touch()
+            hide_windows_file(_LAUNCHED_FILE)
+
+        if not _SETTINGS_FILE.is_file():
+            # Write default_settings to user's SETTINGS_FILE
+            with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
+                toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
 
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""
