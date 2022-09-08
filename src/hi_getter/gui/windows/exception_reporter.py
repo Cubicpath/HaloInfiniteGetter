@@ -131,8 +131,7 @@ class ExceptionReporter(QWidget):
         """Report the current exception to the exception logger."""
         exc_name: str = type(self.logger.exception_log[self.selected].exception).__name__
         exc_msg:  str = str(self.logger.exception_log[self.selected].exception).rstrip(".")
-        exc_tb:   str = format_tb(self.logger.exception_log[self.selected].traceback).strip()
-        exc_tb.replace(getuser(), '%USERNAME%')  # Hide the username in the traceback
+        exc_tb:   str = format_tb(self.logger.exception_log[self.selected].traceback).strip().replace(getuser(), '%USERNAME%')
         base:     str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params:   dict[str, str] = {
             'template': 'bug-report.yaml',
