@@ -30,8 +30,6 @@ def main(*args, **kwargs) -> int:
 
     with ExceptionHook():
         APP:        Final[GetterApp] = GetterApp(list(args))
-        APP.load_env(verbose=True)
-
         SIZE:       Final[QSize] = QSize(
             # Size to use, with a minimum of 100x100.
             max(kwargs.pop('x_size', APP.settings['gui/window/x_size']), 100),
