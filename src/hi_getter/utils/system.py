@@ -165,7 +165,6 @@ def create_shortcut(target: Path, arguments: str | None = None,
         ):
             if do:
                 # Create the directory if it doesn't exist
-                path = get_desktop_path()
                 if not path.is_dir():
                     path.mkdir(parents=True)
 
