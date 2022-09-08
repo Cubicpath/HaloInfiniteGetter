@@ -226,7 +226,7 @@ class Language:
             raise ValueError(str(err)[:-1] + f' in language tag "{self.tag}".') from err
 
         for lang_file in LANG_PATH.iterdir():
-            if lang_file.suffix == '.json' and lang_file.with_suffix('').name.lower() == self.tag.replace('-', '_').lower():
+            if lang_file.suffix == '.json' and lang_file.stem.lower() == self.tag.replace('-', '_').lower():
                 # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
 
                 # Read the language file corresponding to this Language's tags.

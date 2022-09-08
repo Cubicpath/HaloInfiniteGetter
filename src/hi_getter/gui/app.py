@@ -347,7 +347,7 @@ class GetterApp(QApplication):
         """
         # Load locally stored icons
         self.icon_store.update({
-            filename.with_suffix('').name: QIcon(str(filename)) for
+            filename.stem: QIcon(str(filename)) for
             filename in (HI_RESOURCE_PATH / 'icons').iterdir() if filename.is_file()
         })
 
@@ -407,11 +407,12 @@ class GetterApp(QApplication):
                 for theme_resource in path.iterdir():
                     if theme_resource.is_file():
                         if theme_resource.name == 'stylesheet.qss':
+                            # Load stylesheet file
                             theme['id'] = id
                             theme['style'] = theme_resource.read_text(encoding='utf8')
                         elif theme_resource.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
                             # Load all images in the theme directory into the icon store.
-                            self.icon_store[f'hi_theme+{id}+{theme_resource.with_suffix("").name}'] = QIcon(str(theme_resource.resolve()))
+                            self.icon_store[f'hi_theme+{id}+{theme_resource.stem}'] = QIcon(str(theme_resource.resolve()))
 
                 Theme(**theme)
 

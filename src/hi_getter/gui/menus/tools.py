@@ -46,10 +46,8 @@ def create_app_shortcut() -> None:
     do_start_menu = response.button == start_menu_button or response.button == both_button
 
     # Get the windowless Python executable name (append w)
-    name = exec_path.with_suffix('').name
-    if not name.endswith('w'):
-        name += 'w'
-    shortcut_path = exec_path.with_name(f'{name}{exec_path.suffix}')
+    name = exec_path.stem
+    shortcut_path = exec_path.with_stem(name if name.endswith('w') else name + 'w')
 
     # Create shortcut to launch this package, with proper kwargs
     create_shortcut(target=shortcut_path, arguments=f'-m {HI_PACKAGE_NAME}',
