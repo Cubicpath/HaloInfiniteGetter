@@ -75,6 +75,7 @@ def is_error_status(status: int) -> bool:
 # Requests
 # Copyright 2019 Kenneth Reitz
 # Apache 2.0 License
+# https://github.com/psf/requests/blob/main/LICENSE
 
 
 # Null bytes; no need to recreate these on each call to guess_json_utf

@@ -21,11 +21,11 @@ from warnings import warn
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
 
+from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
 from ..utils.network import dict_to_query
 from ..utils.network import encode_url_params
 from ..utils.network import query_to_dict
-from .structures import CaseInsensitiveDict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 _StringPair:           TypeAlias = dict[str, str] | list[tuple[str, str]]
