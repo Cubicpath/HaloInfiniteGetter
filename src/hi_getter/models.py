@@ -8,6 +8,7 @@ __all__ = (
     'CaseInsensitiveDict',
     'DeferredCallable',
     'DistributedCallable',
+    'Singleton',
 )
 
 from abc import ABC
@@ -29,6 +30,46 @@ _PT = TypeVar('_PT')  # Positional Arguments
 _KT = TypeVar('_KT')  # Keyword Arguments
 _PTCallable: TypeAlias = Callable[[], _PT]  # Which returns _PT
 _KTCallable: TypeAlias = Callable[[], _KT]  # Which returns _KT
+
+
+class Singleton(ABC):
+    """A type which can only support one object instance.
+
+    Once instantiated, attempting to instantiate another :py:class:`Singleton` object will raise a :py:class:`RuntimeError`.
+
+    You can access the :py:class:`Singleton` instance from the class definition by using the Singleton.instance() class method.
+    Attempting to use Singleton.instance() before the :py:class:`Singleton` is created will also raise a :py:class:`RuntimeError`.
+    """
+    # Singleton._instance is never used, all subclasses have their own _instance class attribute.
+    _instance: Singleton | None = None
+
+    def __init__(self) -> None:
+        super().__init__()
+        cls = self.__class__
+
+        # ABC LOGIC
+        if cls is Singleton:
+            raise TypeError(f'Cannot directly instantiate abstract class {cls.__name__}.')
+
+        # SINGLETON LOGIC
+        if cls._instance is not None:
+            raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
+        else:
+            cls._instance = self
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+
+        # Ensure that the class instance is set to None for all subclasses
+        cls._instance: Singleton | None = None
+
+    @classmethod
+    def instance(cls) -> Singleton:
+        """Return the singleton instance."""
+        o: Singleton | None = cls._instance
+        if o is None:
+            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
+        return o
 
 
 class _AbstractCallable(ABC):
