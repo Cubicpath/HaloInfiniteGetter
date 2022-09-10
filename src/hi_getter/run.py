@@ -27,7 +27,7 @@ def main(*args, **kwargs) -> int:
     # ExceptionHook is required for subscribing to ExceptionEvents
     with ExceptionHook():
         APP: Final[GetterApp] = GetterApp(*args, **kwargs)
-        APP.main_window.show()
+        APP.windows['app'].show()
         return APP.exec()
 
 

@@ -26,6 +26,7 @@ from ...events import EventBus
 from ...exceptions import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
+from ...tomlfile import TomlEvents
 from ...utils.gui import init_objects
 from ...utils.gui import scroll_to_top
 from ...utils.network import decode_url
@@ -59,8 +60,6 @@ class AppWindow(QMainWindow):
 
     def __init__(self, size: QSize) -> None:
         """Create the window for the application."""
-        from .settings import SettingsWindow
-
         super().__init__()
         app().client.receivedError.connect(self.update_error)
         app().client.receivedData.connect(self.update_image)
@@ -71,7 +70,10 @@ class AppWindow(QMainWindow):
         self.change_title(tr('app.name') + f' v{__version__}')
         self.resize(size)
 
-        self.settings_window = SettingsWindow(self, QSize(420, 600))
+        for subscribe_params in (
+                (DeferredCallable(self.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
+                (lambda val: self.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
+        ): EventBus['settings'].subscribe(*subscribe_params)
 
         self.exception_reporter:  ExceptionReporter
         self.input_field:         HistoryComboBox
@@ -93,6 +95,7 @@ class AppWindow(QMainWindow):
 
     def _init_toolbar(self) -> None:
         """Initialize toolbar widgets."""
+        from .settings import SettingsWindow
 
         def context_menu_handler(menu_class: type[QMenu]) -> None:
             """Create a new :py:class:`QMenu` and show it at the cursor's position."""
@@ -120,9 +123,9 @@ class AppWindow(QMainWindow):
             (settings := QAction(self)): {
                 'menuRole': QAction.MenuRole.PreferencesRole,
                 'triggered': DistributedCallable((
-                    self.settings_window.show,
-                    self.settings_window.activateWindow,
-                    self.settings_window.raise_
+                    SettingsWindow.instance().show,
+                    SettingsWindow.instance().activateWindow,
+                    SettingsWindow.instance().raise_
                 ))
             },
 

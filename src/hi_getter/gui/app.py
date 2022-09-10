@@ -94,7 +94,7 @@ class Theme:
 class GetterApp(QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
 
-    :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() method or the app() function.
+    :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() class method or the app() function.
     """
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
@@ -102,6 +102,7 @@ class GetterApp(QApplication):
     def __init__(self, *args, **kwargs) -> None:
         """Create a new app with the given arguments and settings."""
         from .windows import AppWindow
+        from .windows import SettingsWindow
 
         super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
         self.load_env(verbose=True)   # Must load .env before Client is instantiated
@@ -109,6 +110,7 @@ class GetterApp(QApplication):
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
+        self._windows: dict[str, QWidget] = {}
 
         # Create all files/directories that are needed for the app to run
         self._create_paths()
@@ -134,12 +136,13 @@ class GetterApp(QApplication):
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
 
-        SIZE: Final[QSize] = QSize(
+        # Create Windows
+        self._windows['settings'] = SettingsWindow(QSize(420, 600))
+        self._windows['app'] = AppWindow(QSize(
             # Size to use, with a minimum of 100x100.
             max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
             max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
-        )
-        self.main_window: AppWindow = AppWindow(SIZE)
+        ))
 
     @classmethod
     def instance(cls) -> GetterApp:
@@ -156,6 +159,15 @@ class GetterApp(QApplication):
         This is determined by checking if the .LAUNCHED file exists in the user's config folder.
         """
         return self._first_launch
+
+    @property
+    def windows(self) -> dict[str, QWidget]:
+        """Return a copy of the self._windows dictionary.
+
+        :return:
+        """
+
+        return self._windows.copy()
 
     def _create_paths(self) -> None:
         """Create files and directories if they do not exist."""

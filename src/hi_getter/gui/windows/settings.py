@@ -23,17 +23,27 @@ from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
 from ..widgets import PasteLineEdit
-from .application import AppWindow
 
 
 # noinspection PyArgumentList
 class SettingsWindow(QWidget):
-    """Window that provides user interaction with the application's settings."""
+    """Window that provides user interaction with the application's settings.
 
-    def __init__(self, app_window: AppWindow, size: QSize) -> None:
-        """Create a new settings window. Should only have one instance."""
+    :py:class:`SettingsWindow` is a singleton and can be accessed via the class using the SettingsWindow.instance() class method.
+    """
+    _instance: SettingsWindow | None = None
+
+    def __init__(self, size: QSize) -> None:
+        """Create the settings window."""
+        # SINGLETON LOGIC
+        cls = self.__class__
+        if cls._instance is not None:
+            raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
+        else:
+            cls._instance = self
+
+        # NORMAL LOGIC
         super().__init__()
-        self.app_window = app_window
 
         self.setWindowTitle(tr('gui.settings.title'))
         self.setWindowIcon(app().icon_store['settings'])
@@ -241,8 +251,6 @@ class SettingsWindow(QWidget):
         })
 
         for subscribe_params in (
-                (DeferredCallable(self.app_window.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
-                (lambda val: self.app_window.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
                 (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
                 (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
                 (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
@@ -300,6 +308,14 @@ class SettingsWindow(QWidget):
         self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])
         self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])
         self.theme_dropdown.setCurrentIndex(app().theme_index_map[app().settings['gui/themes/selected']])
+
+    @classmethod
+    def instance(cls) -> SettingsWindow:
+        """Return the singleton instance of :py:class:`SettingsWindow`."""
+        o: SettingsWindow | None = cls._instance
+        if o is None:
+            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
+        return o
 
     # # # # # Events
 
