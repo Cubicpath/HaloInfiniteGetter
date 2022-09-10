@@ -43,13 +43,6 @@ _DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
 _LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
 _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
-# Read default settings file
-DEFAULT_SETTINGS: Final[TomlTable] = toml.loads(
-    _DEFAULTS_FILE.read_text(encoding='utf8').replace(
-        '{HI_RESOURCE_PATH}', str(HI_RESOURCE_PATH.resolve()).replace('\\', '\\\\')
-    ), decoder=PathTomlDecoder()
-)
-
 
 def app() -> GetterApp:
     """:return: GetterApp.instance()"""
@@ -110,6 +103,7 @@ class GetterApp(QApplication):
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
+        self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
         self._windows: dict[str, QWidget] = {}
 
         # Create all files/directories that are needed for the app to run
@@ -118,7 +112,7 @@ class GetterApp(QApplication):
         self.client:          Client = Client(self)
         self.icon_store:      dict[str, QIcon] = {}
         self.session:         NetworkSession = NetworkSession(self)
-        self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=DEFAULT_SETTINGS)
+        self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
         self.themes:          dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
         self.translator:      Translator = Translator(self.settings['language'])
@@ -183,7 +177,7 @@ class GetterApp(QApplication):
         if not _SETTINGS_FILE.is_file():
             # Write default_settings to user's SETTINGS_FILE
             with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
-                toml.dump(DEFAULT_SETTINGS, file, encoder=PathTomlEncoder())
+                toml.dump(self._setting_defaults, file, encoder=PathTomlEncoder())
 
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""
