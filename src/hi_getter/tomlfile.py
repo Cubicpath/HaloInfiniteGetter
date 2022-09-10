@@ -56,7 +56,7 @@ class TomlEvents:
 
     class File(TomlEvent):
         """Accessing a File on disk."""
-        __slots__ = ('toml_file', 'path')
+        __slots__ = ('path',)
 
         def __init__(self, toml_file: TomlFile, path: Path) -> None:
             super().__init__(toml_file=toml_file)
@@ -64,15 +64,15 @@ class TomlEvents:
 
     class Import(File):
         """Loading a TomlFile."""
-        __slots__ = ('toml_file', 'path')
+        __slots__ = ()
 
     class Export(File):
         """Exporting a TomlFile to disk"""
-        __slots__ = ('toml_file', 'path')
+        __slots__ = ()
 
     class KeyAccess(TomlEvent):
         """A key's value is accessed."""
-        __slots__ = ('toml_file', 'key')
+        __slots__ = ('key',)
 
         def __init__(self, toml_file: TomlFile, key: str) -> None:
             super().__init__(toml_file=toml_file)
@@ -80,7 +80,7 @@ class TomlEvents:
 
     class Get(KeyAccess):
         """Value is given."""
-        __slots__ = ('toml_file', 'key', 'value')
+        __slots__ = ('value',)
 
         def __init__(self, toml_file: TomlFile, key: str, value: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
@@ -88,7 +88,7 @@ class TomlEvents:
 
     class Set(KeyAccess):
         """Value is set."""
-        __slots__ = ('toml_file', 'key', 'old', 'new')
+        __slots__ = ('old', 'new')
 
         def __init__(self, toml_file: TomlFile, key: str, old: TomlValue, new: TomlValue) -> None:
             super().__init__(toml_file=toml_file, key=key)
@@ -97,7 +97,7 @@ class TomlEvents:
 
     class Fail(TomlEvent):
         """General Failure."""
-        __slots__ = ('toml_file', 'failure',)
+        __slots__ = ('failure',)
 
         def __init__(self, toml_file: TomlFile, failure: str) -> None:
             super().__init__(toml_file=toml_file)
