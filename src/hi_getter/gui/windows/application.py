@@ -38,14 +38,14 @@ from ..widgets import *
 from .exception_reporter import ExceptionReporter
 
 
-def size_label_for(size: int) -> str:
+def size_label_for(num: int) -> str:
     """Return the best display unit to describe the given data's size.
 
     Ex: Bytes, KiB, MiB, GiB, TiB
     """
     display_unit = 'Bytes'
-    for size_label in BYTE_UNITS:
-        if size >= (BYTE_UNITS[size_label] // 2):
+    for size_label, size in BYTE_UNITS.items():
+        if num >= (size // 2):
             display_unit = size_label
         else:
             break

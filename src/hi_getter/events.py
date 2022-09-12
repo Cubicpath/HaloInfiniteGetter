@@ -29,16 +29,16 @@ class Event:
     __slots__ = ()
 
     def __repr__(self) -> str:
-        values = {attr: val for attr, val in ((attr, getattr(self, attr)) for attr in self.__slots__)}
+        values = {attr: getattr(self, attr) for attr in self.__slots__}
         return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
 
     def __rshift__(self, __bus: EventBus, /) -> None:
         """Syntax sugar for __bus.fire(event)"""
-        __bus.fire(event=self)
+        return __bus.fire(event=self)
 
     def __rlshift__(self, __bus: EventBus, /) -> None:
         """Right shift if the EventBus.__lshift__ dunder is not working."""
-        self >> __bus
+        return self >> __bus
 
     @property
     def name(self) -> str:
@@ -171,7 +171,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
 
     def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
         """Syntax sugar for self.fire(event)"""
-        self.fire(__event)
+        return self.fire(__event)
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'

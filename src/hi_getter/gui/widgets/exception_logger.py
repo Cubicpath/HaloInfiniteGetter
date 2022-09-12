@@ -69,8 +69,8 @@ class ExceptionLogger(QPushButton):
             level = 1
         else:
             level = 2
-        if self.severity < level:
-            self.severity = level
+
+        self.severity = max(self.severity, level)
 
         self.exception_log.append(LoggedException(level, event.exception, event.traceback, datetime.now()))
         self.sort_exceptions()

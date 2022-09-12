@@ -94,6 +94,11 @@ enable = [
     "literal-comparison",           # R0123
     "comparison-with-itself",       # R0124
     "consider-using-ternary",       # R1706
+    "consider-using-in",            # R1714
+    "unnecessary-comprehension",    # R1721
+    "consider-using-min-builtin",   # R1730
+    "consider-using-max-builtin",   # R1731
+    "use-list-literal",             # R1734
     "use-dict-literal",             # R1735
 ]
 

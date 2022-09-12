@@ -246,7 +246,7 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
     """
     __slots__ = ('callables', 'args', 'kwargs')
 
-    def __init__(self, __callables: _CT = (), *args: _PT, **kwargs: _KT) -> None:
+    def __init__(self, __callables: _CT = (), /, *args: _PT, **kwargs: _KT) -> None:
         """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs.
 
         _CT is a Type Generic containing a :py:class:`Collection` of callables.
@@ -265,7 +265,8 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
 
         :return: The results of each callable, packaged in a tuple.
         """
-        return tuple(func(*self.args, **self.kwargs) for func in self.callables)
+        results = tuple(func(*self.args, **self.kwargs) for func in self.callables)
+        return results
 
     def generate(self, *args, **kwargs) -> Generator[Any]:
         """Run all stored :py:class:`Callable`'s with the given extra arguments. Yielding every result.

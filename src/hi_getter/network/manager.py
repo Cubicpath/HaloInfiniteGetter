@@ -159,7 +159,7 @@ class NetworkSession:
                 value.fromString(str(old_value), Qt.DateFormat.ISODateWithMs)
 
             case 'QNetworkCookie':
-                cookie_list: list[QNetworkCookie] = list()
+                cookie_list: list[QNetworkCookie] = []
                 match old_value[0] if old_value else None:
 
                     # Translate dictionaries
@@ -215,19 +215,18 @@ class NetworkSession:
                 return cookie.name().toStdString() == name and cookie.domain() == domain and cookie.path() == path
 
             # 2 args -- Delete all cookies with the given domain and path.
-            elif path is not None:
+            if path is not None:
                 if domain is None:
                     raise ValueError('Must specify domain if specifying path')
 
                 return cookie.domain() == domain and cookie.path() == path
 
             # 1 arg -- Delete all cookies in the given domain.
-            elif domain is not None:
+            if domain is not None:
                 return cookie.domain() == domain
 
             # 0 args -- Delete all cookies
-            else:
-                return True
+            return True
 
         results = []
         for _cookie in self.manager.cookieJar().allCookies():
@@ -323,8 +322,7 @@ class NetworkSession:
         # Translate dictionary-compatible tuple pair lists to dictionaries
         # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
         for tuple_list in ('params', 'data', 'headers', 'cookies', 'proxies'):
-            if isinstance(vars()[tuple_list], list):
-                vars()[tuple_list] = {key: value for key, value in vars()[tuple_list]}
+            vars()[tuple_list] = dict(vars()[tuple_list])
 
         request_url:     QUrl = QUrl(url)                                              # Ensure url is of type QUrl
         request_params:  dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument

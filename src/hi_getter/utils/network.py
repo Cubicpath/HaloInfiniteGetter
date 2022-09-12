@@ -45,24 +45,24 @@ def dict_to_cookie_list(cookie_values: dict[str, str]) -> list[QNetworkCookie]:
     ) for name, value in cookie_values.items()]
 
 
+# noinspection PyTypeChecker
 def dict_to_query(params: dict[str, str]) -> QUrlQuery:
     """Transforms a param name and value pair into a :py:class:`QUrlQuery` object."""
     query = QUrlQuery()
-    query.setQueryItems([(key, value) for key, value in params.items()])
+    query.setQueryItems(list(params.items()))
     return query
 
 
+# noinspection PyTypeChecker
 def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
     """Translate a query string with the format of QUrl.query() to a dictionary representation."""
     if isinstance(query, QUrlQuery):
         query = query.query()
     query = query.lstrip('?')
 
-    return {} if not query else {
-        key: value for key, value in (
-            pair.split('=') for pair in query.split('&')
-        )
-    }
+    return {} if not query else dict(
+        pair.split('=') for pair in query.split('&')
+    )
 
 
 def is_error_status(status: int) -> bool:

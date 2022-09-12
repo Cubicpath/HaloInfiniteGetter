@@ -42,13 +42,7 @@ class HelpContextMenu(QMenu):
 
     def __init__(self, parent) -> None:
         """Create a new :py:class:`HelpContextMenu`."""
-        from ..windows import LicenseViewer
-
         super().__init__(parent)
-
-        # Make sure when instantiating QObjects that those QObjects reference a Python object that re-references that QObject,
-        # otherwise the QObject will not be considered "in use" by the garbage collector, and will be deleted.
-        self.license_window = LicenseViewer()
 
         init_objects({
             (github_view := QAction(self)): {

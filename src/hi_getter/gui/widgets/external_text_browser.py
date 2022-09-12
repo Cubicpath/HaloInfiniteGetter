@@ -81,8 +81,8 @@ class ExternalTextBrowser(QTextBrowser):
             else:
                 image.loadFromData(self.remote_image_cache[url_string])
             return image
-        else:
-            return super().loadResource(int(resource_type), url)
+
+        return super().loadResource(int(resource_type), url)
 
     def setLineWrapMode(self, mode: int | QTextEdit.LineWrapMode) -> None:
         """Set the line wrap mode. Allows use of ints."""

@@ -273,12 +273,11 @@ class Language:
 
         if result is not default:
             return format_value(result, *args, _language=self, _key_eval=key_eval)
-        else:
-            # Dont format default value
-            quote = '"'
-            for arg in (f'%{str(arg) if not isinstance(arg, str) else quote + arg + quote}%' for arg in args):
-                result += arg
 
+        # Dont format default value
+        quote = '"'
+        for arg in (f'%{str(arg) if not isinstance(arg, str) else quote + arg + quote}%' for arg in args):
+            result += arg
         return result
 
     def get_raw(self, key: str) -> str:

@@ -42,8 +42,8 @@ def create_app_shortcut() -> None:
         return
 
     # If response is affirmative, mark which shortcuts to create
-    do_desktop = response.button == desktop_button or response.button == both_button
-    do_start_menu = response.button == start_menu_button or response.button == both_button
+    do_desktop = response.button in {desktop_button, both_button}
+    do_start_menu = response.button in {start_menu_button, both_button}
 
     # Get the windowless Python executable name (append w)
     name = exec_path.stem
@@ -73,8 +73,8 @@ class ToolsContextMenu(QMenu):
 
             (exception_reporter := QAction(self)): {
                 'text': tr('gui.menus.tools.exception_reporter'),
-                'icon': parent.exception_reporter.logger.icon(),
-                'triggered': parent.exception_reporter.show
+                'icon': app().windows['app'].exception_reporter.logger.icon(),
+                'triggered': app().windows['app'].exception_reporter.show
             }
         })
 

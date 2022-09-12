@@ -39,8 +39,8 @@ class SettingsWindow(QWidget):
         cls = self.__class__
         if cls._instance is not None:
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
-        else:
-            cls._instance = self
+
+        cls._instance = self
 
         # NORMAL LOGIC
         super().__init__()
