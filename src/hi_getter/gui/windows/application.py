@@ -36,7 +36,6 @@ from ..app import tr
 from ..menus import *
 from ..widgets import *
 from .exception_reporter import ExceptionReporter
-from .readme_viewer import ReadmeViewer
 
 
 def size_label_for(size: int) -> str:
@@ -570,9 +569,7 @@ class AppWindow(QMainWindow):
         super().show()
 
         if app().first_launch:
-            readme = ReadmeViewer()
-            readme.setWindowTitle(tr('gui.readme_viewer.title_first_launch'))
-            readme.show()
+            app().windows['readme_viewer'].show()
             app().show_dialog('information.first_launch', self)
 
         elif not self.shown_key_warning and app().client.token is None:

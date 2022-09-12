@@ -63,7 +63,6 @@
     "gui.outputs.text.label_empty": "Text Output:",
     "gui.readme_viewer.close": "Close",
     "gui.readme_viewer.title": "README Viewer",
-    "gui.readme_viewer.title_first_launch": "----- {gui.readme_viewer.title} ----- FIRST LAUNCH -----",
 
     "gui.menu_bar.title": "Menu Bar",
     "gui.menus.file": "File",

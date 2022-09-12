@@ -85,6 +85,8 @@ class LicenseViewer(QWidget):
         })
 
         app().init_translations({
+            self.setWindowTitle: 'gui.license_viewer.title',
+
             self.next_license_button.setText: 'gui.license_viewer.next',
             self.prev_license_button.setText: 'gui.license_viewer.previous',
         })

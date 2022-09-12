@@ -94,8 +94,6 @@ class GetterApp(QApplication):
     # noinspection PyTypeChecker
     def __init__(self, *args, **kwargs) -> None:
         """Create a new app with the given arguments and settings."""
-        from .windows import AppWindow
-        from .windows import SettingsWindow
 
         super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
         self.load_env(verbose=True)   # Must load .env before Client is instantiated
@@ -130,13 +128,8 @@ class GetterApp(QApplication):
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
 
-        # Create Windows
-        self._windows['settings'] = SettingsWindow(QSize(420, 600))
-        self._windows['app'] = AppWindow(QSize(
-            # Size to use, with a minimum of 100x100.
-            max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
-            max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
-        ))
+        # Create window instances
+        self._create_windows(**kwargs)
 
     @classmethod
     def instance(cls) -> GetterApp:
@@ -156,10 +149,7 @@ class GetterApp(QApplication):
 
     @property
     def windows(self) -> dict[str, QWidget]:
-        """Return a copy of the self._windows dictionary.
-
-        :return:
-        """
+        """Return a copy of the self._windows dictionary."""
 
         return self._windows.copy()
 
@@ -178,6 +168,24 @@ class GetterApp(QApplication):
             # Write default_settings to user's SETTINGS_FILE
             with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._setting_defaults, file, encoder=PathTomlEncoder())
+
+    def _create_windows(self, **kwargs) -> None:
+        """Create window instances."""
+        from .windows import AppWindow
+        from .windows import LicenseViewer
+        from .windows import ReadmeViewer
+        from .windows import SettingsWindow
+
+        self._windows['license_viewer'] = LicenseViewer()
+        self._windows['readme_viewer'] = ReadmeViewer()
+        self._windows['settings'] = SettingsWindow(QSize(420, 600))
+
+        # AppWindow depends on the others existing
+        self._windows['app'] = AppWindow(QSize(
+            # Size to use, with a minimum of 100x100
+            max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
+            max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
+        ))
 
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""

@@ -35,9 +35,6 @@ class ReadmeViewer(QWidget):
         self.readme_viewer: ExternalTextBrowser
         self._init_ui()
 
-    def _dummy_func(self) -> None:
-        """Must exist otherwise ReadmeViewer instances will be garbage collected through Context Menu deletion. Don't ask, just accept."""
-
     def _init_ui(self) -> None:
         self.readme_viewer = ExternalTextBrowser(self)
 
@@ -55,6 +52,8 @@ class ReadmeViewer(QWidget):
         })
 
         app().init_translations({
+            self.setWindowTitle: 'gui.readme_viewer.title',
+
             close_button.setText: 'gui.readme_viewer.close'
         })
 
@@ -62,11 +61,4 @@ class ReadmeViewer(QWidget):
         layout.addWidget(self.readme_viewer)
         layout.addWidget(close_button)
 
-        self.readme_viewer.connect_key_to(Qt.Key_Any, self._dummy_func)  # Refer to self._dummy_func
         self.readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        """Manually signal the readme_viewer for garbage collection."""
-        super().closeEvent(event)
-        self.readme_viewer.deleteLater()
-        event.accept()
