@@ -78,39 +78,34 @@ def is_error_status(status: int) -> bool:
 # https://github.com/psf/requests/blob/main/LICENSE
 
 
-# Null bytes; no need to recreate these on each call to guess_json_utf
-_NULL = "\x00".encode("ascii")  # encoding to ASCII for Python 3
-_NULL2 = _NULL * 2
-_NULL3 = _NULL * 3
-
-
-def guess_json_utf(data):
-    """
-    :rtype: str
-    """
+def guess_json_utf(data: bytes) -> str | None:
+    """:return: String representing the detected encoding of the given data. None if not detected."""
     # JSON always starts with two ASCII characters, so detection is as
     # easy as counting the nulls and from their location and count
     # determine the encoding. Also detect a BOM, if present.
-    sample = data[:4]
+    sample: bytes = data[:4]
+
     if sample in (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE):
-        return "utf-32"  # BOM included
+        return 'utf-32'     # BOM included
     if sample[:3] == codecs.BOM_UTF8:
-        return "utf-8-sig"  # BOM included, MS style (discouraged)
+        return 'utf-8-sig'  # BOM included, MS style (discouraged)
     if sample[:2] in (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE):
-        return "utf-16"  # BOM included
-    null_count = sample.count(_NULL)
-    if null_count == 0:
-        return "utf-8"
-    if null_count == 2:
-        if sample[::2] == _NULL2:  # 1st and 3rd are null
-            return "utf-16-be"
-        if sample[1::2] == _NULL2:  # 2nd and 4th are null
-            return "utf-16-le"
-        # Did not detect 2 valid UTF-16 ascii-range characters
-    if null_count == 3:
-        if sample[:3] == _NULL3:
-            return "utf-32-be"
-        if sample[1:] == _NULL3:
-            return "utf-32-le"
-        # Did not detect a valid UTF-32 ascii-range character
+        return 'utf-16'     # BOM included
+
+    match sample.count(b'\x00'):
+        case 0:
+            return 'utf-8'
+
+        case 2:
+            if sample[::2] == b'\x00\x00':   # 1st and 3rd are null
+                return 'utf-16-be'
+            if sample[1::2] == b'\x00\x00':  # 2nd and 4th are null
+                return 'utf-16-le'
+
+        case 3:
+            if sample[:3] == b'\x00\x00\x00':  # First 3 are null
+                return 'utf-32-be'
+            if sample[1:] == b'\x00\x00\x00':  # Last 3 are null
+                return 'utf-32-le'
+
     return None
