@@ -11,6 +11,7 @@ __all__ = (
     'Singleton',
 )
 
+import sys
 import weakref
 from abc import ABC
 from abc import abstractmethod
@@ -24,6 +25,7 @@ from typing import Any
 from typing import Generic
 from typing import TypeAlias
 from typing import TypeVar
+from warnings import warn
 
 _VT = TypeVar('_VT')
 _CT = TypeVar('_CT', bound=Collection[Callable])  # Bound to Collection of Callables
@@ -314,16 +316,32 @@ class Singleton(ABC):
         """Ensure that the class instance is set to None for all subclasses."""
         super().__init_subclass__(**kwargs)
 
-        cls.__instance: Singleton | None = None
+        cls.__instance = None
+
+    @classmethod
+    def _check_ref_count(cls) -> bool:
+        """Check if reference count is 1 for the :py:class:`Singleton` instance.
+
+        Warns user if they access the internal instance.
+        """
+
+        # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
+        if (sys.getrefcount(cls.__instance) - 1) > 1:
+            warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
+                                f'This is undefined behaviour; please use weak references.'))
+            return False
+
+        return True
 
     @classmethod
     def instance(cls) -> Singleton:
         """Return a weak reference to the :py:class:`Singleton` instance."""
-        o: Singleton | None = cls.__instance
-        if o is None:
+        cls._check_ref_count()
+
+        if cls.__instance is None:
             raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
 
-        return weakref.proxy(o)
+        return weakref.proxy(cls.__instance)
 
     @classmethod
     def destroy(cls) -> None:
@@ -331,6 +349,10 @@ class Singleton(ABC):
 
         This results in the destruction of all weak references to the previous instance.
         """
+        if cls._check_ref_count() is False:
+            raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '
+                               f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy()')
+
         if cls.__instance is None:
             raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
 
