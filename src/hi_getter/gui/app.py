@@ -66,22 +66,11 @@ class _DialogResponse(NamedTuple):
     role:   QMessageBox.ButtonRole = QMessageBox.NoRole
 
 
-class Theme:
+class Theme(NamedTuple):
     """Object containing data about a Theme."""
-    __slots__ = ('id', 'style', 'display_name')
-
-    def __init__(self, id: str, style: str = '', display_name: str | None = None) -> None:
-        """Create a new Theme using a unique ID, the style data (.qss file content), and an optional display name.
-
-        :param id: Uniquely identifying string, must be a valid TOML Table name.
-        :param style: String read from a .qss file to use as a stylesheet.
-        :param display_name: Optional display name to represent the theme, as opposed to the id.
-        """
-        self.id:           str = id
-        self.style:        str = style
-        self.display_name: str = display_name if display_name is not None else self.id
-
-        app().themes[self.id] = self
+    id:           str
+    style:        str
+    display_name: str
 
 
 class GetterApp(QApplication):
@@ -398,12 +387,19 @@ class GetterApp(QApplication):
         if (icon_key := f'hi_theme+{current_theme}+{icon}') in self.icon_store:
             return self.icon_store[icon_key]
 
+    def add_theme(self, theme: Theme) -> None:
+        """Add a theme to the application.
+
+        Overwrites previous theme if the ids are the same.
+        """
+        self.themes[theme.id] = theme
+
     def load_themes(self) -> None:
         """Load all theme locations from settings and store them in self.themes.
 
         Also set current theme from settings.
         """
-        Theme('legacy', self._legacy_style, 'Legacy (Default Qt)')
+        self.add_theme(Theme('legacy', self._legacy_style, 'Legacy (Default Qt)'))
 
         try:
             themes = self.settings['gui/themes']
@@ -433,11 +429,12 @@ class GetterApp(QApplication):
                             # Load stylesheet file
                             theme['id'] = id
                             theme['style'] = theme_resource.read_text(encoding='utf8')
+                            theme['display_name'] = theme.get('display_name') or id
                         elif theme_resource.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
                             # Load all images in the theme directory into the icon store.
                             self.icon_store[f'hi_theme+{id}+{theme_resource.stem}'] = QIcon(str(theme_resource.resolve()))
 
-                Theme(**theme)
+                self.add_theme(Theme(**theme))
 
         # noinspection PyUnresolvedReferences
         self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes())}
