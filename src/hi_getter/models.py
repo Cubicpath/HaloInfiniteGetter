@@ -36,7 +36,7 @@ _KTCallable: TypeAlias = Callable[[], _KT]  # Which returns _KT
 
 
 class _AbstractCallable(ABC):
-    """Abstract callable object.
+    """Abstract :py:class:`Callable` object.
 
     Child objects are callable as a shortcut to their `run` method.
     """
@@ -63,17 +63,17 @@ class _AbstractCallable(ABC):
 # https://github.com/psf/requests/blob/main/LICENSE
 
 class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
-    """A case-insensitive ``dict``-like object.
+    """A case-insensitive :py:class:`dict`-like object.
 
     Implements all methods and operations of
-    ``MutableMapping`` as well as dict's ``copy``. Also
+    :py:class:`MutableMapping` as well as :py:class:`dict`'s ``copy``. Also
     provides ``lower_items``.
 
     All keys are expected to be strings. The structure remembers the
     case of the last key to be set, and ``iter(instance)``,
     ``keys()``, ``items()``, ``iterkeys()``, and ``iteritems()``
     will contain case-sensitive keys. However, querying and contains
-    testing is case insensitive::
+    testing is case-insensitive::
 
         cid = CaseInsensitiveDict()
         cid['Accept'] = 'application/json'
@@ -88,6 +88,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     operations are given keys that have equal ``.lower()``s, the
     behavior is undefined.
     """
+    __slots__ = ('_store',)
 
     def __init__(self, data=None, **kwargs) -> None:
         self._store: OrderedDict[str, _VT] = OrderedDict()
@@ -289,10 +290,13 @@ class Singleton(ABC):
     You can access the :py:class:`Singleton` instance from the class definition by using the Singleton.instance() class method.
     Attempting to use Singleton.instance() or Singleton.destroy() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
     """
-    # Singleton.__instance is never used, all subclasses have their own __instance class attribute.
     __instance: Singleton | None = None
+    """The singular reference for the class instance. Should ONLY be accessed using weak reference proxies.
 
-    def __new__(cls, *args, **kwargs) -> weakref.ProxyType[Singleton]:
+    Singleton.__instance is never used, all subclasses have their own __instance class attribute.
+    """
+
+    def __new__(cls, *args, **kwargs) -> Singleton:
         o = super().__new__(cls, *args, **kwargs)
         o.__init__()
 
