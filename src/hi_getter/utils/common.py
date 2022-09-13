@@ -8,6 +8,7 @@ __all__ = (
     'bit_rep',
     'dump_data',
     'get_parent_doc',
+    'get_weakref_object',
     'quote_str',
     'return_arg',
     'unique_values',
@@ -17,6 +18,7 @@ from collections.abc import Iterable
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TypeVar
+from weakref import ProxyType
 
 _PT = TypeVar('_PT')
 
@@ -63,6 +65,20 @@ def get_parent_doc(__type: type, /) -> str | None:
         if doc:
             break
     return doc
+
+
+def get_weakref_object(ref: ProxyType[_PT]) -> _PT:
+    """Get the internal object of a weakref proxy."""
+    import ctypes
+
+    # Parse the proxy repr for the internal address
+    addr_pos: int = repr(ref).rindex('0x')
+    addr_str: str = repr(ref)[addr_pos:].strip(' ._<>')
+
+    # Cast address into an object
+    obj_val: _PT = ctypes.cast(int(addr_str, base=16), ctypes.py_object).value
+
+    return obj_val
 
 
 def quote_str(__str: str, /) -> str:
