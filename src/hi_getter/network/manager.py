@@ -321,8 +321,9 @@ class NetworkSession:
 
         # Translate dictionary-compatible tuple pair lists to dictionaries
         # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
-        for tuple_list in ('params', 'data', 'headers', 'cookies', 'proxies'):
-            vars()[tuple_list] = dict(vars()[tuple_list])
+        for var_name in ('params', 'data', 'headers', 'cookies', 'proxies'):
+            if isinstance(vars()[var_name], Sequence):
+                vars()[var_name] = dict(vars()[var_name])
 
         request_url:     QUrl = QUrl(url)                                              # Ensure url is of type QUrl
         request_params:  dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
