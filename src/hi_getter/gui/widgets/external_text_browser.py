@@ -20,6 +20,7 @@ from ...models import DeferredCallable
 from ..app import app
 
 
+# FIXME: Add a timer for hot reloading
 class ExternalTextBrowser(QTextBrowser):
     """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s.
 
@@ -29,6 +30,7 @@ class ExternalTextBrowser(QTextBrowser):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.anchorClicked.connect(lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#')))
 
         # default factory producing empty DeferredCallables
         self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
@@ -53,6 +55,33 @@ class ExternalTextBrowser(QTextBrowser):
 
     def set_hot_reloadable_text(self, text: str, text_type: str) -> None:
         """Set text that is designated to be hot-reloadable."""
+
+        # Inject html anchors to markdown headers to allow relative linking.
+        if text_type == 'markdown':
+            lines:     list[str] = text.splitlines()
+            lines_new: list[str] = []
+
+            # Find headers and add relative anchors
+            for i, line in enumerate(lines):
+                simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
+
+                has_hashtag:   bool = line.strip().startswith('#')
+                has_underline: bool = (i < len(lines) - 1) and any(
+                    line and  # Empty lines don't count
+                    # Line must end and begin with the respective underline
+                    lines[i + 1].strip().startswith(a) and
+                    lines[i + 1].strip().endswith(a) for a in ('-', '=')
+                )
+
+                # If line has a header marker, append it with an anchor tag and add it to the new list.
+                # Otherwise, append the unchanged line to the new list.
+                if has_hashtag or has_underline:
+                    lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}">§</a>')
+                    continue
+                lines_new.append(line)
+
+            text = '\n'.join(lines_new)
+
         self.cached_text = text
         self.cached_type = text_type
         self.hot_reload()
