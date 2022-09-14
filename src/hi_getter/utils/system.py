@@ -15,6 +15,7 @@ __all__ = (
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from .common import bit_rep
 from .common import quote_str
@@ -58,7 +59,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
     name = 'Shortcut' if name is None else name
     working_dir = Path.home() if working_dir is None else working_dir
 
-    PLATFORM_SHORTCUT_DATA: dict[str, dict[str, ...]] = {
+    PLATFORM_SHORTCUT_DATA: dict[str, dict[str, Any]] = {
         'darwin': {
             'shortcut_ext': '.app',
             'icon_exts': ('.icns',),
@@ -88,7 +89,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
             return
 
         # Create the desktop directory if it doesn't exist
-        if not (desktop_path := get_desktop_path()).is_dir():
+        if (desktop_path := get_desktop_path()) is not None and desktop_path.is_dir():
             desktop_path.mkdir(parents=True)
 
         # Create the shortcut folders, replacing if it already exists

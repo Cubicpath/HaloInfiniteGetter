@@ -14,7 +14,7 @@ __all__ = (
 
 import json
 import re
-from contextlib import AbstractContextManager
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from string import ascii_letters
@@ -29,7 +29,7 @@ LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 
-def format_value(value: str, *args, _language: Language = None, _key_eval: bool = True) -> str:
+def format_value(value: str, *args: Any, _language: Language = None, _key_eval: bool = True) -> str:
     """Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
@@ -43,14 +43,14 @@ def format_value(value: str, *args, _language: Language = None, _key_eval: bool 
             "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
         }
     """
-    list_args:     list = list(args)
+    list_args:     list[Any] = list(args)
     replaced:      set[str] = set()
     pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
     key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
 
-    for match in pos_param_ref.finditer(value):
-        match = match[0]
-        arg_val = args[int(match.strip('{}'))]
+    for matches in pos_param_ref.finditer(value):
+        match:   str = matches[0]
+        arg_val: Any = args[int(match.strip('{}'))]
         if match not in replaced:
             replaced.add(match)
             value = value.replace(match, arg_val)
@@ -64,13 +64,13 @@ def format_value(value: str, *args, _language: Language = None, _key_eval: bool 
             # Loop if a match is found, to recursively get translation key values.
             # Limit of 50 to prevent an infinite loop.
 
-            found = False
-            for match in key_ref.finditer(value):
+            found: bool = False
+            for rec_matches in key_ref.finditer(value):
                 found = True
-                match = match[0]
-                if match not in replaced:
-                    replaced.add(match)
-                    value = value.replace(match, _language.get_raw(match.strip('{}')))
+                rec_match = rec_matches[0]
+                if rec_match not in replaced:
+                    replaced.add(rec_match)
+                    value = value.replace(rec_match, _language.get_raw(rec_match.strip('{}')))
 
             if not found:
                 # End loop if no inner translation keys are found.
@@ -323,7 +323,7 @@ class Translator:
         return self.language.get(key, *args, **kwargs)
 
     @contextmanager
-    def as_language(self, language: Language | str) -> AbstractContextManager[None]:
+    def as_language(self, language: Language | str) -> Iterator[None]:
         """Temporarily translate for a specific language using a context manager."""
         # __enter__
         old_lang = self._language

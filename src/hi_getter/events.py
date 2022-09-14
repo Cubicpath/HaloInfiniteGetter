@@ -26,7 +26,7 @@ class Event:
 
         Event() >> EventBus['foo']
     """
-    __slots__ = ()
+    __slots__: tuple[str, ...] = ()
 
     def __repr__(self) -> str:
         values = {attr: getattr(self, attr) for attr in self.__slots__}
@@ -54,10 +54,10 @@ class Event:
 
         Defaults to the first line of the nearest type doc in the mro.
         """
-        doc = self.__doc__
+        doc: str | None = self.__doc__
         if doc is None and isinstance(self, Event) and type(self) is not Event:
             doc = get_parent_doc(type(self))
-        return doc.splitlines()[0]
+        return doc.splitlines()[0] if doc is not None else ''
 
 
 _ET_co = TypeVar('_ET_co', bound=Event, covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
@@ -103,11 +103,14 @@ class _EventBusMeta(type):
 
     @classmethod
     @overload
-    def __getitem__(mcs, _: type[Event] | str, /) -> EventBus | None:
-        """Exist to support Generic Typing on :py:class:`EventBus`."""
+    def __getitem__(mcs, id: type[Event]) -> None: ...
 
     @classmethod
-    def __getitem__(mcs, id: str) -> EventBus | None:
+    @overload
+    def __getitem__(mcs, id: str) -> EventBus | None: ...
+
+    @classmethod
+    def __getitem__(mcs, id):
         return mcs._id_bus_map.get(id.lower())
 
     @classmethod
@@ -161,13 +164,14 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
         :param __id: id to register this instance as.
         :raises KeyError: When a bus with the given id already exists.
         """
-        if __id is None or type(self)[__id] is None:
-            self.id = __id
-            self._subscribers = _Subscribers()
-            if __id is not None:
-                type(self)[__id] = self
-        else:
+        if __id is not None and type(self)[__id] is not None:
             raise KeyError(f'EventBus id "{__id}" is already registered in {type(type(self)).__name__}')
+
+        self.id: str | None = __id
+        self._subscribers: _Subscribers = _Subscribers()
+
+        if __id is not None:
+            type(self)[__id] = self
 
     def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
         """Syntax sugar for self.fire(event)"""

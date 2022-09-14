@@ -91,7 +91,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     __slots__ = ('_store',)
 
     def __init__(self, data=None, **kwargs) -> None:
-        self._store: OrderedDict[str, _VT] = OrderedDict()
+        self._store: OrderedDict[str, tuple[str, _VT]] = OrderedDict()
         if data is None:
             data = {}
         self.update(data, **kwargs)
@@ -107,7 +107,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     def __delitem__(self, key: str) -> None:
         del self._store[key.lower()]
 
-    def __iter__(self) -> Generator[str]:
+    def __iter__(self) -> Generator[str, None, None]:
         return (cased_key for cased_key, mapped_value in self._store.values())
 
     def __len__(self) -> int:
@@ -134,7 +134,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
 
         return self
 
-    def lower_items(self) -> Generator[tuple[str, _VT]]:
+    def lower_items(self) -> Generator[tuple[str, _VT], None, None]:
         """Like iteritems(), but with all lowercase keys."""
         return (
             (lower_key, keyval[1])
@@ -263,7 +263,7 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {len(self.callables)} functions with {args=}, {kwargs=}>'
 
-    def run(self, *args, **kwargs) -> tuple[Any]:
+    def run(self, *args, **kwargs) -> tuple[Any, ...]:
         """Run all stored :py:class:`Callable`'s with the given extra arguments.
 
         :return: The results of each callable, packaged in a tuple.
@@ -271,7 +271,7 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
         results = tuple(func(*self.args, **self.kwargs) for func in self.callables)
         return results
 
-    def generate(self, *args, **kwargs) -> Generator[Any]:
+    def generate(self, *args, **kwargs) -> Generator[Any, None, None]:
         """Run all stored :py:class:`Callable`'s with the given extra arguments. Yielding every result.
 
         :return: A generator yielding the results of each callable.
@@ -298,7 +298,7 @@ class Singleton(ABC):
 
     def __new__(cls, *args, **kwargs) -> Singleton:
         o = super().__new__(cls, *args, **kwargs)
-        o.__init__()
+        cls.__init__(o)
 
         return weakref.proxy(cls.__instance)
 
@@ -355,7 +355,7 @@ class Singleton(ABC):
         """
         if cls._check_ref_count() is False:
             raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '
-                               f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy()')
+                               f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy().')
 
         if cls.__instance is None:
             raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
