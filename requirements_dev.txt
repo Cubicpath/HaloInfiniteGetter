@@ -2,4 +2,4 @@
 -r requirements.txt
 
 # Linting
-pylint==2.15.2
+pylint==2.15.3
