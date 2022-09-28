@@ -227,7 +227,7 @@ class SettingsWindow(QWidget):
                     'gui.settings.text.line_wrap.fixed_column'
                 )
             }
-        }, translator=tr)
+        })
 
         app().init_translations({
             self.setWindowTitle: 'gui.settings.title',

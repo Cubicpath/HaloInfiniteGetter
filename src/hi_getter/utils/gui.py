@@ -12,19 +12,13 @@ __all__ = (
     'set_or_swap_icon',
 )
 
-from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 from typing import Any
-from typing import TypeAlias
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-
-from .common import return_arg
-
-_Translator: TypeAlias = Callable[[str], str]
 
 
 def delete_layout_widgets(layout: QLayout) -> None:
@@ -42,7 +36,7 @@ def icon_from_bytes(data: bytes) -> QIcon:
 
 
 # noinspection PyUnresolvedReferences
-def init_objects(object_data: dict[QObject, dict[str, Any]], translator: _Translator = return_arg) -> None:
+def init_objects(object_data: dict[QObject, dict[str, Any]]) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
 
     Translation key strings are evaluated using the given translator, if provided.
@@ -59,12 +53,11 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: _Transl
         }
 
     :param object_data: Dictionary containing data used to initialize basic QObject values.
-    :param translator: Translator used for translation key evaluation.
     """
     # Initialize widget attributes
     for obj, data in object_data.items():
-        special_keys = ('items', 'size', 'text',)
-        items, size_dict, text = (data.get(key) for key in special_keys)
+        special_keys = ('items', 'size')
+        items, size_dict = (data.get(key) for key in special_keys)
 
         # Find setter method for all non specially-handled keys
         for key, val in data.items():
@@ -92,9 +85,11 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: _Transl
                 # Set directly for non-dropdowns
                 obj.setItems(items)
             else:
-                # Translate keys for dropdowns, append original keys as data.
-                for key_val, key in ((translator(key), key) for key in items):
-                    obj.addItem(key_val, userData=key)
+                if hasattr(obj, 'addItems'):
+                    obj.addItems(items)
+                else:
+                    for key in items:
+                        obj.addItem(key)
 
         # Set size
         if size_dict is not None:
@@ -111,10 +106,6 @@ def init_objects(object_data: dict[QObject, dict[str, Any]], translator: _Transl
                             getattr(obj, f'set{size_type.title()}Width')(size[0])
                         if size[1]:
                             getattr(obj, f'set{size_type.title()}Height')(size[1])
-
-        # Translate widget texts
-        if text is not None:
-            obj.setText(text)
 
 
 def scroll_to_top(widget: QTextEdit) -> None:

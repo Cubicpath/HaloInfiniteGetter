@@ -146,7 +146,7 @@ class AppWindow(QMainWindow):
                     logger.reporter.raise_
                 ))
             }
-        }, translator=tr)
+        })
 
         app().init_translations({
             menu_bar.setWindowTitle: 'gui.menu_bar.title',
@@ -353,7 +353,7 @@ class AppWindow(QMainWindow):
                 'lineWrapMode': QTextEdit.LineWrapMode(app().settings['gui/text_output/line_wrap_mode']),
                 'openLinks': False, 'anchorClicked': self.navigate_to
             }
-        }, translator=app().translator)
+        })
 
         app().init_translations({
             self.change_title: 'app.name',
