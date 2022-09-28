@@ -8,9 +8,12 @@ __all__ = (
     'ExternalTextBrowser',
     'HistoryComboBox',
     'PasteLineEdit',
+    'TranslatableComboBox',
 )
 
+from .combo_box import ComboBox
+from .combo_box import HistoryComboBox
+from .combo_box import TranslatableComboBox
 from .exception_logger import ExceptionLogger
 from .external_text_browser import ExternalTextBrowser
-from .history_combo_box import HistoryComboBox
 from .paste_line_edit import PasteLineEdit

@@ -23,6 +23,7 @@ from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
 from ..widgets import PasteLineEdit
+from ..widgets import TranslatableComboBox
 
 
 # noinspection PyArgumentList
@@ -122,7 +123,7 @@ class SettingsWindow(QWidget):
             self.key_field
         ) = (
             QPushButton(self), QPushButton(self),
-            QComboBox(self), QComboBox(self), QComboBox(self), QComboBox(self),
+            TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self),
             PasteLineEdit(self)
         )
 
@@ -231,6 +232,10 @@ class SettingsWindow(QWidget):
 
         app().init_translations({
             self.setWindowTitle: 'gui.settings.title',
+            self.aspect_ratio_dropdown.translate_items: '',
+            self.line_wrap_dropdown.translate_items: '',
+            self.theme_dropdown.translate_items: '',
+            self.transformation_dropdown.translate_items: '',
 
             # Labels
             theme_label.setText: 'gui.settings.theme',
