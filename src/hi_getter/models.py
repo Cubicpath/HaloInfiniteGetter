@@ -302,8 +302,8 @@ class Singleton(ABC):
 
         return weakref.proxy(cls.__instance)
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         cls = self.__class__
 
         # ABC LOGIC
@@ -316,9 +316,9 @@ class Singleton(ABC):
 
         cls.__instance = self
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(*args, **kwargs)
 
         cls.__instance = None
 
@@ -328,7 +328,6 @@ class Singleton(ABC):
 
         Warns user if they access the internal instance.
         """
-
         # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
         if (sys.getrefcount(cls.__instance) - 1) > 1:
             warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
@@ -340,10 +339,10 @@ class Singleton(ABC):
     @classmethod
     def instance(cls) -> Singleton:
         """Return a weak reference to the :py:class:`Singleton` instance."""
-        cls._check_ref_count()
-
         if cls.__instance is None:
             raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
+
+        cls._check_ref_count()
 
         return weakref.proxy(cls.__instance)
 
@@ -353,11 +352,11 @@ class Singleton(ABC):
 
         This results in the destruction of all weak references to the previous instance.
         """
+        if cls.__instance is None:
+            raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
+
         if cls._check_ref_count() is False:
             raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '
                                f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy().')
-
-        if cls.__instance is None:
-            raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
 
         cls.__instance = None

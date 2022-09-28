@@ -66,8 +66,7 @@ class ExternalTextBrowser(QTextBrowser):
                 simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
                 has_hashtag:   bool = line.strip().startswith('#')
-                has_underline: bool = (i < len(lines) - 1) and any(
-                    line and  # Empty lines don't count
+                has_underline: bool = line and (i < len(lines) - 1) and any(
                     # Line must end and begin with the respective underline
                     lines[i + 1].strip().startswith(a) and
                     lines[i + 1].strip().endswith(a) for a in ('-', '=')

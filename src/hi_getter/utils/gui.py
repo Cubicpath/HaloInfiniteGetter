@@ -64,9 +64,9 @@ def init_objects(object_data: dict[QObject, dict[str, Any]]) -> None:
             if key in special_keys:
                 continue  # Skip special keys
 
-            # Check if key is a signal on widget
-            # If so, connect it to the given function
             if hasattr(obj, key):
+                # Check if key is a signal on widget
+                # If so, connect it to the given function
                 if isinstance((attribute := getattr(obj, key)), SignalInstance):
                     if isinstance(val, Iterable):
                         for slot in val:

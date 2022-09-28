@@ -327,9 +327,15 @@ class SettingsWindow(QWidget):
     def showEvent(self, event: QShowEvent) -> None:
         """Auto hides the key upon un-minimizing."""
         super().showEvent(event)
-        self.key_set_button.setDisabled(True)
-        self.key_field.setAlignment(Qt.AlignCenter)
-        self.key_field.setDisabled(True)
-        self.key_field.setText(app().client.hidden_key())
-        self.token_clear_button.setDisabled(not app().client.token)
+
+        init_objects({
+            self.key_field: {
+                'disabled': True,
+                'alignment': Qt.AlignCenter,
+                'text': app().client.hidden_key()
+            },
+            self.key_set_button: {'disabled': True},
+            self.token_clear_button: {'disabled': not app().client.token}
+        })
+
         event.accept()
