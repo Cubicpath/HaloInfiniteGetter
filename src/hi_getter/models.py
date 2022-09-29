@@ -280,7 +280,7 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
             yield func(*args, **kwargs)
 
 
-class Singleton(ABC):
+class Singleton:
     """A type which can only support one object instance.
 
     Once instantiated, attempting to instantiate another :py:class:`Singleton` object will raise a :py:class:`RuntimeError`.
@@ -296,25 +296,11 @@ class Singleton(ABC):
     Singleton.__instance is never used, all subclasses have their own __instance class attribute.
     """
 
-    def __new__(cls, *args, **kwargs) -> Singleton:
-        o = super().__new__(cls, *args, **kwargs)
-        cls.__init__(o)
-
-        return weakref.proxy(cls.__instance)
+    def __new__(cls) -> None:
+        raise NotImplementedError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        cls = self.__class__
-
-        # ABC LOGIC
-        if cls is Singleton:
-            raise TypeError(f'Cannot directly instantiate abstract class {cls.__name__}.')
-
-        # SINGLETON LOGIC
-        if cls.__instance is not None:
-            raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
-
-        cls.__instance = self
+        raise NotImplementedError(f'Could not instantiate abstract class {type(self).__name__} with abstract method __init__')
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
@@ -329,12 +315,22 @@ class Singleton(ABC):
         Warns user if they access the internal instance.
         """
         # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
-        if (sys.getrefcount(cls.__instance) - 1) > 1:
+        if cls.__instance is not None and (sys.getrefcount(cls.__instance) - 1) > 1:
             warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
-                                f'This is undefined behaviour; please use weak references.'))
+                                f'This is undefined behavior; please use weak references.'))
             return False
 
         return True
+
+    @classmethod
+    def create(cls, *args, **kwargs) -> None:
+        """The preferred way of creating the :py:class:`Singleton` instance."""
+        cls._check_ref_count()
+        if cls.__instance is not None:
+            raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
+
+        cls.__instance = object.__new__(cls)
+        cls.__init__(cls.__instance, *args, **kwargs)
 
     @classmethod
     def instance(cls) -> Singleton:
