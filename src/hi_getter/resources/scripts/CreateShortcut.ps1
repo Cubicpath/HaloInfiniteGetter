@@ -48,12 +48,12 @@
 
             PS> CreateShortcut.ps1 "MyFile.exe" "My Shortcut"
             C:\Users\User\Desktop\My Shortcut.lnk
-            C:\Users\User\Desktop\Roaming\Microsoft\Windows\Start Menu\Programs\My Shortcut.lnk
+            C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\My Shortcut.lnk
 
             -------------------------- EXAMPLE 2 --------------------------
 
             PS> CreateShortcut.ps1 -Target "MyFile.exe" -Name "My Shortcut" -Desktop $False
-            C:\Users\User\Desktop\Roaming\Microsoft\Windows\Start Menu\Programs\My Shortcut.lnk
+            C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\My Shortcut.lnk
 
             -------------------------- EXAMPLE 3 --------------------------
 

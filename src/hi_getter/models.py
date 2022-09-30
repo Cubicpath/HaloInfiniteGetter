@@ -300,7 +300,7 @@ class Singleton:
         raise NotImplementedError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
     def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError(f'Could not instantiate abstract class {type(self).__name__} with abstract method __init__')
+        raise NotImplementedError(f'Could not instantiate abstract class {type(self).__name__} with abstract method __init__.')
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
