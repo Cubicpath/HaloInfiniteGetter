@@ -281,14 +281,36 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
 
 
 class Singleton:
-    """A type which can only support one object instance.
+    """A type which can only support one object instance at a time.
 
-    Once instantiated, attempting to instantiate another :py:class:`Singleton` object will raise a :py:class:`RuntimeError`.
+    All public "instances" of :py:class:`Singleton` are actually weakref proxies to the _Singleton__instance class attribute.
 
-    All public instances of :py:class:`Singleton` are weak references to the _Singleton__instance attribute object.
+    DO:
+        Anything with Singleton.instance() return value.
 
-    You can access the :py:class:`Singleton` instance from the class definition by using the Singleton.instance() class method.
-    Attempting to use Singleton.instance() or Singleton.destroy() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
+    DO NOT:
+        Access _Singleton__instance class attribute outside of the class.
+
+        Store _Singleton__instance class attribute in any variable.
+
+    -----
+
+    Create:
+        To instantiate the :py:class:`Singleton` instance, use the create() class method. While instantiated,
+        attempting to instantiate another :py:class:`Singleton` object will raise a :py:class:`RuntimeError`.
+
+    Access:
+        You can access the :py:class:`Singleton` instance from the class definition by using the instance() class method.
+        Attempting to use instance() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
+
+        To check whether the :py:class:`Singleton` is instantiated, use the is_instantiated() class method.
+
+    Destroy:
+        :py:class:`Singleton` instances must be destroyed before you can create a new one. To do so, call the destroy() class method.
+        Calling destroy guarantees that all references to the instance are deleted and garbage collected. If this isn't possible,
+        a :py:class:`RuntimeError` is raised.
+
+        Attempting to use destroy() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
     """
     __instance: Singleton | None = None
     """The singular reference for the class instance. Should ONLY be accessed using weak reference proxies.
@@ -299,8 +321,7 @@ class Singleton:
     def __new__(cls) -> None:
         raise NotImplementedError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
-    def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError(f'Could not instantiate abstract class {type(self).__name__} with abstract method __init__.')
+    def __init__(self: weakref.ProxyType[Singleton]) -> None: ...
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
@@ -315,30 +336,41 @@ class Singleton:
         Warns user if they access the internal instance.
         """
         # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
-        if cls.__instance is not None and (sys.getrefcount(cls.__instance) - 1) > 1:
+        if cls.is_instantiated() and (sys.getrefcount(cls.__instance) - 1) > 1:
             warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
-                                f'This is undefined behavior; please use weak references.'))
+                                f'This is undefined behavior; please use weakref proxies.'))
             return False
 
         return True
 
     @classmethod
     def create(cls, *args, **kwargs) -> None:
-        """The preferred way of creating the :py:class:`Singleton` instance."""
+        """The preferred way of creating the :py:class:`Singleton` instance.
+
+        When __init__ is called on the :py:class:`Singleton` instance, ``self`` is actually a :py:class:`weakref.ProxyType[Singleton]`.
+        """
+        # All subclasses of Singleton should override __init__
+        if cls.__init__ is Singleton.__init__:
+            raise TypeError(f'Could not instantiate abstract class {cls.__name__} with abstract method __init__.')
+
         cls._check_ref_count()
-        if cls.__instance is not None:
+        if cls.is_instantiated():
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
         cls.__instance = object.__new__(cls)
-        cls.__init__(cls.__instance, *args, **kwargs)
+
+        # cls.instance() is passed down to __init__ as opposed to cls.__instance to avoid an extra reference.
+        # If you require the actual Singleton instance, you can use self._Singleton__instance, but do not store this in a variable or return it.
+        # noinspection PyArgumentList
+        cls.__init__(cls.instance(), *args, **kwargs)
 
     @classmethod
-    def instance(cls) -> Singleton:
+    def instance(cls) -> Singleton:  # Real return type is weakref.ProxyType[Singleton]
         """Return a weak reference to the :py:class:`Singleton` instance."""
-        if cls.__instance is None:
-            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
-
         cls._check_ref_count()
+
+        if not cls.is_instantiated():
+            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
 
         return weakref.proxy(cls.__instance)
 
@@ -348,11 +380,16 @@ class Singleton:
 
         This results in the destruction of all weak references to the previous instance.
         """
-        if cls.__instance is None:
-            raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
-
         if cls._check_ref_count() is False:
             raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '
                                f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy().')
 
+        if not cls.is_instantiated():
+            raise RuntimeError(f'Called {cls.__name__}.destroy() when {cls.__name__} is not instantiated.')
+
         cls.__instance = None
+
+    @classmethod
+    def is_instantiated(cls) -> bool:
+        """Return whether the :py:class:`Singleton` instance exists."""
+        return isinstance(cls.__instance, cls)
