@@ -42,6 +42,7 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     :keyword pre_sep: Pre-release seperator
     :keyword pre_ver_sep: Pre-release version seperator
     :keyword post: Post-release version
+    :keyword post_spelling: How post is represented (post, rev, r)
     :keyword post_implicit: Post-release version
     :keyword post_sep: Post-release seperator
     :keyword post_ver_sep: Post-release version seperator
@@ -121,5 +122,5 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     return v_number
 
 
-__version__ = _stringify(*__version_info__, dev=0)
+__version__ = _stringify(*__version_info__)
 """String representation of version number."""
