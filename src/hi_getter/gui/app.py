@@ -83,20 +83,19 @@ class GetterApp(QApplication):
     # noinspection PyTypeChecker
     def __init__(self, *args, **kwargs) -> None:
         """Create a new app with the given arguments and settings."""
-
         super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
-        self.load_env(verbose=True)   # Must load .env before Client is instantiated
 
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
-        self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
+
         self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
+        self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
         self._windows: dict[str, QWidget] = {}
 
         # Create all files/directories that are needed for the app to run
         self._create_paths()
 
-        self.client:          Client = Client(self)
+        # Must have themes up before load_env
         self.icon_store:      dict[str, QIcon] = {}
         self.session:         NetworkSession = NetworkSession(self)
         self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
@@ -104,18 +103,19 @@ class GetterApp(QApplication):
         self.theme_index_map: dict[str, int] = {}
         self.translator:      Translator = Translator(self.settings['language'])
 
+        # Load resources from disk
+        self.load_themes()  # Depends on icon_store, settings, themes, theme_index_map
+        self.load_icons()   # Depends on icon_store, session
+
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
-        # Load resources from disk
-        self.load_themes()
-        self.load_icons()
-
-        # Set the default icon for all windows.
-        self.setWindowIcon(self.icon_store['hi'])
+        # Must load client last, but before windows
+        self.load_env(verbose=True)
+        self.client = Client(self)
 
         # Create window instances
         self._create_windows(**kwargs)
@@ -376,6 +376,9 @@ class GetterApp(QApplication):
                 reply.deleteLater()
 
             app().session.get(url, finished=handle_reply)
+
+        # Set the default icon for all windows.
+        self.setWindowIcon(self.icon_store['hi'])
 
     def get_theme_icon(self, icon: str) -> QIcon | None:
         """Return the icon for the given theme.
