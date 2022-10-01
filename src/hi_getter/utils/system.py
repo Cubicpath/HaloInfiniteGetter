@@ -89,7 +89,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
             return
 
         # Create the desktop directory if it doesn't exist
-        if (desktop_path := get_desktop_path()) is not None and desktop_path.is_dir():
+        if (desktop_path := get_desktop_path()) is not None and not desktop_path.is_dir():
             desktop_path.mkdir(parents=True)
 
         # Create the shortcut folders, replacing if it already exists
