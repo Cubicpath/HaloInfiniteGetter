@@ -312,13 +312,14 @@ class Singleton:
 
         Attempting to use destroy() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
     """
+    _base_type: type(type) = object
     __instance: Singleton | None = None
     """The singular reference for the class instance. Should ONLY be accessed using weak reference proxies.
 
     Singleton.__instance is never used, all subclasses have their own __instance class attribute.
     """
 
-    def __new__(cls) -> None:
+    def __new__(cls, *args, **kwargs) -> None:
         raise NotImplementedError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
     def __init__(self: weakref.ProxyType[Singleton]) -> None: ...
@@ -353,11 +354,11 @@ class Singleton:
         if cls.__init__ is Singleton.__init__:
             raise TypeError(f'Could not instantiate abstract class {cls.__name__} with abstract method __init__.')
 
-        cls._check_ref_count()
         if cls.is_instantiated():
+            cls._check_ref_count()
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
-        cls.__instance = object.__new__(cls)
+        cls.__instance = cls._base_type.__new__(cls)
 
         # cls.instance() is passed down to __init__ as opposed to cls.__instance to avoid an extra reference.
         # If you require the actual Singleton instance, you can use self._Singleton__instance, but do not store this in a variable or return it.
