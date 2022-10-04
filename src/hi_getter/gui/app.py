@@ -14,6 +14,7 @@ __all__ = (
 import json
 import subprocess
 import sys
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
@@ -96,7 +97,7 @@ class GetterApp(QApplication):
         self._create_paths()
 
         # Must have themes up before load_env
-        self.icon_store:      dict[str, QIcon] = {}
+        self.icon_store:      defaultdict[str, QIcon] = defaultdict(QIcon)  # Null icon generator
         self.session:         NetworkSession = NetworkSession(self)
         self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
         self.themes:          dict[str, Theme] = {}
@@ -380,15 +381,14 @@ class GetterApp(QApplication):
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
 
-    def get_theme_icon(self, icon: str) -> QIcon | None:
+    def get_theme_icon(self, icon: str) -> QIcon:
         """Return the icon for the given theme.
 
         :param icon: Icon name for given theme.
-        :return: QIcon for the given theme or default value or None if icon not found.
+        :return: QIcon for the given theme or a null QIcon if not found. Null icons are falsy.
         """
         current_theme = self.settings['gui/themes/selected']
-        if (icon_key := f'hi_theme+{current_theme}+{icon}') in self.icon_store:
-            return self.icon_store[icon_key]
+        return self.icon_store[f'hi_theme+{current_theme}+{icon}']
 
     def add_theme(self, theme: Theme) -> None:
         """Add a theme to the application.
