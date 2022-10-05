@@ -283,36 +283,57 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
 class Singleton:
     """A type which can only support one object instance at a time.
 
-    All public "instances" of :py:class:`Singleton` are actually weakref proxies to the _Singleton__instance class attribute.
+    All public "instances" of :py:class:`Singleton` are actually weakref proxies to the ``_Singleton__instance`` class attribute.
 
     DO:
-        Anything with Singleton.instance() return value.
+        Anything with ``Singleton.instance()`` return value.
 
     DO NOT:
-        Access _Singleton__instance class attribute outside of the class.
+        Access ``_Singleton__instance`` class attribute outside the class.
 
-        Store _Singleton__instance class attribute in any variable.
+        Store ``_Singleton__instance`` class attribute in any variable.
+
+    -----
+
+    When subclassing :py:class:`Singleton`, you must override the ``__init__`` abstract method.
+
+    If you are subclassing multiple classes, it should always be the first in the order, and should specify the
+    other class as your ``_singleton_base_type`` in your class definition. ex::
+
+        class MySingleton(Singleton, OtherClass):
+            _singleton_base_type = OtherClass
+            _singleton_check_ref = True
+
+            def __init__(self):
+                ...
+
+    If you are subclassing a C-Extension object (Such as a PySide ``QObject``) which keeps a hard-ref, or otherwise cannot guarantee the
+    non-existence of outside references to the singleton instance, set the ``_singleton_check_ref`` attribute to ``False`` in your class definition.
+    This removes all checks to the ``sys`` ref count.
 
     -----
 
     Create:
-        To instantiate the :py:class:`Singleton` instance, use the create() class method. While instantiated,
+        To instantiate the :py:class:`Singleton` instance, use the ``create()`` class method. While instantiated,
         attempting to instantiate another :py:class:`Singleton` object will raise a :py:class:`RuntimeError`.
 
     Access:
-        You can access the :py:class:`Singleton` instance from the class definition by using the instance() class method.
-        Attempting to use instance() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
+        You can access the :py:class:`Singleton` instance from the class definition by using the ``instance()`` class method.
+        Attempting to use ``instance()`` before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
 
-        To check whether the :py:class:`Singleton` is instantiated, use the is_instantiated() class method.
+        To check whether the :py:class:`Singleton` is instantiated, use the ``is_instantiated()`` class method.
 
     Destroy:
-        :py:class:`Singleton` instances must be destroyed before you can create a new one. To do so, call the destroy() class method.
+        :py:class:`Singleton` instances must be destroyed before you can create a new one. To do so, call the ``destroy()`` class method.
         Calling destroy guarantees that all references to the instance are deleted and garbage collected. If this isn't possible,
-        a :py:class:`RuntimeError` is raised.
+        and ``_singleton_check_ref`` is ``True``, a :py:class:`RuntimeError` is raised.
 
-        Attempting to use destroy() before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
+        Attempting to use ``destroy()`` before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
     """
-    _base_type: type(type) = object
+    __slots__: tuple[str, ...] = ()
+
+    _singleton_base_type: type(type) = object
+    _singleton_check_ref: bool = True
     __instance: Singleton | None = None
     """The singular reference for the class instance. Should ONLY be accessed using weak reference proxies.
 
@@ -336,11 +357,12 @@ class Singleton:
 
         Warns user if they access the internal instance.
         """
-        # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
-        if cls.is_instantiated() and (sys.getrefcount(cls.__instance) - 1) > 1:
-            warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
-                                f'This is undefined behavior; please use weakref proxies.'))
-            return False
+        if cls._singleton_check_ref:
+            # 1 for cls.__instance, anymore is undefined behaviour. (Subtract 1 for argument reference)
+            if cls.is_instantiated() and (sys.getrefcount(cls.__instance) - 1) > 1:
+                warn(RuntimeWarning(f'There is an outside reference to the internal {cls.__name__} instance. '
+                                    f'This is undefined behavior; please use weakref proxies.'))
+                return False
 
         return True
 
@@ -355,8 +377,8 @@ class Singleton:
             cls._check_ref_count()
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
-        cls.__instance = cls._base_type.__new__(cls)
-        cls._base_type.__init__(cls.__instance)
+        cls.__instance = cls._singleton_base_type.__new__(cls)
+        cls._singleton_base_type.__init__(cls.__instance)
 
         # noinspection PyArgumentList
         cls.__init__(cls.__instance, *args, **kwargs)
