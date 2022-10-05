@@ -320,9 +320,9 @@ class Singleton:
     """
 
     def __new__(cls, *args, **kwargs) -> None:
-        raise NotImplementedError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
+        raise TypeError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
-    def __init__(self: weakref.ProxyType[Singleton]) -> None: ...
+    def __init__(self) -> None: ...
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
@@ -346,10 +346,7 @@ class Singleton:
 
     @classmethod
     def create(cls, *args, **kwargs) -> None:
-        """The preferred way of creating the :py:class:`Singleton` instance.
-
-        When __init__ is called on the :py:class:`Singleton` instance, ``self`` is actually a :py:class:`weakref.ProxyType[Singleton]`.
-        """
+        """The preferred way of creating the :py:class:`Singleton` instance."""
         # All subclasses of Singleton should override __init__
         if cls.__init__ is Singleton.__init__:
             raise TypeError(f'Could not instantiate abstract class {cls.__name__} with abstract method __init__.')
@@ -359,11 +356,10 @@ class Singleton:
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
         cls.__instance = cls._base_type.__new__(cls)
+        cls._base_type.__init__(cls.__instance)
 
-        # cls.instance() is passed down to __init__ as opposed to cls.__instance to avoid an extra reference.
-        # If you require the actual Singleton instance, you can use self._Singleton__instance, but do not store this in a variable or return it.
         # noinspection PyArgumentList
-        cls.__init__(cls.instance(), *args, **kwargs)
+        cls.__init__(cls.__instance, *args, **kwargs)
 
     @classmethod
     def instance(cls) -> Singleton:  # Real return type is weakref.ProxyType[Singleton]
