@@ -32,6 +32,7 @@ from ..events import EventBus
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
+from ..models import Singleton
 from ..network import *
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
@@ -74,11 +75,13 @@ class Theme(NamedTuple):
     display_name: str
 
 
-class GetterApp(QApplication):
+class GetterApp(Singleton, QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
 
     :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() class method or the app() function.
     """
+    _singleton_base_type = QApplication
+    _singleton_check_ref = False
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker
@@ -121,14 +124,6 @@ class GetterApp(QApplication):
         # Create window instances
         self._create_windows(**kwargs)
 
-    @classmethod
-    def instance(cls) -> GetterApp:
-        """Return the singleton instance of :py:class:`GetterApp`."""
-        o: GetterApp | None = super().instance()
-        if o is None:
-            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
-        return o
-
     @property
     def first_launch(self) -> bool:
         """Return whether this is the first launch of the application.
@@ -166,16 +161,17 @@ class GetterApp(QApplication):
         from .windows import ReadmeViewer
         from .windows import SettingsWindow
 
-        self._windows['license_viewer'] = LicenseViewer()
-        self._windows['readme_viewer'] = ReadmeViewer()
-        self._windows['settings'] = SettingsWindow(QSize(420, 600))
-
-        # AppWindow depends on the others existing
-        self._windows['app'] = AppWindow(QSize(
+        SettingsWindow.create(QSize(420, 600))
+        AppWindow.create(QSize(
             # Size to use, with a minimum of 100x100
             max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
             max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
         ))
+
+        self._windows['license_viewer'] = LicenseViewer()
+        self._windows['readme_viewer'] = ReadmeViewer()
+        self._windows['settings'] = SettingsWindow.instance()
+        self._windows['app'] = AppWindow.instance()
 
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""

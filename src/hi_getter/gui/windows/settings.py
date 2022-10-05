@@ -18,6 +18,7 @@ from PySide6.QtWidgets import *
 from ...constants import *
 from ...events import EventBus
 from ...models import DeferredCallable
+from ...models import Singleton
 from ...tomlfile import TomlEvents
 from ...utils.gui import init_objects
 from ..app import app
@@ -27,23 +28,16 @@ from ..widgets import TranslatableComboBox
 
 
 # noinspection PyArgumentList
-class SettingsWindow(QWidget):
+class SettingsWindow(Singleton, QWidget):
     """Window that provides user interaction with the application's settings.
 
     :py:class:`SettingsWindow` is a singleton and can be accessed via the class using the SettingsWindow.instance() class method.
     """
-    _instance: SettingsWindow | None = None
+    _singleton_base_type = QWidget
+    _singleton_check_ref = False
 
     def __init__(self, size: QSize) -> None:
         """Create the settings window."""
-        # SINGLETON LOGIC
-        cls = self.__class__
-        if cls._instance is not None:
-            raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
-
-        cls._instance = self
-
-        # NORMAL LOGIC
         super().__init__()
 
         self.setWindowTitle(tr('gui.settings.title'))
@@ -313,14 +307,6 @@ class SettingsWindow(QWidget):
         self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])
         self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])
         self.theme_dropdown.setCurrentIndex(app().theme_index_map[app().settings['gui/themes/selected']])
-
-    @classmethod
-    def instance(cls) -> SettingsWindow:
-        """Return the singleton instance of :py:class:`SettingsWindow`."""
-        o: SettingsWindow | None = cls._instance
-        if o is None:
-            raise RuntimeError(f'Called {cls.__name__}.instance() when {cls.__name__} is not instantiated.')
-        return o
 
     # # # # # Events
 

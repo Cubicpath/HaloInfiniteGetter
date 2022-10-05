@@ -26,6 +26,7 @@ from ...events import EventBus
 from ...exceptions import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
+from ...models import Singleton
 from ...tomlfile import TomlEvents
 from ...utils.gui import init_objects
 from ...utils.gui import scroll_to_top
@@ -53,8 +54,10 @@ def size_label_for(num: int) -> str:
 
 
 # noinspection PyArgumentList
-class AppWindow(QMainWindow):
+class AppWindow(Singleton, QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
+    _singleton_base_type = QMainWindow
+    _singleton_check_ref = False
     shown_key_warning: bool = False
 
     def __init__(self, size: QSize) -> None:

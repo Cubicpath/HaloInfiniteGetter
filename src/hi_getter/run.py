@@ -9,7 +9,6 @@ __all__ = (
 )
 
 import sys
-from typing import Final
 
 from ._version import __version__
 from .exceptions import ExceptionHook
@@ -26,9 +25,11 @@ def main(*args, **kwargs) -> int:
 
     # ExceptionHook is required for subscribing to ExceptionEvents
     with ExceptionHook():
-        APP: Final[GetterApp] = GetterApp(*args, **kwargs)
-        APP.windows['app'].show()
-        return APP.exec()
+        GetterApp.create(*args, **kwargs)
+
+        app = GetterApp.instance()
+        app.windows['app'].show()
+        return app.exec()
 
 
 if __name__ == '__main__':
