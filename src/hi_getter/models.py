@@ -343,7 +343,9 @@ class Singleton:
     def __new__(cls, *args, **kwargs) -> None:
         raise TypeError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
-    def __init__(self) -> None: ...
+    def __init__(self, *args, **kwargs) -> None:
+        # pylint: disable=useless-super-delegation
+        super().__init__(*args, **kwargs)
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         """Ensure that the class instance is set to None for all subclasses."""
@@ -378,9 +380,6 @@ class Singleton:
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
         cls.__instance = cls._singleton_base_type.__new__(cls)
-        cls._singleton_base_type.__init__(cls.__instance)
-
-        # noinspection PyArgumentList
         cls.__init__(cls.__instance, *args, **kwargs)
 
     @classmethod
