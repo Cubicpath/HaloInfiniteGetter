@@ -9,8 +9,8 @@ __all__ = (
 )
 
 import webbrowser
-from shutil import rmtree
 
+from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
@@ -80,7 +80,7 @@ class FileContextMenu(QMenu):
         ).role == QMessageBox.AcceptRole
 
         if do_flush:
-            rmtree(HI_CACHE_PATH)
+            QDir(HI_CACHE_PATH).removeRecursively()
             HI_CACHE_PATH.mkdir()
 
     def import_data(self) -> None:
