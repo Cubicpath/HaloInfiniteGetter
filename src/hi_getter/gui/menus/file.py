@@ -75,8 +75,8 @@ class FileContextMenu(QMenu):
         """Remove all data from cache."""
         do_flush: bool = app().show_dialog(
             'warnings.delete_cache', self,
-            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-            QMessageBox.StandardButton.Cancel
+            QMessageBox.Ok | QMessageBox.Cancel,
+            default_button=QMessageBox.Cancel
         ).role == QMessageBox.AcceptRole
 
         if do_flush:

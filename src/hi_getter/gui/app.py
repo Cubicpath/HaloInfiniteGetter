@@ -318,9 +318,11 @@ class GetterApp(Singleton, QApplication):
         install_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('errors.missing_package.install'))
 
         consent_to_install: bool = self.show_dialog(
-            'errors.missing_package', parent,
-            [(install_button, QMessageBox.AcceptRole), QMessageBox.Cancel],
-            QMessageBox.Cancel,
+            'errors.missing_package', parent, (
+                (install_button, QMessageBox.AcceptRole),
+                QMessageBox.Cancel
+            ),
+            default_button=QMessageBox.Cancel,
             description_args=(package, reason, exec_path)
         ).role == QMessageBox.AcceptRole
 
@@ -419,8 +421,7 @@ class GetterApp(Singleton, QApplication):
 
             # Ensure path is a Path value that exists
             if (path := Path(path)).is_dir():
-                search_path = f'hi_theme+{id}'
-                QDir.addSearchPath(search_path, str(path))
+                QDir.addSearchPath(f'hi_theme+{id}', path)
 
                 for theme_resource in path.iterdir():
                     if theme_resource.is_file():
