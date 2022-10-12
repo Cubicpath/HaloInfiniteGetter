@@ -4,6 +4,7 @@
 """Package containing miscellaneous :py:class:`QWidget` Widgets."""
 
 __all__ = (
+    'CacheExplorer',
     'ExceptionLogger',
     'ExternalTextBrowser',
     'HistoryComboBox',
@@ -11,6 +12,7 @@ __all__ = (
     'TranslatableComboBox',
 )
 
+from .cache_explorer import CacheExplorer
 from .combo_box import ComboBox
 from .combo_box import HistoryComboBox
 from .combo_box import TranslatableComboBox

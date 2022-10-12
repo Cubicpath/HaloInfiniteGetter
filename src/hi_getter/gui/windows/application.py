@@ -273,12 +273,12 @@ class AppWindow(Singleton, QMainWindow):
             self.input_field, self.image_size_label, self.text_size_label,
             self.image_detach_button, self.text_detach_button, self.clear_picture, self.copy_picture,
             self.clear_text, self.copy_text, self.media_frame, self.text_frame,
-            self.media_output, self.text_output,
+            self.media_output, self.text_output, self.cache_explorer
         ) = (
             HistoryComboBox(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QFrame(self), QFrame(self),
-            QGraphicsView(self), ExternalTextBrowser(self)
+            QGraphicsView(self), ExternalTextBrowser(self), CacheExplorer(self)
         )
 
         init_objects({
@@ -382,6 +382,7 @@ class AppWindow(Singleton, QMainWindow):
         main_widget = QWidget()
         layout = QGridLayout()
         top = QHBoxLayout()
+        middle = QHBoxLayout()
         self.outputs = QHBoxLayout()
         media_layout = QVBoxLayout(self.media_frame)
         media_top = QHBoxLayout()
@@ -395,7 +396,7 @@ class AppWindow(Singleton, QMainWindow):
         self.setCentralWidget(main_widget)
         main_widget.setLayout(layout)
         layout.addLayout(top, 10, 0, Qt.AlignTop)
-        layout.addLayout(self.outputs, 20, 0, Qt.AlignHCenter)
+        layout.addLayout(middle, 20, 0, Qt.AlignHCenter)
         layout.addLayout(bottom, 30, 0, Qt.AlignBottom)
 
         top.addWidget(subdomain_field)
@@ -405,6 +406,8 @@ class AppWindow(Singleton, QMainWindow):
         top.addWidget(scan_button)
         top.setSpacing(2)
 
+        middle.addWidget(self.cache_explorer, Qt.AlignLeft)
+        middle.addLayout(self.outputs, Qt.AlignHCenter)
         self.outputs.addWidget(self.media_frame)
         self.outputs.addWidget(self.text_frame)
 
