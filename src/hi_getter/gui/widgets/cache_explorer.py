@@ -9,10 +9,36 @@ __all__ = (
 )
 
 from PySide6.QtCore import *
+from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...models import DeferredCallable
 from ...utils.gui import init_objects
+from ..app import tr
+
+
+class _CachedFileContextMenu(QMenu):
+    """Context menu that shows actions to manipulate files."""
+
+    def __init__(self, parent: CacheExplorer, index: QModelIndex):
+        super().__init__(parent)
+
+        init_objects({
+            (open_in_view := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.open_in_view'),
+                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'triggered': DeferredCallable(parent.open_index, index)
+            },
+        })
+
+        section_map = {
+            'Open': (open_in_view,)
+        }
+
+        for section, actions in section_map.items():
+            self.addSection(section)
+            self.addActions(actions)
 
 
 class CacheExplorer(QTreeView):
@@ -20,6 +46,7 @@ class CacheExplorer(QTreeView):
 
     Has a native :py:class:`QFileSystemModel` and item context menu.
     """
+    openFileInView = Signal(str, name='openFileInView')
 
     def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(parent, *args, **kwargs)
@@ -49,9 +76,27 @@ class CacheExplorer(QTreeView):
 
         :param point: The point to place the context menu.
         """
+        index = self.indexAt(point)
 
-    def on_double_click(self, model_index: QModelIndex) -> None:
+        if index.isValid():
+            menu = _CachedFileContextMenu(self, index)
+            menu.setAttribute(Qt.WA_DeleteOnClose)
+
+            menu.move(self.viewport().mapToGlobal(point))
+            menu.show()
+
+    def on_double_click(self, index: QModelIndex) -> None:
         """Function called when the doubleClicked signal is emitted.
 
-        :param model_index: The model index which was double-clicked.
+        :param index: The model index which was double-clicked.
         """
+        # get file name
+        if index.isValid():
+            self.open_index(index)
+
+    def open_index(self, index: QModelIndex) -> None:
+        """Emit the openFileInView signal with the index's filepath as an argument.
+
+        :param index: Index to open in view.
+        """
+        self.openFileInView.emit(self.model().filePath(index))
