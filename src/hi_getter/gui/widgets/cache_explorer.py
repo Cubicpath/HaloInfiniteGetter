@@ -8,6 +8,8 @@ __all__ = (
     'CacheExplorer',
 )
 
+from pathlib import Path
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -15,6 +17,7 @@ from PySide6.QtWidgets import *
 from ...constants import *
 from ...models import DeferredCallable
 from ...utils.gui import init_objects
+from ..app import app
 from ..app import tr
 
 
@@ -24,16 +27,38 @@ class _CachedFileContextMenu(QMenu):
     def __init__(self, parent: CacheExplorer, index: QModelIndex):
         super().__init__(parent)
 
+        file_path = Path(parent.model().filePath(index))
+        if not (dir_path := file_path).is_dir():
+            dir_path = file_path.parent
+
         init_objects({
             (open_in_view := QAction(self)): {
                 'text': tr('gui.menus.cache_explorer.open_in_view'),
                 'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
-                'triggered': DeferredCallable(parent.open_index, index)
+                'triggered': DeferredCallable(
+                    parent.openFileInView.emit, file_path.as_posix()
+                )
+            },
+
+            (open_in_default_app := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.open_in_default_app'),
+                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'triggered': DeferredCallable(
+                    QDesktopServices.openUrl, QUrl(file_path.as_uri())
+                )
+            },
+
+            (open_in_explorer := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.view_in_explorer'),
+                'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
+                'triggered': DeferredCallable(
+                    QDesktopServices.openUrl, QUrl(dir_path.as_uri())
+                )
             },
         })
 
         section_map = {
-            'Open': (open_in_view,)
+            'Open': (open_in_view, open_in_default_app, open_in_explorer)
         }
 
         for section, actions in section_map.items():
@@ -52,6 +77,7 @@ class CacheExplorer(QTreeView):
         super().__init__(parent, *args, **kwargs)
         self.customContextMenuRequested.connect(self.on_custom_context_menu)
         self.doubleClicked.connect(self.on_double_click)
+        self.openFileInView.connect(print)
 
         init_objects({
             (model := QFileSystemModel(self)): {
@@ -68,8 +94,13 @@ class CacheExplorer(QTreeView):
             }
         })
 
-        for index in (1, 2):  # SIZE and FILE TYPE
+        for index in (1, 2, 3):  # SIZE, FILE TYPE, DATE MODIFIED
             self.hideColumn(index)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Resize "Name" column on click/expansion."""
+        super().mousePressEvent(event)
+        self.resizeColumnToContents(0)
 
     def on_custom_context_menu(self, point: QPoint) -> None:
         """Function called when the customContextMenuRequested signal is emitted.
@@ -90,13 +121,5 @@ class CacheExplorer(QTreeView):
 
         :param index: The model index which was double-clicked.
         """
-        # get file name
         if index.isValid():
-            self.open_index(index)
-
-    def open_index(self, index: QModelIndex) -> None:
-        """Emit the openFileInView signal with the index's filepath as an argument.
-
-        :param index: Index to open in view.
-        """
-        self.openFileInView.emit(self.model().filePath(index))
+            self.openFileInView.emit(self.model().filePath(index))
