@@ -59,11 +59,13 @@ class _CachedFileContextMenu(QMenu):
             },
 
             (expand_this := QAction(self)): {
+                'disabled': file_path.is_file(),
                 'text': tr('gui.menus.cache_explorer.expand_this'),
                 'triggered': DeferredCallable(parent.expand, index)
             },
 
             (expand_recursively := QAction(self)): {
+                'disabled': file_path.is_file(),
                 'text': tr('gui.menus.cache_explorer.expand_recursively'),
                 'triggered': DeferredCallable(parent.expandRecursively, index)
             },
@@ -74,6 +76,7 @@ class _CachedFileContextMenu(QMenu):
             },
 
             (collapse_this := QAction(self)): {
+                'disabled': file_path.is_file(),
                 'text': tr('gui.menus.cache_explorer.collapse_this'),
                 'triggered': DeferredCallable(parent.collapse, index)
             },
