@@ -37,6 +37,7 @@ class FileContextMenu(QMenu):
             },
 
             (flush_cache := QAction(self)): {
+                'disabled': not tuple(HI_CACHE_PATH.iterdir()),  # Set disabled if HI_CACHE_PATH directory is empty
                 'text': tr('gui.menus.file.flush'),
                 'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
                 'triggered': self.flush_cache
@@ -62,8 +63,6 @@ class FileContextMenu(QMenu):
         for section, actions in section_map.items():
             self.addSection(section)
             self.addActions(actions)
-
-        flush_cache.setDisabled(not tuple(HI_CACHE_PATH.iterdir()))  # Set disabled if HI_CACHE_PATH directory is empty
 
         # TODO: Add functionality and enable
         import_from.setDisabled(True)

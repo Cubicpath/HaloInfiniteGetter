@@ -3,6 +3,7 @@
 ###################################################################################################
 """A simple way to get live Halo data straight from Halo Waypoint."""
 # TODO: Add logging functionality
+# TODO: Redo Events implementation
 from ._version import __version__
 from ._version import __version_info__
 
