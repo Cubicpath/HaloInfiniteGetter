@@ -265,6 +265,13 @@ class AppWindow(Singleton, QMainWindow):
                 self.input_field.setCurrentIndex(self.input_field.count() - 1)
             self.use_input()
 
+        def open_file_in_view(file_path: str) -> None:
+            if not file_path.endswith(tuple(SUPPORTED_IMAGE_EXTENSIONS) + ('json',)):
+                return
+
+            self.input_field.setCurrentText(app().client.to_get_path(file_path))
+            self.use_input()
+
         # Define widget attributes
         # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
         # This works in the standard AST, but is a seemingly arbitrary limitation set by the interpreter.
@@ -342,6 +349,10 @@ class AppWindow(Singleton, QMainWindow):
             (root_folder_field := PasteLineEdit(self)): {
                 'text': app().client.parent_path, 'disabled': True,
                 'size': {'fixed': (28, None)}
+            },
+
+            self.cache_explorer: {
+                'openFileInView': open_file_in_view
             },
 
             # Outputs
@@ -510,7 +521,7 @@ class AppWindow(Singleton, QMainWindow):
         else:
             output = tr(
                 'gui.outputs.text.errors.too_large',
-                app().client.os_path(search_path)
+                app().client.to_os_path(search_path)
             )
 
         original_output = output

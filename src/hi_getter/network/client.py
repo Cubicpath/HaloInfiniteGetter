@@ -131,7 +131,7 @@ class Client(QObject):
         :return: dict for JSON objects, bytes for media, int for error codes.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
-        os_path: Path = self.os_path(path, parent=dump_path)
+        os_path: Path = self.to_os_path(path, parent=dump_path)
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
@@ -178,9 +178,15 @@ class Client(QObject):
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
-    def os_path(self, path: str, parent: Path = HI_CACHE_PATH) -> Path:
+    def to_os_path(self, path: str, parent: Path = HI_CACHE_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
+
+    def to_get_path(self, path: str) -> str:
+        """Translate a given cache location to the equivalent GET path."""
+        resource = path.split(self.parent_path, maxsplit=1)[1]
+        pre, post = resource.split("/", maxsplit=1)
+        return f'{pre}/file/{post}'
 
     def recursive_search(self, search_path: str) -> None:
         """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
