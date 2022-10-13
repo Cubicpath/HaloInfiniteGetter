@@ -215,7 +215,7 @@ class CacheExplorer(QTreeView):
         init_objects({
             (model := QFileSystemModel(self)): {
                 'readOnly': True,
-                'rootPath': str(HI_CACHE_PATH.absolute()),
+                'rootPath': HI_CACHE_PATH.absolute().as_posix(),
                 'iconProvider': _IconProvider(self),
                 'nameFilters': [f'*.{ext}' for ext in SUPPORTED_IMAGE_EXTENSIONS],
                 'nameFilterDisables': True
@@ -223,7 +223,7 @@ class CacheExplorer(QTreeView):
 
             self: {
                 'model': model,
-                'rootIndex': model.index(str(HI_CACHE_PATH.absolute())),
+                'rootIndex': model.index(HI_CACHE_PATH.absolute().as_posix()),
                 'indentation': 12,
                 'contextMenuPolicy': Qt.CustomContextMenu,
                 'customContextMenuRequested': self.on_custom_context_menu,

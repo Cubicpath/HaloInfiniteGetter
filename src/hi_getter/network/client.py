@@ -7,6 +7,7 @@ from __future__ import annotations
 __all__ = (
     'Client',
     'TOKEN_PATH',
+    'WEB_DUMP_PATH',
     'WPAUTH_PATH',
 )
 
@@ -32,8 +33,9 @@ from ..utils.network import is_error_status
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
-TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
-WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
+WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'web_requests'
+TOKEN_PATH:    Final[Path] = HI_CONFIG_PATH / '.token'
+WPAUTH_PATH:   Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
 class Client(QObject):
@@ -125,7 +127,7 @@ class Client(QObject):
 
         return reply
 
-    def get_hi_data(self, path: str, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
@@ -178,7 +180,7 @@ class Client(QObject):
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
-    def to_os_path(self, path: str, parent: Path = HI_CACHE_PATH) -> Path:
+    def to_os_path(self, path: str, parent: Path = WEB_DUMP_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
 
