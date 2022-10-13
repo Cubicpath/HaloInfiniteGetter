@@ -293,6 +293,16 @@ class CacheExplorer(QTreeView):
         # pylint: disable=useless-super-delegation
         return super().model()
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Map keys to actions."""
+        super().keyPressEvent(event)
+
+        match event.key():
+            case Qt.Key_Delete:
+                # Delete Path at Selected Index
+                for i in self.selectedIndexes():
+                    self.delete_index(i)
+
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Resize "Name" column on click/expansion."""
         super().mousePressEvent(event)
