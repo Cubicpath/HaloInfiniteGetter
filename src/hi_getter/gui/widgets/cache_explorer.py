@@ -15,7 +15,10 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...events import EventBus
 from ...models import DeferredCallable
+from ...tomlfile import TomlEvents
+from ...utils.gui import icon_from_bytes
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
@@ -157,6 +160,46 @@ class _CachedFileContextMenu(QMenu):
             self.addActions(actions)
 
 
+class _IconProvider(QAbstractFileIconProvider):
+    NULL_ICON = QIcon()
+
+    def __init__(self):
+        super().__init__()
+        self._icon_mode: int = app().settings['gui/cache_explorer/icon_mode']
+        self._fallback_provider = QFileIconProvider()
+
+        EventBus['settings'].subscribe(
+            self.on_mode_change, TomlEvents.Set,
+            event_predicate=lambda event: event.new != event.old and event.key == 'gui/cache_explorer/icon_mode'
+        )
+
+    def icon(self, info: QFileInfo | QAbstractFileIconProvider.IconType) -> QIcon:
+        """Get the icon for a path using the given information.
+
+        settings['gui/cache_explorer/icon_mode'] changes how this function works.
+        0 --- No Icons
+        1 --- Default Icons
+        2 --- Preview Images
+
+        :param info: File info to associate icon with.
+        :return: Icon read from image, or icon from the fallback QFileIconProvider.
+        """
+        if self._icon_mode == 0:
+            return _IconProvider.NULL_ICON
+
+        if self._icon_mode == 2:
+            if isinstance(info, QFileInfo):
+                if (path := Path(info.filePath())).is_file():
+                    if path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
+                        return icon_from_bytes(path.read_bytes())
+
+        return self._fallback_provider.icon(info)
+
+    def on_mode_change(self, event: TomlEvents.Set):
+        """Set the icon mode to the one selected in settings."""
+        self._icon_mode = event.new
+
+
 class CacheExplorer(QTreeView):
     """:py:class:`QTreeView` used to interact with the app's cache directory.
 
@@ -171,6 +214,7 @@ class CacheExplorer(QTreeView):
             (model := QFileSystemModel(self)): {
                 'readOnly': True,
                 'rootPath': str(HI_CACHE_PATH.absolute()),
+                'iconProvider': _IconProvider(),
                 'nameFilters': [f'*.{ext}' for ext in SUPPORTED_IMAGE_EXTENSIONS],
                 'nameFilterDisables': True
             },

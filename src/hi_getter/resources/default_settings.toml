@@ -7,6 +7,9 @@ y_size = 500 # Minimum value of 100
 [gui.themes]
 selected = "light"
 
+[gui.cache_explorer]
+icon_mode = 1 # 0: No Icons | 1: Default | 2: Preview Images
+
 [gui.media_output]
 aspect_ratio_mode = 1 # 0: Ignore | 1: Keep | 2: Expanding
 transformation_mode = 0 # 0: Fast | 1: Smooth
