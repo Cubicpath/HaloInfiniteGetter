@@ -77,8 +77,6 @@ class CacheExplorer(QTreeView):
 
     def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(parent, *args, **kwargs)
-        self.customContextMenuRequested.connect(self.on_custom_context_menu)
-        self.doubleClicked.connect(self.on_double_click)
 
         init_objects({
             (model := QFileSystemModel(self)): {
@@ -91,7 +89,14 @@ class CacheExplorer(QTreeView):
             self: {
                 'model': model,
                 'rootIndex': model.index(str(HI_CACHE_PATH.absolute())),
-                'contextMenuPolicy': Qt.CustomContextMenu
+                'contextMenuPolicy': Qt.CustomContextMenu,
+                'indentation': 12,
+                'customContextMenuRequested': self.on_custom_context_menu,
+                'doubleClicked': self.on_double_click
+            },
+
+            self.header(): {
+                'size': {'fixed': (None, 26)}
             }
         })
 
