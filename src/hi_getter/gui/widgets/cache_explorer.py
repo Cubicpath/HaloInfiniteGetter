@@ -57,10 +57,37 @@ class _CachedFileContextMenu(QMenu):
                     QDesktopServices.openUrl, QUrl(dir_path.as_uri())
                 )
             },
+
+            (expand_this := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.expand_this'),
+                'triggered': DeferredCallable(parent.expand, index)
+            },
+
+            (expand_recursively := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.expand_recursively'),
+                'triggered': DeferredCallable(parent.expandRecursively, index)
+            },
+
+            (expand_all := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.expand_all'),
+                'triggered': parent.expandAll
+            },
+
+            (collapse_this := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.collapse_this'),
+                'triggered': DeferredCallable(parent.collapse, index)
+            },
+
+            (collapse_all := QAction(self)): {
+                'text': tr('gui.menus.cache_explorer.collapse_all'),
+                'triggered': parent.collapseAll
+            },
         })
 
         section_map = {
-            'Open': (open_in_view, open_in_default_app, open_in_explorer)
+            'Open': (open_in_view, open_in_default_app, open_in_explorer),
+            'Expand': (expand_this, expand_recursively, expand_all),
+            'Collapse': (collapse_this, collapse_all)
         }
 
         for section, actions in section_map.items():
@@ -102,6 +129,28 @@ class CacheExplorer(QTreeView):
 
         for index in (1, 2, 3):  # SIZE, FILE TYPE, DATE MODIFIED
             self.hideColumn(index)
+
+    def expandAll(self) -> None:
+        """Call super().expandall ~50 times."""
+        timer = QTimer(self)
+        timer.timeout.connect(DeferredCallable(super().expandAll))
+        timer.start(5)
+
+        timer2 = QTimer(self)
+        timer2.setSingleShot(True)
+        timer2.timeout.connect(timer.stop)
+        timer2.start(500)
+
+    def expandRecursively(self, *args, **kwargs) -> None:
+        """Call super().expandRecursively ~50 times."""
+        timer = QTimer(self)
+        timer.timeout.connect(DeferredCallable(super().expandRecursively, *args, **kwargs))
+        timer.start(5)
+
+        timer2 = QTimer(self)
+        timer2.setSingleShot(True)
+        timer2.timeout.connect(timer.stop)
+        timer2.start(500)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Resize "Name" column on click/expansion."""
