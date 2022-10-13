@@ -163,8 +163,9 @@ class _CachedFileContextMenu(QMenu):
 class _IconProvider(QAbstractFileIconProvider):
     NULL_ICON = QIcon()
 
-    def __init__(self):
+    def __init__(self, cache_explorer: CacheExplorer):
         super().__init__()
+        self._cache_explorer = cache_explorer
         self._icon_mode: int = app().settings['gui/cache_explorer/icon_mode']
         self._fallback_provider = QFileIconProvider()
 
@@ -198,6 +199,7 @@ class _IconProvider(QAbstractFileIconProvider):
     def on_mode_change(self, event: TomlEvents.Set):
         """Set the icon mode to the one selected in settings."""
         self._icon_mode = event.new
+        self._cache_explorer.model().setIconProvider(self)
 
 
 class CacheExplorer(QTreeView):
@@ -214,7 +216,7 @@ class CacheExplorer(QTreeView):
             (model := QFileSystemModel(self)): {
                 'readOnly': True,
                 'rootPath': str(HI_CACHE_PATH.absolute()),
-                'iconProvider': _IconProvider(),
+                'iconProvider': _IconProvider(self),
                 'nameFilters': [f'*.{ext}' for ext in SUPPORTED_IMAGE_EXTENSIONS],
                 'nameFilterDisables': True
             },

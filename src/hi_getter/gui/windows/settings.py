@@ -113,11 +113,11 @@ class SettingsWindow(Singleton, QWidget):
         # See: https://stackoverflow.com/questions/64055314/why-cant-pythons-walrus-operator-be-used-to-set-instance-attributes#answer-66617839
         (
             self.key_set_button, self.token_clear_button,
-            self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown, self.line_wrap_dropdown,
+            self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown, self.line_wrap_dropdown, self.icon_mode_dropdown,
             self.key_field
         ) = (
             QPushButton(self), QPushButton(self),
-            TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self),
+            TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self),
             PasteLineEdit(self)
         )
 
@@ -133,6 +133,9 @@ class SettingsWindow(Singleton, QWidget):
                 'size': {'maximum': (90, None)}
             },
             (line_wrap_label := QLabel(self)): {
+                'size': {'maximum': (90, None)}
+            },
+            (icon_mode_label := QLabel(self)): {
                 'size': {'maximum': (90, None)}
             },
 
@@ -221,6 +224,18 @@ class SettingsWindow(Singleton, QWidget):
                     'gui.settings.text.line_wrap.fixed_pixel',
                     'gui.settings.text.line_wrap.fixed_column'
                 )
+            },
+            self.icon_mode_dropdown: {
+                'activated': DeferredCallable(
+                    app().settings.__setitem__,
+                    'gui/cache_explorer/icon_mode',
+                    self.icon_mode_dropdown.currentIndex
+                ),
+                'items': (
+                    'gui.settings.cache.icon_mode.no_icons',
+                    'gui.settings.cache.icon_mode.default',
+                    'gui.settings.cache.icon_mode.preview'
+                )
             }
         })
 
@@ -236,6 +251,7 @@ class SettingsWindow(Singleton, QWidget):
             aspect_ratio_label.setText: 'gui.settings.media.aspect_ratio',
             transformation_label.setText: 'gui.settings.media.image_transform',
             line_wrap_label.setText: 'gui.settings.text.line_wrap',
+            icon_mode_label.setText: 'gui.settings.cache.icon_mode',
 
             # Buttons
             save_button.setText: 'gui.settings.save',
@@ -262,6 +278,7 @@ class SettingsWindow(Singleton, QWidget):
         middle = QVBoxLayout()
         theme_layout = QHBoxLayout()
         output_layout = QGridLayout()
+        cache_layout = QHBoxLayout()
         bottom = QVBoxLayout()
         key_layout = QHBoxLayout()
         token_layout = QHBoxLayout()
@@ -281,6 +298,7 @@ class SettingsWindow(Singleton, QWidget):
         middle.addWidget(open_editor_button)
         middle.addLayout(theme_layout)
         middle.addLayout(output_layout)
+        middle.addLayout(cache_layout)
         theme_layout.addWidget(theme_label)
         theme_layout.addWidget(self.theme_dropdown)
         output_layout.addWidget(aspect_ratio_label, 0, 0)
@@ -289,6 +307,8 @@ class SettingsWindow(Singleton, QWidget):
         output_layout.addWidget(self.transformation_dropdown, 0, 30)
         output_layout.addWidget(line_wrap_label, 10, 0)
         output_layout.addWidget(self.line_wrap_dropdown, 10, 10)
+        cache_layout.addWidget(icon_mode_label)
+        cache_layout.addWidget(self.icon_mode_dropdown)
 
         # Add bottom widgets
         bottom.addWidget(key_show_button)
@@ -303,6 +323,7 @@ class SettingsWindow(Singleton, QWidget):
 
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
+        self.icon_mode_dropdown.setCurrentIndex(app().settings['gui/cache_explorer/icon_mode'])
         self.aspect_ratio_dropdown.setCurrentIndex(app().settings['gui/media_output/aspect_ratio_mode'])
         self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])
         self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])
