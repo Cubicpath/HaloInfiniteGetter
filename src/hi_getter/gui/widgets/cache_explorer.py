@@ -33,6 +33,7 @@ class _CachedFileContextMenu(QMenu):
 
         init_objects({
             (open_in_view := QAction(self)): {
+                'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cache_explorer.open_in_view'),
                 'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
                 'triggered': DeferredCallable(
@@ -41,6 +42,7 @@ class _CachedFileContextMenu(QMenu):
             },
 
             (open_in_default_app := QAction(self)): {
+                'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cache_explorer.open_in_default_app'),
                 'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
                 'triggered': DeferredCallable(
@@ -77,7 +79,6 @@ class CacheExplorer(QTreeView):
         super().__init__(parent, *args, **kwargs)
         self.customContextMenuRequested.connect(self.on_custom_context_menu)
         self.doubleClicked.connect(self.on_double_click)
-        self.openFileInView.connect(print)
 
         init_objects({
             (model := QFileSystemModel(self)): {

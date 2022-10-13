@@ -65,6 +65,9 @@
     "gui.readme_viewer.title": "README Viewer",
 
     "gui.menu_bar.title": "Menu Bar",
+    "gui.menus.cache_explorer.open_in_view": "Open in View",
+    "gui.menus.cache_explorer.open_in_default_app": "Open in Default App",
+    "gui.menus.cache_explorer.view_in_explorer": "View in Explorer",
     "gui.menus.file": "File",
     "gui.menus.file.export": "Export Data to...",
     "gui.menus.file.flush": "Flush Cache",
