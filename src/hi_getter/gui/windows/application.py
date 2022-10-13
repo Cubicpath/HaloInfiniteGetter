@@ -12,7 +12,6 @@ __all__ = (
 import json
 import string
 import sys
-import webbrowser
 from collections.abc import Callable
 from typing import Any
 
@@ -441,7 +440,7 @@ class AppWindow(Singleton, QMainWindow):
                 or
                 sys.platform.startswith('linux') and str_path.startswith('/')
         ):
-            webbrowser.open(str_path)
+            QDesktopServices.openUrl(QUrl(str_path))
         else:
             self.input_field.addItem(str_path)
             self.input_field.setCurrentIndex(self.input_field.count() - 1)

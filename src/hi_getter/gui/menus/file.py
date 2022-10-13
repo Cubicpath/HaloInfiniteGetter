@@ -8,8 +8,6 @@ __all__ = (
     'FileContextMenu',
 )
 
-import webbrowser
-
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -34,7 +32,7 @@ class FileContextMenu(QMenu):
                 'text': tr('gui.menus.file.open'),
                 'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
                 'triggered': DeferredCallable(
-                    webbrowser.open, f'file:///{HI_CACHE_PATH}'
+                    QDesktopServices.openUrl, QUrl(HI_CACHE_PATH.as_uri())
                 )
             },
 

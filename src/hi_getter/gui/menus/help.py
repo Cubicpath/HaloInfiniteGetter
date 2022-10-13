@@ -10,9 +10,9 @@ __all__ = (
 )
 
 import sys
-import webbrowser
 from platform import platform
 
+from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
@@ -49,7 +49,7 @@ class HelpContextMenu(QMenu):
                 'text': tr('gui.menus.help.github'),
                 'icon': app().icon_store['github'],
                 'triggered': DeferredCallable(
-                    webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/', new=2, autoraise=True
+                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/')
                 )
             },
 
@@ -57,7 +57,7 @@ class HelpContextMenu(QMenu):
                 'text': tr('gui.menus.help.issue'),
                 'icon': app().icon_store['github'],
                 'triggered': DeferredCallable(
-                    webbrowser.open, 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose', new=2, autoraise=True
+                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose')
                 )
             },
 

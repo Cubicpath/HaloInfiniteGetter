@@ -8,7 +8,6 @@ __all__ = (
     'SettingsWindow',
 )
 
-import webbrowser
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -153,7 +152,7 @@ class SettingsWindow(Singleton, QWidget):
                 'clicked': export_settings
             },
             (open_editor_button := QPushButton(self)): {
-                'clicked': DeferredCallable(webbrowser.open, lambda: app().settings.path)
+                'clicked': DeferredCallable(QDesktopServices.openUrl, lambda: QUrl(app().settings.path.as_uri()))
             },
             (key_show_button := QPushButton(self)): {
                 'clicked': toggle_key_visibility

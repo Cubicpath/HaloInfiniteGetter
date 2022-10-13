@@ -10,7 +10,6 @@ __all__ = (
 )
 
 import traceback
-import webbrowser
 from getpass import getuser
 from types import TracebackType
 
@@ -142,7 +141,7 @@ class ExceptionReporter(QWidget):
             'version': f'v{__version__}',
             'logs': f'{exc_name}: {exc_msg}\n\n{exc_tb}'
         }
-        webbrowser.open(f'{base}?{encode_url_params(params)}')
+        QDesktopServices.openUrl(QUrl(f'{base}?{encode_url_params(params)}'))
 
     def disable_exception_widgets(self) -> None:
         """Disables the widgets on the right pane."""
