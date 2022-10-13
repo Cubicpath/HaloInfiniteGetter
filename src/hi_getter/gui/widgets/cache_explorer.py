@@ -86,7 +86,7 @@ class _CachedFileContextMenu(QMenu):
         init_objects({
             (open_in_view := QAction(self)): {
                 'disabled': file_path.is_dir(),
-                'text': tr('gui.menus.cache_explorer.open_in_view'),
+                'text': tr('gui.menus.cached_file.open_in_view'),
                 'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
                 'triggered': DeferredCallable(
                     parent.openFileInView.emit, file_path.as_posix()
@@ -95,7 +95,7 @@ class _CachedFileContextMenu(QMenu):
 
             (open_in_default_app := QAction(self)): {
                 'disabled': file_path.is_dir(),
-                'text': tr('gui.menus.cache_explorer.open_in_default_app'),
+                'text': tr('gui.menus.cached_file.open_in_default_app'),
                 'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
                 'triggered': DeferredCallable(
                     QDesktopServices.openUrl, QUrl(file_path.as_uri())
@@ -103,7 +103,7 @@ class _CachedFileContextMenu(QMenu):
             },
 
             (open_in_explorer := QAction(self)): {
-                'text': tr('gui.menus.cache_explorer.view_in_explorer'),
+                'text': tr('gui.menus.cached_file.view_in_explorer'),
                 'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
                 'triggered': DeferredCallable(
                     QDesktopServices.openUrl, QUrl(dir_path.as_uri())
@@ -112,29 +112,29 @@ class _CachedFileContextMenu(QMenu):
 
             (expand_this := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cache_explorer.expand_this'),
+                'text': tr('gui.menus.cached_file.expand_this'),
                 'triggered': DeferredCallable(parent.expand, index)
             },
 
             (expand_recursively := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cache_explorer.expand_recursively'),
+                'text': tr('gui.menus.cached_file.expand_recursively'),
                 'triggered': DeferredCallable(parent.expandRecursively, index)
             },
 
             (expand_all := QAction(self)): {
-                'text': tr('gui.menus.cache_explorer.expand_all'),
+                'text': tr('gui.menus.cached_file.expand_all'),
                 'triggered': parent.expandAll
             },
 
             (collapse_this := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cache_explorer.collapse_this'),
+                'text': tr('gui.menus.cached_file.collapse_this'),
                 'triggered': DeferredCallable(parent.collapse, index)
             },
 
             (collapse_all := QAction(self)): {
-                'text': tr('gui.menus.cache_explorer.collapse_all'),
+                'text': tr('gui.menus.cached_file.collapse_all'),
                 'triggered': parent.collapseAll
             },
         })
@@ -185,6 +185,7 @@ class CacheExplorer(QTreeView):
             }
         })
 
+        # Hide all but Name by default
         for index in (1, 2, 3):  # SIZE, FILE TYPE, DATE MODIFIED
             self.hideColumn(index)
 
