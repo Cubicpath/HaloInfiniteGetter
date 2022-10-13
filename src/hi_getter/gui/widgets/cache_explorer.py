@@ -137,12 +137,19 @@ class _CachedFileContextMenu(QMenu):
                 'text': tr('gui.menus.cached_file.collapse_all'),
                 'triggered': parent.collapseAll
             },
+
+            (delete := QAction(self)): {
+                'text': tr('gui.menus.cached_file.delete', 'Folder' if file_path.is_dir() else 'File'),
+                'icon': app().get_theme_icon('dialog_cancel') or self.style().standardIcon(QStyle.SP_DialogCancelButton),
+                'triggered': DeferredCallable(parent.delete_index, index)
+            },
         })
 
         section_map = {
             'Open': (open_in_view, open_in_default_app, open_in_explorer),
             'Expand': (expand_this, expand_recursively, expand_all),
-            'Collapse': (collapse_this, collapse_all)
+            'Collapse': (collapse_this, collapse_all),
+            'Delete': (delete,)
         }
 
         for section, actions in section_map.items():
@@ -189,6 +196,30 @@ class CacheExplorer(QTreeView):
         for index in (1, 2, 3):  # SIZE, FILE TYPE, DATE MODIFIED
             self.hideColumn(index)
 
+    def delete_index(self, index: QModelIndex) -> None:
+        """Deletes a given index from the file system after prompting the user.
+
+        If the path resolves to a directory, all items in the directory are recursively removed.
+
+        :param index: The index to get the filepath from and delete.
+        """
+        file_path: Path = Path(self.model().filePath(index))
+        path_type: str = 'Folder' if file_path.is_dir() else 'File'
+
+        consent: bool = app().show_dialog(
+            'warnings.delete_path', self, (
+                QMessageBox.Ok | QMessageBox.Cancel
+            ), default_button=QMessageBox.Cancel,
+            title_args=(path_type,),
+            description_args=(path_type, file_path)
+        ).role == QMessageBox.AcceptRole
+
+        if consent:
+            if file_path.is_dir():
+                QDir(file_path).removeRecursively()
+            else:
+                file_path.unlink()
+
     def expandAll(self) -> None:
         """Call super().expandall ~50 times."""
         timer = QTimer(self)
@@ -210,6 +241,11 @@ class CacheExplorer(QTreeView):
         timer2.setSingleShot(True)
         timer2.timeout.connect(timer.stop)
         timer2.start(500)
+
+    def model(self) -> QFileSystemModel:
+        """:return: The file system model for the CacheExplorer."""
+        # pylint: disable=useless-super-delegation
+        return super().model()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Resize "Name" column on click/expansion."""
