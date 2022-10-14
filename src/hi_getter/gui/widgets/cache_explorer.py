@@ -88,6 +88,10 @@ class _CachedFileContextMenu(QMenu):
             dir_path = file_path.parent
 
         init_objects({
+            (folding_submenu := QMenu(self)): {
+                'title': tr('gui.menus.cached_file.folding')
+            },
+
             (open_in_view := QAction(self)): {
                 'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cached_file.open_in_view'),
@@ -116,29 +120,29 @@ class _CachedFileContextMenu(QMenu):
 
             (expand_this := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cached_file.expand_this'),
+                'text': tr('gui.menus.cached_file.folding.expand_this'),
                 'triggered': DeferredCallable(parent.expand, index)
             },
 
             (expand_recursively := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cached_file.expand_recursively'),
+                'text': tr('gui.menus.cached_file.folding.expand_recursively'),
                 'triggered': DeferredCallable(parent.expandRecursively, index)
             },
 
             (expand_all := QAction(self)): {
-                'text': tr('gui.menus.cached_file.expand_all'),
+                'text': tr('gui.menus.cached_file.folding.expand_all'),
                 'triggered': parent.expandAll
             },
 
             (collapse_this := QAction(self)): {
                 'disabled': file_path.is_file(),
-                'text': tr('gui.menus.cached_file.collapse_this'),
+                'text': tr('gui.menus.cached_file.folding.collapse_this'),
                 'triggered': DeferredCallable(parent.collapse, index)
             },
 
             (collapse_all := QAction(self)): {
-                'text': tr('gui.menus.cached_file.collapse_all'),
+                'text': tr('gui.menus.cached_file.folding.collapse_all'),
                 'triggered': parent.collapseAll
             },
 
@@ -149,10 +153,14 @@ class _CachedFileContextMenu(QMenu):
             },
         })
 
-        add_menu_items(self, [
-            'Open', open_in_view, open_in_default_app, open_in_explorer,
+        add_menu_items(folding_submenu, [
             'Expand', expand_this, expand_recursively, expand_all,
             'Collapse', collapse_this, collapse_all,
+        ])
+
+        add_menu_items(self, [
+            'Open', open_in_view, open_in_default_app, open_in_explorer,
+            'Folding', folding_submenu,
             'Delete', delete
         ])
 
