@@ -84,12 +84,14 @@ class ExternalTextBrowser(QTextBrowser):
         self.cached_type = text_type
         self.hot_reload()
 
-    def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl, **kwargs) -> Any:
+    def loadResource(self, resource_type: int, url: QUrl, **kwargs) -> Any:
         """Load a resource from an url.
 
         If resource type is an image and the url is external, download it using requests and cache it.
         """
-        if resource_type == QTextDocument.ResourceType.ImageResource and not url.isLocalFile():
+        # See: https://github.com/Cubicpath/HaloInfiniteGetter/pull/30#issuecomment-1279562460
+        # QTextDocument.ResourceType.ImageResource = 0x2
+        if resource_type == 0x2 and not url.isLocalFile():
             image:      QImage = QImage()
             url_string: str = url.toDisplayString()
             if url_string not in self.remote_image_cache:
@@ -111,7 +113,7 @@ class ExternalTextBrowser(QTextBrowser):
                 image.loadFromData(self.remote_image_cache[url_string])
             return image
 
-        return super().loadResource(int(resource_type), url, **kwargs)
+        return super().loadResource(resource_type, url, **kwargs)
 
     def setLineWrapMode(self, mode: int | QTextEdit.LineWrapMode) -> None:
         """Set the line wrap mode. Allows use of ints."""
