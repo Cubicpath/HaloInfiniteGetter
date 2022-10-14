@@ -1485,7 +1485,6 @@ QTableView::item,
 QListView::item,
 QTreeView::item
 {
-    padding: 0.13em;
     color: #BFC1C3;
 }
 
@@ -1496,7 +1495,6 @@ QTreeView::item:!selected:hover
     background-color: rgba(61, 173, 232, 0.1);
     outline: 0;
     color: #BFC1C3;
-    padding: 0.13em;
 }
 
 QSlider::handle:horizontal,
