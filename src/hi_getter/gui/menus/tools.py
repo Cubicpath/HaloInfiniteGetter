@@ -57,7 +57,6 @@ def create_app_shortcut() -> None:
                     desktop=do_desktop, start_menu=do_start_menu)
 
 
-# noinspection PyArgumentList
 class ToolsContextMenu(QMenu):
     """Context menu for tools."""
 
@@ -65,6 +64,7 @@ class ToolsContextMenu(QMenu):
         """Create a new :py:class:`ToolsContextMenu`."""
         super().__init__(parent)
 
+        # noinspection PyUnresolvedReferences
         init_objects({
             (shortcut_tool := QAction(self)): {
                 'text': tr('gui.menus.tools.create_shortcut'),

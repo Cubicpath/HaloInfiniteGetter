@@ -20,7 +20,6 @@ from ..app import app
 from ..app import tr
 
 
-# noinspection PyArgumentList
 class FileContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
 

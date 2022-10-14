@@ -129,10 +129,10 @@ Other rules:
 - All local imports should be relative imports. Ex: `from .module import Class` as opposed to `from module import Class`.
 
 - When importing multiple attributes from a module, each line should contain one import. Ex:
-   ```python
-   from module import attribute
-   from module import other_attribute
-   ```
+```python
+from module import attribute
+from module import other_attribute
+```
 
 - Only `import *` modules which have an `__all__` attribute defined.
 

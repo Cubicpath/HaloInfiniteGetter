@@ -28,6 +28,7 @@ from ..utils.network import encode_url_params
 from ..utils.network import query_to_dict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
+_ProgressConsumer:     TypeAlias = Callable[[QNetworkReply, int, int], None]
 _StringPair:           TypeAlias = dict[str, str] | list[tuple[str, str]]
 _KnownHeaderValues:    TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
 _HeaderValue:          TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
@@ -264,7 +265,8 @@ class NetworkSession:
                 verify: bool | str | None = None,
                 cert: str | tuple[str, str] | None = None,
                 json: dict[str, Any] | None = None,
-                finished: _NetworkReplyConsumer | None = None) -> QNetworkReply:
+                finished: _NetworkReplyConsumer | None = None,
+                progress: _ProgressConsumer | None = None) -> QNetworkReply:
         """Send an HTTP request to the given URL with the given data.
 
         :param method: HTTP method/verb to use for the request. Case-sensitive.
@@ -307,7 +309,11 @@ class NetworkSession:
             Automatically encodes to bytes and updates Content-Type header.
             Incompatible with the data and files parameters.
 
-        :param finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :param finished: Callback when the request finishes,
+            with request supplied as an argument.
+
+        :param progress: Callback to update download progress,
+            with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
@@ -435,6 +441,9 @@ class NetworkSession:
         if finished is not None:
             reply.finished.connect(DeferredCallable(finished, reply))
 
+        if progress is not None:
+            reply.downloadProgress.connect(DeferredCallable(progress, reply, _extra_pos_args=2))
+
         if self.manager.cookieJar() is not original_cookie_jar:
             self.manager.setCookieJar(original_cookie_jar)
         if self.manager.redirectPolicy() != self.default_redirect_policy:
@@ -473,7 +482,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
@@ -499,7 +509,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
@@ -525,7 +536,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
@@ -550,7 +562,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
@@ -575,7 +588,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """
@@ -600,7 +614,8 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
-        :keyword finished: Consumer to call when the request finishes, with request supplied as an argument.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         """

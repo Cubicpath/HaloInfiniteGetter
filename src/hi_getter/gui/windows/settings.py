@@ -26,7 +26,7 @@ from ..widgets import PasteLineEdit
 from ..widgets import TranslatableComboBox
 
 
-# noinspection PyArgumentList
+# noinspection PyTypeChecker
 class SettingsWindow(Singleton, QWidget):
     """Window that provides user interaction with the application's settings.
 
@@ -62,16 +62,16 @@ class SettingsWindow(Singleton, QWidget):
 
         def import_settings() -> None:
             """Import settings from a chosen TOML file."""
-            file_path = Path(QFileDialog.getOpenFileName(self, tr('gui.settings.import'),
-                                                         str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            file_path = Path(QFileDialog.getOpenFileName(self, caption=tr('gui.settings.import'),
+                                                         dir=str(HI_CONFIG_PATH), filter='TOML Files (*.toml);;All files (*.*)')[0])
             if file_path.is_file():
                 if app().settings.import_from(file_path):
                     save_button.setDisabled(False)
 
         def export_settings() -> None:
             """Export current settings to a chosen file location."""
-            file_path = Path(QFileDialog.getSaveFileName(self, tr('gui.settings.export'),
-                                                         str(HI_CONFIG_PATH), 'TOML Files (*.toml);;All files (*.*)')[0])
+            file_path = Path(QFileDialog.getSaveFileName(self, caption=tr('gui.settings.export'),
+                                                         dir=str(HI_CONFIG_PATH), filter='TOML Files (*.toml);;All files (*.*)')[0])
             if str(file_path) != '.':
                 app().settings.export_to(file_path)
 

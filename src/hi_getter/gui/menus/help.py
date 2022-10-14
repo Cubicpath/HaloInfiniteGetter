@@ -27,7 +27,7 @@ from ..app import tr
 
 
 def package_versions() -> str:
-    """Generate the package version list for use in the about message.
+    """Generate the package version list for use in the "About" message.
 
     :return: Package version list separated by newlines.
     """
@@ -37,7 +37,6 @@ def package_versions() -> str:
     )
 
 
-# noinspection PyArgumentList
 class HelpContextMenu(QMenu):
     """Context menu that shows actions to help the user."""
 

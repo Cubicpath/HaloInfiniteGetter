@@ -104,6 +104,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
 
         # Add macOS shortcut data
         with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
+            # noinspection HttpUrlsUsage
             plist.writelines([
                     '<?xml version="1.0" encoding="UTF-8"?>\n',
                     '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',

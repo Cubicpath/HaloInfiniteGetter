@@ -444,5 +444,4 @@ class GetterApp(Singleton, QApplication):
 
     def sorted_themes(self) -> list[Theme]:
         """List of themes sorted by their display name."""
-        # noinspection PyTypeChecker
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)

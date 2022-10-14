@@ -85,6 +85,7 @@ class TranslatableComboBox(ComboBox):
         self.clear()
         self.addItems(items)
 
+    # noinspection PyTypeChecker
     def addItem(self, text: str, *args, **kwargs) -> None:
         """Translates strings from being added using addItem."""
         super().addItem(tr(text), *args, userData=text, **kwargs)

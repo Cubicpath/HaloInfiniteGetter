@@ -20,7 +20,6 @@ from ...exceptions import ExceptionEvent
 from ..app import tr
 
 
-# noinspection PyArgumentList
 class ExceptionLogger(QPushButton):
     """A :py:class:`QPushButton` that logs exceptions to the event bus."""
 

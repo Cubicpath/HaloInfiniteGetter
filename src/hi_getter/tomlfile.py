@@ -182,6 +182,7 @@ class TomlFile:
         if not path:
             raise ValueError('Path cannot be an empty string.')
 
+        key:   str = path
         scope: dict = self._data
         paths: list[str] = path.split('/')
 
@@ -197,10 +198,7 @@ class TomlFile:
                     elif isinstance(scope.get(key), dict):
                         scope = scope[key]
                         continue
-        else:
-            key = path
 
-        # noinspection PyUnboundLocalVariable
         return scope, key
 
     @property

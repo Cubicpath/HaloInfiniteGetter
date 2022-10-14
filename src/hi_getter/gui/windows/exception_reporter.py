@@ -36,7 +36,6 @@ def format_tb(tb: TracebackType) -> str:
     return '\n'.join(traceback.format_tb(tb))
 
 
-# noinspection PyArgumentList
 class ExceptionReporter(QWidget):
     """A :py:class:`QWidget` that displays logged exceptions and their traceback."""
 
