@@ -14,6 +14,7 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
+from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
@@ -56,13 +57,9 @@ class FileContextMenu(QMenu):
             }
         })
 
-        section_map = {
-            'Files': (open_explorer, flush_cache, import_from, export_to)
-        }
-
-        for section, actions in section_map.items():
-            self.addSection(section)
-            self.addActions(actions)
+        add_menu_items(self, [
+            'Files', open_explorer, flush_cache, import_from, export_to
+        ])
 
         # TODO: Add functionality and enable
         import_from.setDisabled(True)

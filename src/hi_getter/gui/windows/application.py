@@ -13,6 +13,7 @@ import json
 import string
 import sys
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import *
@@ -264,6 +265,15 @@ class AppWindow(Singleton, QMainWindow):
                 self.input_field.setCurrentIndex(self.input_field.count() - 1)
             self.use_input()
 
+        def open_file_in_view(file_path: str) -> None:
+            if not Path(file_path).is_file():
+                return
+
+            if file_path.endswith(tuple(SUPPORTED_IMAGE_EXTENSIONS)):
+                self.update_image(file_path, Path(file_path).read_bytes())
+            else:
+                self.update_text(file_path, Path(file_path).read_text(encoding='utf8'))
+
         # Define widget attributes
         # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
         # This works in the standard AST, but is a seemingly arbitrary limitation set by the interpreter.
@@ -272,12 +282,12 @@ class AppWindow(Singleton, QMainWindow):
             self.input_field, self.image_size_label, self.text_size_label,
             self.image_detach_button, self.text_detach_button, self.clear_picture, self.copy_picture,
             self.clear_text, self.copy_text, self.media_frame, self.text_frame,
-            self.media_output, self.text_output,
+            self.media_output, self.text_output, self.cache_explorer
         ) = (
             HistoryComboBox(self), QLabel(self), QLabel(self),
             QPushButton(self), QPushButton(self), QPushButton(self), QPushButton(self),
             QPushButton(self), QPushButton(self), QFrame(self), QFrame(self),
-            QGraphicsView(self), ExternalTextBrowser(self)
+            QGraphicsView(self), ExternalTextBrowser(self), CacheExplorer(self)
         )
 
         init_objects({
@@ -343,6 +353,10 @@ class AppWindow(Singleton, QMainWindow):
                 'size': {'fixed': (28, None)}
             },
 
+            self.cache_explorer: {
+                'openFileInView': open_file_in_view
+            },
+
             # Outputs
             self.media_output: {
                 'disabled': True, 'size': {'minimum': (None, 28)},
@@ -381,6 +395,7 @@ class AppWindow(Singleton, QMainWindow):
         main_widget = QWidget()
         layout = QGridLayout()
         top = QHBoxLayout()
+        middle = QHBoxLayout()
         self.outputs = QHBoxLayout()
         media_layout = QVBoxLayout(self.media_frame)
         media_top = QHBoxLayout()
@@ -394,7 +409,7 @@ class AppWindow(Singleton, QMainWindow):
         self.setCentralWidget(main_widget)
         main_widget.setLayout(layout)
         layout.addLayout(top, 10, 0, Qt.AlignTop)
-        layout.addLayout(self.outputs, 20, 0, Qt.AlignHCenter)
+        layout.addLayout(middle, 20, 0, Qt.AlignHCenter)
         layout.addLayout(bottom, 30, 0, Qt.AlignBottom)
 
         top.addWidget(subdomain_field)
@@ -404,6 +419,8 @@ class AppWindow(Singleton, QMainWindow):
         top.addWidget(scan_button)
         top.setSpacing(2)
 
+        middle.addWidget(self.cache_explorer, Qt.AlignLeft)
+        middle.addLayout(self.outputs, Qt.AlignHCenter)
         self.outputs.addWidget(self.media_frame)
         self.outputs.addWidget(self.text_frame)
 
@@ -487,9 +504,10 @@ class AppWindow(Singleton, QMainWindow):
         ))
         self.resize_image()
 
-    def update_text(self, search_path: str, data: dict[str, Any]) -> None:
+    def update_text(self, search_path: str, data: str | dict[str, Any]) -> None:
         """Update the text output with the given data."""
-        data = json.dumps(data, indent=2)
+        if isinstance(data, dict):
+            data = json.dumps(data, indent=2)
 
         scroll_to_top(self.text_output)
         self.clear_text.setDisabled(False)
@@ -506,7 +524,7 @@ class AppWindow(Singleton, QMainWindow):
         else:
             output = tr(
                 'gui.outputs.text.errors.too_large',
-                app().client.os_path(search_path)
+                app().client.to_os_path(search_path)
             )
 
         original_output = output

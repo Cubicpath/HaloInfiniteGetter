@@ -75,6 +75,7 @@ Full Example:
 # License and copyright text
 ############################
 """This is a module's docstring."""
+from __future__ import annotations
 
 __all__ = (
    'CONSTANT',

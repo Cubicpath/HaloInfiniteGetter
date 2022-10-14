@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'add_menu_items',
     'delete_layout_widgets',
     'icon_from_bytes',
     'init_objects',
@@ -19,6 +20,36 @@ from typing import Any
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
+
+
+_menu_type_map = {
+    str: QMenu.addSection,
+    QMenu: QMenu.addMenu,
+    QAction: QMenu.addAction,
+}
+
+
+def add_menu_items(menu: QMenu, items: Sequence[str | QAction | QMenu]) -> None:
+    """Add items to the given menu.
+
+    This uses the associated :py:class:`QMenu` methods for each object's type::
+
+        str: QMenu.addSection,
+        QMenu: QMenu.addMenu,
+        QAction: QMenu.addAction,
+
+
+    :param menu: The menu to add items to.
+    :param items: The items to add to the menu.
+    """
+    for obj in items:
+        # Find the item's type and associated method.
+        for item_type, meth in _menu_type_map.items():
+
+            if isinstance(obj, item_type):
+                # Run method and go to next item.
+                meth(menu, obj)
+                break
 
 
 def delete_layout_widgets(layout: QLayout) -> None:

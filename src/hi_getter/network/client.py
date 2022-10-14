@@ -7,6 +7,7 @@ from __future__ import annotations
 __all__ = (
     'Client',
     'TOKEN_PATH',
+    'WEB_DUMP_PATH',
     'WPAUTH_PATH',
 )
 
@@ -32,8 +33,9 @@ from ..utils.network import is_error_status
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
-TOKEN_PATH:  Final[Path] = HI_CONFIG_PATH / '.token'
-WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
+WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
+TOKEN_PATH:    Final[Path] = HI_CONFIG_PATH / '.token'
+WPAUTH_PATH:   Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
 class Client(QObject):
@@ -125,13 +127,13 @@ class Client(QObject):
 
         return reply
 
-    def get_hi_data(self, path: str, dump_path: Path = HI_CACHE_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
-        os_path: Path = self.os_path(path, parent=dump_path)
+        os_path: Path = self.to_os_path(path, parent=dump_path)
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
@@ -178,9 +180,15 @@ class Client(QObject):
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
-    def os_path(self, path: str, parent: Path = HI_CACHE_PATH) -> Path:
+    def to_os_path(self, path: str, parent: Path = WEB_DUMP_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
+
+    def to_get_path(self, path: str) -> str:
+        """Translate a given cache location to the equivalent GET path."""
+        resource = path.split(self.parent_path, maxsplit=1)[1]
+        pre, post = resource.split("/", maxsplit=1)
+        return f'{pre}/file/{post}'
 
     def recursive_search(self, search_path: str) -> None:
         """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
