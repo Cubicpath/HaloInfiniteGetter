@@ -19,6 +19,7 @@ from PySide6.QtWidgets import *
 from ..._version import __version_info__
 from ...constants import *
 from ...models import DeferredCallable
+from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ...utils.package import current_requirement_versions
 from ..app import app
@@ -88,14 +89,10 @@ class HelpContextMenu(QMenu):
             }
         })
 
-        section_map = {
-            'Github': (github_view, create_issue),
-            'Information': (about_view, about_qt_view, license_view, readme)
-        }
-
-        for section, actions in section_map.items():
-            self.addSection(section)
-            self.addActions(actions)
+        add_menu_items(self, [
+            'Github', github_view, create_issue,
+            'Information', about_view, about_qt_view, license_view, readme
+        ])
 
     # pylint: disable=not-an-iterable
     def open_about(self) -> None:

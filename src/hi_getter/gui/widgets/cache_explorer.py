@@ -18,6 +18,7 @@ from ...constants import *
 from ...events import EventBus
 from ...models import DeferredCallable
 from ...tomlfile import TomlEvents
+from ...utils.gui import add_menu_items
 from ...utils.gui import icon_from_bytes
 from ...utils.gui import init_objects
 from ..app import app
@@ -148,16 +149,12 @@ class _CachedFileContextMenu(QMenu):
             },
         })
 
-        section_map = {
-            'Open': (open_in_view, open_in_default_app, open_in_explorer),
-            'Expand': (expand_this, expand_recursively, expand_all),
-            'Collapse': (collapse_this, collapse_all),
-            'Delete': (delete,)
-        }
-
-        for section, actions in section_map.items():
-            self.addSection(section)
-            self.addActions(actions)
+        add_menu_items(self, [
+            'Open', open_in_view, open_in_default_app, open_in_explorer,
+            'Expand', expand_this, expand_recursively, expand_all,
+            'Collapse', collapse_this, collapse_all,
+            'Delete', delete
+        ])
 
 
 class _IconProvider(QAbstractFileIconProvider):

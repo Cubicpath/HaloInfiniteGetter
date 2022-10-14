@@ -16,6 +16,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ...utils.system import create_shortcut
 from ..app import app
@@ -78,10 +79,6 @@ class ToolsContextMenu(QMenu):
             }
         })
 
-        section_map = {
-            'Tools': (shortcut_tool, exception_reporter)
-        }
-
-        for section, actions in section_map.items():
-            self.addSection(section)
-            self.addActions(actions)
+        add_menu_items(self, [
+            'Tools', shortcut_tool, exception_reporter
+        ])
