@@ -71,6 +71,9 @@
     "gui.readme_viewer.title": "README Viewer",
 
     "gui.menu_bar.title": "Menu Bar",
+    "gui.menus.cached_file.copy_contents": "Copy File Contents",
+    "gui.menus.cached_file.copy_endpoint_path": "Copy Endpoint Path",
+    "gui.menus.cached_file.copy_full_path": "Copy Full Path",
     "gui.menus.cached_file.delete": "Delete %s",
     "gui.menus.cached_file.folding": "Folding",
     "gui.menus.cached_file.folding.collapse_all": "Collapse All",
