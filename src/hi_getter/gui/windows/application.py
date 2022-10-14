@@ -14,6 +14,7 @@ import string
 import sys
 import webbrowser
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import *
@@ -266,11 +267,13 @@ class AppWindow(Singleton, QMainWindow):
             self.use_input()
 
         def open_file_in_view(file_path: str) -> None:
-            if not file_path.endswith(tuple(SUPPORTED_IMAGE_EXTENSIONS) + ('json',)):
+            if not Path(file_path).is_file():
                 return
 
-            self.input_field.setCurrentText(app().client.to_get_path(file_path))
-            self.use_input()
+            if file_path.endswith(tuple(SUPPORTED_IMAGE_EXTENSIONS)):
+                self.update_image(file_path, Path(file_path).read_bytes())
+            else:
+                self.update_text(file_path, Path(file_path).read_text(encoding='utf8'))
 
         # Define widget attributes
         # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
@@ -502,9 +505,10 @@ class AppWindow(Singleton, QMainWindow):
         ))
         self.resize_image()
 
-    def update_text(self, search_path: str, data: dict[str, Any]) -> None:
+    def update_text(self, search_path: str, data: str | dict[str, Any]) -> None:
         """Update the text output with the given data."""
-        data = json.dumps(data, indent=2)
+        if isinstance(data, dict):
+            data = json.dumps(data, indent=2)
 
         scroll_to_top(self.text_output)
         self.clear_text.setDisabled(False)
