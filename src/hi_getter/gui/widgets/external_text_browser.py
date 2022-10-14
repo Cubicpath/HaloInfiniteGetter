@@ -20,7 +20,6 @@ from ...models import DeferredCallable
 from ..app import app
 
 
-# FIXME: Add a timer for hot reloading
 class ExternalTextBrowser(QTextBrowser):
     """:py:class:`QTextBrowser` with ability to map keys to :py:class:`Callable`'s.
 
@@ -94,9 +93,11 @@ class ExternalTextBrowser(QTextBrowser):
             image:      QImage = QImage()
             url_string: str = url.toDisplayString()
             if url_string not in self.remote_image_cache:
-                reply = app().session.get(url)
+                # Add placeholder bytes to show the url is being downloaded.
+                # Otherwise, unneeded replies are sent out and cause application stutter.
+                self.remote_image_cache[url_string] = bytes()
 
-                def handle_reply():
+                def handle_reply(reply):
                     data: bytes = reply.readAll()
                     image.loadFromData(data)
                     self.remote_image_cache[url_string] = data
@@ -105,7 +106,7 @@ class ExternalTextBrowser(QTextBrowser):
                         self.hot_reload()
                     reply.deleteLater()
 
-                reply.finished.connect(handle_reply)
+                app().session.get(url, finished=handle_reply)
             else:
                 image.loadFromData(self.remote_image_cache[url_string])
             return image
