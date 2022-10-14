@@ -53,7 +53,6 @@ def size_label_for(num: int) -> str:
     return display_unit
 
 
-# noinspection PyArgumentList
 class AppWindow(Singleton, QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
     _singleton_base_type = QMainWindow
@@ -175,6 +174,7 @@ class AppWindow(Singleton, QMainWindow):
         status_bar.addSeparator()
         status_bar.addWidget(logger.label)
 
+    # noinspection PyTypeChecker
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""
 

@@ -22,7 +22,6 @@ from ..app import tr
 from ..widgets import ExternalTextBrowser
 
 
-# noinspection PyArgumentList
 class ReadmeViewer(QWidget):
     """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
     README_TEXT: Final[str] = metadata(HI_PACKAGE_NAME)['Description']

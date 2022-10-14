@@ -67,7 +67,7 @@ def icon_from_bytes(data: bytes) -> QIcon:
 
 
 # noinspection PyUnresolvedReferences
-def init_objects(object_data: dict[QObject, dict[str, Any]]) -> None:
+def init_objects(object_data: dict[object, dict[str, Any]]) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
 
     Translation key strings are evaluated using the given translator, if provided.

@@ -21,7 +21,7 @@ from ..app import tr
 from ..widgets import ExternalTextBrowser
 
 
-# noinspection PyArgumentList
+# noinspection PyTypeChecker
 class LicenseViewer(QWidget):
     """Widget that formats and shows the project's (and all of its requirements') license files."""
 

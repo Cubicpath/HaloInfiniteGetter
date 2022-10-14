@@ -84,7 +84,7 @@ class ExternalTextBrowser(QTextBrowser):
         self.cached_type = text_type
         self.hot_reload()
 
-    def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl) -> Any:
+    def loadResource(self, resource_type: QTextDocument.ResourceType, url: QUrl, **kwargs) -> Any:
         """Load a resource from an url.
 
         If resource type is an image and the url is external, download it using requests and cache it.
@@ -111,13 +111,12 @@ class ExternalTextBrowser(QTextBrowser):
                 image.loadFromData(self.remote_image_cache[url_string])
             return image
 
-        return super().loadResource(int(resource_type), url)
+        return super().loadResource(int(resource_type), url, **kwargs)
 
     def setLineWrapMode(self, mode: int | QTextEdit.LineWrapMode) -> None:
         """Set the line wrap mode. Allows use of ints."""
         super().setLineWrapMode(QTextEdit.LineWrapMode(mode))
 
-    # noinspection PyTypeChecker
     def connect_key_to(self, key: Qt.Key, func: Callable) -> None:
         """Connect a :py:class:`Callable` to a key press."""
         self.key_callable_map[int(key)] = func
