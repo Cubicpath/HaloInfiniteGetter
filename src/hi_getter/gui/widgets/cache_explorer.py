@@ -19,7 +19,6 @@ from ...events import EventBus
 from ...models import DeferredCallable
 from ...tomlfile import TomlEvents
 from ...utils.gui import add_menu_items
-from ...utils.gui import icon_from_bytes
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
@@ -193,11 +192,16 @@ class _IconProvider(QAbstractFileIconProvider):
         if self._icon_mode == 0:
             return _IconProvider.NULL_ICON
 
-        if self._icon_mode == 2:
-            if isinstance(info, QFileInfo):
-                if (path := Path(info.filePath())).is_file():
-                    if path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
-                        return icon_from_bytes(path.read_bytes())
+        if isinstance(info, QFileInfo):
+            if info.isDir() and info.fileName() == 'cached_requests':
+                return self._cache_explorer.style().standardIcon(QStyle.SP_DialogSaveButton)
+
+            # Preview images
+            if self._icon_mode == 2:
+                if info.isFile() and info.suffix().lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
+                    icon = QIcon()
+                    icon.addFile(info.filePath(), QSize(24, 24))
+                    return icon
 
         return self._fallback_provider.icon(info)
 

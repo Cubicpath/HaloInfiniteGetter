@@ -33,7 +33,7 @@ from ..utils.network import is_error_status
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
-WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'web_requests'
+WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
 TOKEN_PATH:    Final[Path] = HI_CONFIG_PATH / '.token'
 WPAUTH_PATH:   Final[Path] = HI_CONFIG_PATH / '.wpauth'
 

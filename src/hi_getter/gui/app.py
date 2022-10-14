@@ -33,7 +33,9 @@ from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..models import Singleton
-from ..network import *
+from ..network.client import Client
+from ..network.client import WEB_DUMP_PATH
+from ..network.manager import NetworkSession
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
 from ..utils.gui import set_or_swap_icon
@@ -140,7 +142,7 @@ class GetterApp(Singleton, QApplication):
 
     def _create_paths(self) -> None:
         """Create files and directories if they do not exist."""
-        for dir_path in (HI_CACHE_PATH, HI_CONFIG_PATH):
+        for dir_path in (HI_CACHE_PATH, WEB_DUMP_PATH, HI_CONFIG_PATH):
             if not dir_path.is_dir():
                 dir_path.mkdir(parents=True)
 
