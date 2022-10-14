@@ -68,7 +68,7 @@ Guide:
 - Double-click the "wpauth" cookie value and copy with CTRL + C
 - Open the Settings window, unlock the input by pressing the "Edit Auth Key" button, then paste the copied value.
 
-![Settings](https://i.imgur.com/79t0MTpm.png)
+![Settings](https://i.imgur.com/79t0MTpl.png)
 
 - Press the Set button, and you should now be authenticated!
 
