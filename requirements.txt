@@ -1,5 +1,5 @@
 # Hard-requirements:
-PySide6_Essentials==6.3.2  # GUI, Networking stack, etc.
+PySide6_Essentials==6.4.0  # GUI, Networking stack, etc.
 toml==0.10.2               # Configuration file parser and editor
 
 # Soft-requirements:
