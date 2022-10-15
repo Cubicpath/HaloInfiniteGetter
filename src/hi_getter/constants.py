@@ -32,14 +32,14 @@ SUPPORTED_IMAGE_EXTENSIONS: Final[frozenset[str]] = frozenset({
     'bmp', 'cur', 'gif', 'icns', 'ico', 'jpeg', 'jpg', 'pbm', 'pgm', 'png',
     'ppm', 'svg', 'svgz', 'tga', 'tif', 'tiff', 'wbmp', 'webp', 'xbm', 'xpm'
 })
-"""Tuple containing all image file extensions supported by application."""
+"""Set containing all image file extensions supported by application."""
 
 SUPPORTED_IMAGE_MIME_TYPES: Final[frozenset[str]] = frozenset({
     'image/bmp', 'image/gif', 'image/jpeg', 'image/png', 'image/svg+xml', 'image/svg+xml-compressed',
     'image/tiff', 'image/vnd.microsoft.icon', 'image/vnd.wap.wbmp', 'image/webp', 'image/x-icns', 'image/x-portable-bitmap',
     'image/x-portable-graymap', 'image/x-portable-pixmap', 'image/x-tga', 'image/x-xbitmap', 'image/x-xpixmap'
 })
-"""Tuple containing all image mime types supported by application."""
+"""Set containing all image mime types supported by application."""
 
 # Strings
 

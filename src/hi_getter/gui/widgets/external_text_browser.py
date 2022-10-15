@@ -67,8 +67,8 @@ class ExternalTextBrowser(QTextBrowser):
                 has_hashtag:   bool = line.strip().startswith('#')
                 has_underline: bool = line and (i < len(lines) - 1) and any(
                     # Line must end and begin with the respective underline
-                    lines[i + 1].strip().startswith(a) and
-                    lines[i + 1].strip().endswith(a) for a in ('-', '=')
+                    lines[i + 1].strip().startswith(line_char) and
+                    lines[i + 1].strip().endswith(line_char) for line_char in ('-', '=')
                 )
 
                 # If line has a header marker, append it with an anchor tag and add it to the new list.

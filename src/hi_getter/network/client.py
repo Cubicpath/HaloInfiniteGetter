@@ -88,7 +88,7 @@ class Client(QObject):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
         })
         self.web_session: NetworkSession = NetworkSession(self)
-        self.web_session.headers = self.api_session.headers.copy() | {
+        self.web_session.headers = self.api_session.headers | {
             'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
             'Host': self.WEB_HOST,
             'Sec-Fetch-Dest': 'document',
