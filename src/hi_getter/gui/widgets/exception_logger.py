@@ -16,7 +16,7 @@ from typing import NamedTuple
 from PySide6.QtWidgets import *
 
 from ...events import EventBus
-from ...exceptions import ExceptionEvent
+from ...exception_hook import ExceptionEvent
 from ..app import tr
 
 

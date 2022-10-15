@@ -23,7 +23,7 @@ from PySide6.QtWidgets import *
 from ..._version import __version__
 from ...constants import *
 from ...events import EventBus
-from ...exceptions import ExceptionEvent
+from ...exception_hook import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
 from ...models import Singleton

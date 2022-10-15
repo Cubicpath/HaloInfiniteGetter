@@ -11,7 +11,7 @@ __all__ = (
 import sys
 
 from ._version import __version__
-from .exceptions import ExceptionHook
+from .exception_hook import ExceptionHook
 from .gui import GetterApp
 from .utils.system import patch_windows_taskbar_icon
 
