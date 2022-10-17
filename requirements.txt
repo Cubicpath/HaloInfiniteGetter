@@ -3,4 +3,5 @@ PySide6_Essentials==6.4.0  # GUI, Networking stack, etc.
 toml==0.10.2               # Configuration file parser and editor
 
 # Soft-requirements:
+py7zr==0.20.0
 python-dotenv==0.21.0  # To load .env files
