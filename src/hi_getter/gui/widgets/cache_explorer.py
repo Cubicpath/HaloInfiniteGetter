@@ -61,35 +61,31 @@ class _ColumnContextMenu(QMenu):
                 'disabled': not parent.isColumnHidden(0),
                 'text': tr('gui.cache_explorer.columns.name'),
                 'icon': icons[enabled_map[0]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 0, not parent.isColumnHidden(0))
+                'triggered': DeferredCallable(parent.setColumnHidden, 0, not enabled_map[0])
             },
 
             (file_size := QAction(self)): {
                 'text': tr('gui.cache_explorer.columns.file_size'),
                 'icon': icons[enabled_map[1]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 1, not parent.isColumnHidden(1))
+                'triggered': DeferredCallable(parent.setColumnHidden, 1, not enabled_map[1])
             },
 
             (file_type := QAction(self)): {
                 'text': tr('gui.cache_explorer.columns.file_type'),
                 'icon': icons[enabled_map[2]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 2, not parent.isColumnHidden(2))
+                'triggered': DeferredCallable(parent.setColumnHidden, 2, not enabled_map[2])
             },
 
             (date_modified := QAction(self)): {
                 'text': tr('gui.cache_explorer.columns.date_modified'),
                 'icon': icons[enabled_map[3]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 3, not parent.isColumnHidden(3))
+                'triggered': DeferredCallable(parent.setColumnHidden, 3, not enabled_map[3])
             },
         })
 
-        section_map = {
-            'Columns': (name, file_size, file_type, date_modified),
-        }
-
-        for section, actions in section_map.items():
-            self.addSection(section)
-            self.addActions(actions)
+        add_menu_items(self, [
+            'Columns', name, file_size, file_type, date_modified
+        ])
 
 
 class _CachedFileContextMenu(QMenu):
