@@ -3,7 +3,6 @@
 ###################################################################################################
 """Relative package containing all things handling GUI elements."""
 # TODO: Create custom QMessageBox implementation for selectable text
-# TODO: Add fading in/out animations to menus
 # TODO: Redo ExceptionLogger implementation, with more functionality given to ExceptionReporter.
 
 __all__ = (

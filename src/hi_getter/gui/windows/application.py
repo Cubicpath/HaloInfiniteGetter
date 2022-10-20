@@ -103,11 +103,9 @@ class AppWindow(Singleton, QMainWindow):
             if not issubclass(menu_class, QMenu):
                 raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
 
-            menu = menu_class(self)
+            menu: QMenu = menu_class(self)
             menu.setAttribute(Qt.WA_DeleteOnClose)
-
-            menu.move(self.cursor().pos())
-            menu.show()
+            menu.exec(self.cursor().pos())
 
         init_objects({
             (menu_bar := QToolBar(self)): {},
