@@ -8,16 +8,21 @@ __all__ = (
     'FileContextMenu',
 )
 
+from pathlib import Path
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
+from ...utils.common import get_weakref_object
 from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
+
+_ARCHIVE_FILTER: str = ';;'.join(('Archive Files (*.7z *.zip *.tar *.gz)', 'All files (*.*)'))
 
 
 class FileContextMenu(QMenu):
@@ -57,12 +62,9 @@ class FileContextMenu(QMenu):
         })
 
         add_menu_items(self, [
-            'Files', open_explorer, flush_cache, import_from, export_to
+            'Files', open_explorer, flush_cache,
+            'Import/Export', import_from, export_to
         ])
-
-        # TODO: Add functionality and enable
-        import_from.setDisabled(True)
-        export_to.setDisabled(True)
 
     def flush_cache(self) -> None:
         """Remove all data from cache."""
@@ -78,8 +80,10 @@ class FileContextMenu(QMenu):
 
     def import_data(self) -> None:
         """Import data from..."""
-        ...
+        _ = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
+                                             dir=str(HI_CONFIG_PATH), filter=_ARCHIVE_FILTER)[0])
 
     def export_data(self) -> None:
         """Export data to..."""
-        ...
+        _ = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
+                                             dir=str(HI_CONFIG_PATH), filter=_ARCHIVE_FILTER)[0])
