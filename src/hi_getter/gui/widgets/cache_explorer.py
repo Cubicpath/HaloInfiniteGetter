@@ -363,8 +363,7 @@ class CacheExplorer(QTreeView):
             menu = _ColumnContextMenu(self)
             menu.setAttribute(Qt.WA_DeleteOnClose)
 
-            menu.move(self.viewport().mapToGlobal(point))
-            menu.show()
+            menu.exec(self.viewport().mapToGlobal(point))
 
     def on_custom_context_menu(self, point: QPoint) -> None:
         """Function called when the customContextMenuRequested signal is emitted.
@@ -377,8 +376,7 @@ class CacheExplorer(QTreeView):
             menu = _CachedFileContextMenu(self, index)
             menu.setAttribute(Qt.WA_DeleteOnClose)
 
-            menu.move(self.viewport().mapToGlobal(point))
-            menu.show()
+            menu.exec(self.viewport().mapToGlobal(point))
 
     def on_double_click(self, index: QModelIndex) -> None:
         """Function called when the doubleClicked signal is emitted.

@@ -205,7 +205,7 @@ class AppWindow(Singleton, QMainWindow):
                 )
                 self.image_detach_button.setText(tr('gui.outputs.reattach'))
                 window.resizeEvent = DeferredCallable(self.resize_image)
-                window.show()
+                window.exec()
             else:
                 window = self.detached['media']
                 self.detached['media'] = None
