@@ -216,6 +216,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
                         # Finally, call
                         e_callable_pair[0](event)
 
+    # pylint: disable=useless-param-doc
     def subscribe(self, __callable: _EventRunnable, /, event: type[_ET_co], event_predicate: _EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
