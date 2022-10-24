@@ -23,6 +23,7 @@ __all__ = (
     'hide_windows_file',
     'http_code_map',
     'icon_from_bytes',
+    'init_layouts',
     'init_objects',
     'is_error_status',
     'patch_windows_taskbar_icon',
@@ -43,6 +44,7 @@ from .common import unique_values
 from .gui import add_menu_items
 from .gui import delete_layout_widgets
 from .gui import icon_from_bytes
+from .gui import init_layouts
 from .gui import init_objects
 from .gui import scroll_to_top
 from .gui import set_or_swap_icon

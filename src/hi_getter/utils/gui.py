@@ -8,6 +8,7 @@ __all__ = (
     'add_menu_items',
     'delete_layout_widgets',
     'icon_from_bytes',
+    'init_layouts',
     'init_objects',
     'scroll_to_top',
     'set_or_swap_icon',
@@ -15,12 +16,21 @@ __all__ = (
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Literal, TypeAlias
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+
+_LAYOUT_OBJ: TypeAlias = QLayout | QLayoutItem | QWidget
+
+
+_layout_type_map = {
+    QLayout: 'addLayout',
+    QLayoutItem: 'addItem',
+    QWidget: 'addWidget',
+}
 
 _menu_type_map = {
     str: QMenu.addSection,
@@ -66,13 +76,54 @@ def icon_from_bytes(data: bytes) -> QIcon:
     return icon
 
 
+def init_layouts(layout_data: dict[QLayout, dict[Literal['childLayouts', 'childWidgets', 'items'], Sequence[_LAYOUT_OBJ | Sequence]]]) -> None:
+    """Initialize :py:class:`QLayout` hierarchies with the given data.
+
+    The only secondary dictionary keys allowed are ``'childLayouts'``, ``'childWidgets'``, and ``'items'``.
+
+    layout_data should be a dictionary structured like this::
+
+        {
+            my_layout1: {},
+            my_layout2: {'items': [layout1, widget1, my_layout1, widget2, layout2, widget3]},
+            my_layout3: {'childLayouts': [my_layout2], 'childWidgets': [widget4, widget5], 'items': [layout3]},
+        }
+
+    :param layout_data: Dictionary containing data used to initialize QLayouts.
+    """
+    for layout, data in layout_data.items():
+
+        for key, val in data.items():
+            match key:
+                case 'childLayouts':
+                    for _child in val:
+                        layout.addChildLayout(_child)
+
+                case 'childWidgets':
+                    for _child in val:
+                        layout.addChildWidget(_child)
+
+                case 'items':
+                    for _args in val:
+                        if not isinstance(_args, Sequence):
+                            _args = (_args,)
+
+                        # Find the item's type and associated method.
+                        item_type = type(_args[0])
+                        for clazz, method_name in _layout_type_map.items():
+
+                            if issubclass(item_type, clazz):
+                                # Run method if exists and go to next item.
+                                if hasattr(layout, method_name):
+                                    getattr(layout, method_name)(*_args)
+                                break
+
+
 # noinspection PyUnresolvedReferences
 def init_objects(object_data: dict[object, dict[str, Any]]) -> None:
     """Initialize :py:class:`QObject` attributes with the given data.
 
-    Translation key strings are evaluated using the given translator, if provided.
-
-    widget_data should be a dictionary structured like this::
+    object_data should be a dictionary structured like this::
 
         {
             widget1: {'text': 'some.translation.key', 'clicked': on_click},
