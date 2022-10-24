@@ -28,6 +28,7 @@ from ...models import DeferredCallable
 from ...models import DistributedCallable
 from ...models import Singleton
 from ...tomlfile import TomlEvents
+from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ...utils.gui import scroll_to_top
 from ...utils.network import decode_url
@@ -389,59 +390,77 @@ class AppWindow(Singleton, QMainWindow):
 
         self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
         self.text_output.connect_key_to(Qt.Key_Right, next_in_history)
-
-        main_widget = QWidget()
-        layout = QGridLayout()
-        top = QHBoxLayout()
-        middle = QHBoxLayout()
         self.outputs = QHBoxLayout()
-        media_layout = QVBoxLayout(self.media_frame)
-        media_top = QHBoxLayout()
-        media_bottom = QHBoxLayout()
-        text_layout = QVBoxLayout(self.text_frame)
-        text_top = QHBoxLayout()
-        text_bottom = QHBoxLayout()
-        bottom = QGridLayout()
-        statuses = QHBoxLayout()
 
-        self.setCentralWidget(main_widget)
-        main_widget.setLayout(layout)
-        layout.addLayout(top, 10, 0, Qt.AlignTop)
-        layout.addLayout(middle, 20, 0, Qt.AlignHCenter)
-        layout.addLayout(bottom, 30, 0, Qt.AlignBottom)
+        init_layouts({
+            (text_bottom := QHBoxLayout()): {
+                'items': [
+                    (self.clear_text, Qt.AlignLeft),
+                    (self.copy_text, Qt.AlignLeft)
+                ]
+            },
+            (text_top := QHBoxLayout()): {
+                'items': [
+                    (self.text_size_label, Qt.AlignLeft),
+                    (self.text_detach_button, Qt.AlignRight)
+                ]
+            },
+            QVBoxLayout(self.text_frame): {
+                'items': [
+                    text_top, self.text_output, text_bottom
+                ]
+            },
+            (media_bottom := QHBoxLayout()): {
+                'items': [
+                    (self.clear_picture, Qt.AlignLeft),
+                    (self.copy_picture, Qt.AlignLeft)
+                ]
+            },
+            (media_top := QHBoxLayout()): {
+                'items': [
+                    (self.image_size_label, Qt.AlignLeft),
+                    (self.image_detach_button, Qt.AlignRight)
+                ]
+            },
+            QVBoxLayout(self.media_frame): {
+                'items': [
+                    media_top, self.media_output, media_bottom
+                ]
+            },
+            self.outputs: {
+                'items': [
+                    self.media_frame, self.text_frame
+                ]
+            },
+            (middle := QHBoxLayout()): {
+                'items': [
+                    (self.cache_explorer, Qt.AlignLeft),
+                    (self.outputs, Qt.AlignHCenter)
+                ]
+            },
+            (top := QHBoxLayout()): {
+                'items': [
+                    subdomain_field, root_folder_field, self.input_field,
+                    get_button, scan_button
+                ]
+            },
+            (layout := QGridLayout()): {
+                'items': [
+                    (top, 10, 0, Qt.AlignTop),
+                    (middle, 20, 0, Qt.AlignHCenter),
+                    # (bottom, 30, 0, Qt.AlignBottom)
+                ]
+            }
+        })
 
-        top.addWidget(subdomain_field)
-        top.addWidget(root_folder_field)
-        top.addWidget(self.input_field)
-        top.addWidget(get_button)
-        top.addWidget(scan_button)
-        top.setSpacing(2)
+        init_objects({
+            (main_widget := QWidget()): {'layout': layout},
 
-        middle.addWidget(self.cache_explorer, Qt.AlignLeft)
-        middle.addLayout(self.outputs, Qt.AlignHCenter)
-        self.outputs.addWidget(self.media_frame)
-        self.outputs.addWidget(self.text_frame)
+            text_bottom: {'spacing': 5},
+            top: {'spacing': 2},
 
-        # noinspection Duplicates
-        media_layout.addLayout(media_top)
-        media_layout.addWidget(self.media_output)
-        media_layout.addLayout(media_bottom)
-        media_top.addWidget(self.image_size_label, Qt.AlignLeft)
-        media_top.addWidget(self.image_detach_button, Qt.AlignRight)
-        media_bottom.addWidget(self.clear_picture, Qt.AlignLeft)
-        media_bottom.addWidget(self.copy_picture, Qt.AlignLeft)
-
-        # noinspection Duplicates
-        text_layout.addLayout(text_top)
-        text_layout.addWidget(self.text_output)
-        text_layout.addLayout(text_bottom)
-        text_top.addWidget(self.text_size_label, Qt.AlignLeft)
-        text_top.addWidget(self.text_detach_button, Qt.AlignRight)
-        text_bottom.addWidget(self.clear_text, Qt.AlignLeft)
-        text_bottom.addWidget(self.copy_text, Qt.AlignLeft)
-        text_bottom.setSpacing(5)
-
-        bottom.addLayout(statuses, 10, 0)
+            self: {'centralWidget': main_widget}
+        })
 
     def change_title(self, name: str) -> None:
         """Change the window title, includes the version number."""
