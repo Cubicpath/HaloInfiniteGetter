@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Documentation" pattern="file:CODE_OF_CONDUCT.md||file:CONTRIBUTING.md||file:LICENSE||file:README.md" />
+</component>
