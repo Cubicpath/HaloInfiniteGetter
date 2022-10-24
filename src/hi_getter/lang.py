@@ -46,7 +46,7 @@ def format_value(value: str, *args: Any, _language: Language = None, _key_eval: 
     list_args:     list[Any] = list(args)
     replaced:      set[str] = set()
     pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
-    key_ref:       re.Pattern = re.compile(r'{[\w\d\-.]*}')
+    key_ref:       re.Pattern = re.compile(r'{[\w\-.]*}')
 
     for matches in pos_param_ref.finditer(value):
         match:   str = matches[0]
