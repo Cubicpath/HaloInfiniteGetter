@@ -393,6 +393,7 @@ class AppWindow(Singleton, QMainWindow):
         self.outputs = QHBoxLayout()
 
         init_layouts({
+            # Text widget layouts
             (text_bottom := QHBoxLayout()): {
                 'items': [
                     (self.clear_text, Qt.AlignLeft),
@@ -410,6 +411,8 @@ class AppWindow(Singleton, QMainWindow):
                     text_top, self.text_output, text_bottom
                 ]
             },
+
+            # Media widget layouts
             (media_bottom := QHBoxLayout()): {
                 'items': [
                     (self.clear_picture, Qt.AlignLeft),
@@ -427,6 +430,8 @@ class AppWindow(Singleton, QMainWindow):
                     media_top, self.media_output, media_bottom
                 ]
             },
+
+            # Middle parent layouts
             self.outputs: {
                 'items': [
                     self.media_frame, self.text_frame
@@ -438,12 +443,16 @@ class AppWindow(Singleton, QMainWindow):
                     (self.outputs, Qt.AlignHCenter)
                 ]
             },
+
+            # Top widget layout
             (top := QHBoxLayout()): {
                 'items': [
                     subdomain_field, root_folder_field, self.input_field,
                     get_button, scan_button
                 ]
             },
+
+            # Main layout
             (layout := QGridLayout()): {
                 'items': [
                     (top, 10, 0, Qt.AlignTop),

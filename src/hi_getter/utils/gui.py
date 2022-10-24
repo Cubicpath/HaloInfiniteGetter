@@ -16,7 +16,9 @@ __all__ = (
 
 from collections.abc import Iterable
 from collections.abc import Sequence
-from typing import Any, Literal, TypeAlias
+from typing import Any
+from typing import Literal
+from typing import TypeAlias
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *

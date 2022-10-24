@@ -13,6 +13,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ...utils.gui import scroll_to_top
 from ...utils.package import current_requirement_licenses
@@ -49,8 +50,6 @@ class LicenseViewer(QWidget):
         self.license_dropdown:    QComboBox = QComboBox(self)
         self.license_index_label: QLabel = QLabel(self)
         self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
-        self.next_license_button: QPushButton = QPushButton(self)
-        self.prev_license_button: QPushButton = QPushButton(self)
 
         init_objects({
             self.license_dropdown: {
@@ -73,12 +72,12 @@ class LicenseViewer(QWidget):
                 'openExternalLinks': True,
             },
 
-            self.next_license_button: {
+            (next_license_button := QPushButton(self)): {
                 'size': {'fixed': (100, None)},
                 'clicked': self.next_license,
             },
 
-            self.prev_license_button: {
+            (prev_license_button := QPushButton(self)): {
                 'size': {'fixed': (100, None)},
                 'clicked': self.prev_license,
             }
@@ -87,26 +86,30 @@ class LicenseViewer(QWidget):
         app().init_translations({
             self.setWindowTitle: 'gui.license_viewer.title',
 
-            self.next_license_button.setText: 'gui.license_viewer.next',
-            self.prev_license_button.setText: 'gui.license_viewer.previous',
+            next_license_button.setText: 'gui.license_viewer.next',
+            prev_license_button.setText: 'gui.license_viewer.previous',
+        })
+
+        init_layouts({
+            # Top widget layouts
+            (top_right := QHBoxLayout()): {
+                'items': [prev_license_button, next_license_button, self.license_index_label]
+            },
+            (top := QHBoxLayout()): {
+                'items': [self.license_dropdown, top_right]
+            },
+
+            # Main layout
+            QVBoxLayout(self): {
+                'items': [top, self.license_text_edit]
+            }
         })
 
         self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
         self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
         self.view_current_index()
 
-        layout = QVBoxLayout(self)
-        top = QHBoxLayout()
-        top_right = QHBoxLayout()
-
-        layout.addLayout(top)
-        top.addWidget(self.license_dropdown)
-        top.addLayout(top_right)
         top_right.setAlignment(Qt.AlignRight)
-        top_right.addWidget(self.prev_license_button)
-        top_right.addWidget(self.next_license_button)
-        top_right.addWidget(self.license_index_label)
-        layout.addWidget(self.license_text_edit)
 
         cursor = self.license_text_edit.textCursor()
         cursor.clearSelection()

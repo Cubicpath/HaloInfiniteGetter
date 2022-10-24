@@ -19,6 +19,7 @@ from ...events import EventBus
 from ...models import DeferredCallable
 from ...models import Singleton
 from ...tomlfile import TomlEvents
+from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
@@ -264,59 +265,60 @@ class SettingsWindow(Singleton, QWidget):
             self.token_clear_button.setText: 'gui.settings.auth.clear_token'
         })
 
+        init_layouts({
+            # Add bottom widgets
+            (token_layout := QHBoxLayout()): {
+                'items': [self.token_clear_button]
+            },
+            (key_layout := QHBoxLayout()): {
+                'items': [key_copy_button, self.key_field, self.key_set_button]
+            },
+            (bottom := QVBoxLayout()): {
+                'items': [key_show_button, key_layout, token_layout]
+            },
+
+            # Add middle widgets
+            (cache_layout := QHBoxLayout()): {
+                'items': [icon_mode_label, self.icon_mode_dropdown]
+            },
+            (output_layout := QGridLayout()): {
+                'items': [
+                    (aspect_ratio_label, 0, 0),
+                    (self.aspect_ratio_dropdown, 0, 10),
+                    (transformation_label, 0, 20),
+                    (self.transformation_dropdown, 0, 30),
+                    (line_wrap_label, 10, 0),
+                    (self.line_wrap_dropdown, 10, 10)
+                ]
+            },
+            (theme_layout := QHBoxLayout()): {
+                'items': [theme_label, self.theme_dropdown]
+            },
+            (middle := QVBoxLayout()): {
+                'items': [open_editor_button, theme_layout, output_layout, cache_layout]
+            },
+
+            # Add top widgets
+            (top := QHBoxLayout()): {
+                'items': [save_button, reload_button, import_button, export_button]
+            },
+
+            # Main layout
+            QGridLayout(self): {
+                'items': [
+                    (top, 0, 0, Qt.AlignTop),
+                    (middle, 10, 0, Qt.AlignTop),
+                    (bottom, 20, 0, Qt.AlignBottom)
+                ]
+            }
+        })
+
         for subscribe_params in (
                 (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
                 (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
                 (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
                 (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
         ): EventBus['settings'].subscribe(*subscribe_params)
-
-        # Define layouts
-        layout = QGridLayout(self)  # Main layout
-        top = QHBoxLayout()
-        middle = QVBoxLayout()
-        theme_layout = QHBoxLayout()
-        output_layout = QGridLayout()
-        cache_layout = QHBoxLayout()
-        bottom = QVBoxLayout()
-        key_layout = QHBoxLayout()
-        token_layout = QHBoxLayout()
-
-        # Assign positions of layouts
-        layout.addLayout(top, 0, 0, Qt.AlignTop)
-        layout.addLayout(middle, 10, 0, Qt.AlignTop)
-        layout.addLayout(bottom, 20, 0, Qt.AlignBottom)
-
-        # Add top widgets
-        top.addWidget(save_button)
-        top.addWidget(reload_button)
-        top.addWidget(import_button)
-        top.addWidget(export_button)
-
-        # Add middle widgets
-        middle.addWidget(open_editor_button)
-        middle.addLayout(theme_layout)
-        middle.addLayout(output_layout)
-        middle.addLayout(cache_layout)
-        theme_layout.addWidget(theme_label)
-        theme_layout.addWidget(self.theme_dropdown)
-        output_layout.addWidget(aspect_ratio_label, 0, 0)
-        output_layout.addWidget(self.aspect_ratio_dropdown, 0, 10)
-        output_layout.addWidget(transformation_label, 0, 20)
-        output_layout.addWidget(self.transformation_dropdown, 0, 30)
-        output_layout.addWidget(line_wrap_label, 10, 0)
-        output_layout.addWidget(self.line_wrap_dropdown, 10, 10)
-        cache_layout.addWidget(icon_mode_label)
-        cache_layout.addWidget(self.icon_mode_dropdown)
-
-        # Add bottom widgets
-        bottom.addWidget(key_show_button)
-        bottom.addLayout(key_layout)
-        bottom.addLayout(token_layout)
-        key_layout.addWidget(key_copy_button)
-        key_layout.addWidget(self.key_field)
-        key_layout.addWidget(self.key_set_button)
-        token_layout.addWidget(self.token_clear_button)
 
         self.refresh_dropdowns()
 

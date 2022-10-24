@@ -16,6 +16,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
+from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
@@ -56,8 +57,11 @@ class ReadmeViewer(QWidget):
             close_button.setText: 'gui.readme_viewer.close'
         })
 
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.readme_viewer)
-        layout.addWidget(close_button)
+        init_layouts({
+            # Main layout
+            QVBoxLayout(self): {
+                'items': [self.readme_viewer, close_button]
+            }
+        })
 
         self.readme_viewer.set_hot_reloadable_text(self.README_TEXT, 'markdown')

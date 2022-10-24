@@ -23,6 +23,7 @@ from ...exception_hook import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
 from ...utils.gui import delete_layout_widgets
+from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ...utils.network import encode_url_params
 from ..app import app
@@ -51,13 +52,9 @@ class ExceptionReporter(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        layout = QHBoxLayout(self)
         self.left_panel = QFrame(self)
         self.right_panel = QFrame(self)
 
-        left_label = QLabel(self.left_panel)
-        right_label = QLabel(self.right_panel)
-        clear_all_button = QPushButton(self.left_panel)
         self.trace_back_viewer = ExternalTextBrowser(self)
         self.clear_button = QPushButton(self.right_panel)
         self.report_button = QPushButton(self.right_panel)
@@ -74,7 +71,12 @@ class ExceptionReporter(QWidget):
                 'widgetResizable': True
             },
 
-            clear_all_button: {
+            self.left_panel: {'layout': QVBoxLayout()},
+            self.right_panel: {'layout': QVBoxLayout()},
+            (left_label := QLabel(self.left_panel)): {},
+            (right_label := QLabel(self.right_panel)): {},
+
+            (clear_all_button := QPushButton(self.left_panel)): {
                 'clicked': self.clear_all_exceptions
             },
 
@@ -109,21 +111,28 @@ class ExceptionReporter(QWidget):
             self.report_button.setText: 'gui.exception_reporter.report'
         })
 
-        layout.addWidget(self.left_panel)
-        layout.addWidget(self.right_panel)
+        init_layouts({
+            # Left frame layout
+            self.left_panel.layout(): {
+                'items': [left_label, self.scroll_area, clear_all_button]
+            },
+
+            # Right frame layouts
+            (buttons := QHBoxLayout()): {
+                'items': [self.report_button, self.clear_button]
+            },
+            self.right_panel.layout(): {
+                'items': [right_label, self.trace_back_viewer, buttons]
+            },
+
+            # Main layout
+            QHBoxLayout(self): {
+                'items': [self.left_panel, self.right_panel]
+            }
+        })
+
         self.left_panel.setLayout(QVBoxLayout())
         self.right_panel.setLayout(QVBoxLayout())
-        buttons = QHBoxLayout()
-
-        self.left_panel.layout().addWidget(left_label)
-        self.left_panel.layout().addWidget(self.scroll_area)
-        self.left_panel.layout().addWidget(clear_all_button)
-
-        self.right_panel.layout().addWidget(right_label)
-        self.right_panel.layout().addWidget(self.trace_back_viewer)
-        self.right_panel.layout().addLayout(buttons)
-        buttons.addWidget(self.report_button)
-        buttons.addWidget(self.clear_button)
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
