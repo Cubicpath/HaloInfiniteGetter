@@ -51,7 +51,9 @@
         <list>
           <option value="hi_getter.gui.widgets.external_text_browser.ExternalTextBrowser.anchorClicked" />
           <option value="PySide6.QtCore.timeout.connect" />
+          <option value="PySide6.QtCore.Qt.*" />
           <option value="PySide6.QtCore.QTimer.timeout" />
+          <option value="PySide6.QtGui.QKeySequence.*" />
           <option value="PySide6.QtGui.triggered.connect" />
           <option value="PySide6.QtNetwork.downloadProgress.connect" />
           <option value="PySide6.QtNetwork.finished.*" />
@@ -64,7 +66,7 @@
           <option value="PySide6.QtWidgets.clicked.connect" />
           <option value="PySide6.QtWidgets.QComboBox.currentIndexChanged" />
           <option value="PySide6.QtWidgets.QComboBox.activated" />
-          <option value="PySide6.QtWidgets.QMessageBox.buttonClicked" />
+          <option value="PySide6.QtWidgets.QMessageBox.*" />
           <option value="PySide6.QtWidgets.QPushButton.clicked" />
           <option value="PySide6.QtWidgets.QTextBrowser.anchorClicked" />
           <option value="PySide6.QtWidgets.returnPressed.connect" />
