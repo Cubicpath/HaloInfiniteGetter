@@ -44,18 +44,25 @@ def export_data() -> None:
 
         7z, tar, zip, gztar, bztar, xztar
     """
-    export_file = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
+    export_dest = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
                                                    dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
-    if export_file.is_dir():
+    # Return early if no file selected
+    if export_dest.is_dir():
         return
 
-    archive_format = _EXPORT_EXTENSION_MAP.get(export_file.suffix)
+    # Get archive type from export destination's extension
+    archive_format: str | None = _EXPORT_EXTENSION_MAP.get(export_dest.suffix)
 
     if archive_format is None:
-        app().show_dialog('test')
+        app().show_dialog('errors.unsupported_archive_type', description_args=(export_dest, export_dest.suffix,))
         return
 
-    shutil.make_archive(str(export_file.with_name(export_file.stem)), archive_format, root_dir=HI_CACHE_PATH, base_dir='./cached_requests')
+    # Create archive in temp directory then move it to destination path
+    temp = Path(QDir.tempPath()) / export_dest
+    shutil.move(
+        src=shutil.make_archive(str(temp), archive_format, root_dir=HI_CACHE_PATH, base_dir='./cached_requests'),
+        dst=export_dest
+    )
 
 
 def import_data() -> None:
