@@ -73,7 +73,7 @@ def import_data() -> None:
         .7z .zip .piz .tar .tar.gz .tgz .tar.bz2 .tbz2 .tar.xz .txz
     """
     archive_file = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
-                                                    dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
+                                                    dir=str(Path.home() / 'Downloads'), filter=_ARCHIVE_FILTER)[0])
     # Return early if no file selected
     if archive_file.is_dir():
         return
