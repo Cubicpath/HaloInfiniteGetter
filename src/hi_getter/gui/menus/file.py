@@ -93,6 +93,8 @@ class FileContextMenu(QMenu):
         """Create a new :py:class:`FileContextMenu`."""
         super().__init__(parent)
 
+        cached_requests = HI_CACHE_PATH / 'cached_requests'
+
         init_objects({
             (open_explorer := QAction(self)): {
                 'text': tr('gui.menus.file.open'),
@@ -103,7 +105,8 @@ class FileContextMenu(QMenu):
             },
 
             (flush_cache := QAction(self)): {
-                'disabled': not tuple(HI_CACHE_PATH.iterdir()),  # Set disabled if HI_CACHE_PATH directory is empty
+                # DISABLED IF EMPTY DIRECTORY
+                'disabled': not any(HI_CACHE_PATH.iterdir()),
                 'text': tr('gui.menus.file.flush'),
                 'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
                 'triggered': self.flush_cache
@@ -116,6 +119,8 @@ class FileContextMenu(QMenu):
             },
 
             (export_to := QAction(self)): {
+                # DISABLED IF EMPTY DIRECTORY OR NOT DIRECTORY
+                'disabled': True if (cached_requests.is_dir() and not any(cached_requests.iterdir())) else not cached_requests.is_dir(),
                 'text': tr('gui.menus.file.export'),
                 'icon': app().icon_store['export'],
                 'triggered': export_data
