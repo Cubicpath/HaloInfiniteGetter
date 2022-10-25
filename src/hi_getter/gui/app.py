@@ -12,6 +12,7 @@ __all__ = (
 )
 
 import json
+import shutil
 import subprocess
 import sys
 from collections import defaultdict
@@ -119,6 +120,9 @@ class GetterApp(Singleton, QApplication):
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
+        # Register formats for use in shutil
+        self._register_archive_formats()
+
         # Must load client last, but before windows
         self.load_env(verbose=True)
         self.client = Client(self)
@@ -179,6 +183,19 @@ class GetterApp(Singleton, QApplication):
         """Translate the HTTP code map to the current language."""
         for code in (400, 401, 403, 404, 405, 406):
             http_code_map[code] = (http_code_map[code][0], self.translator(f'network.http.codes.{code}.description'))
+
+    def _register_archive_formats(self) -> None:
+        if not has_package('py7zr'):
+            self.missing_package_dialog('py7zr', 'Importing/Exporting 7Zip Archives')
+        if not has_package('py7zr'):  # Check again, during the dialog, the package may be dynamically installed by user.
+            return
+
+        from py7zr import pack_7zarchive
+        from py7zr import unpack_7zarchive
+
+        # Register .7z archive support
+        shutil.register_archive_format('7z', pack_7zarchive, description='7Zip Archive File')
+        shutil.register_unpack_format('7z', ['7z'], unpack_7zarchive, description='7Zip Archive File')
 
     def init_translations(self, translation_calls: dict[Callable, str]) -> None:
         """Initialize the translation of all objects.
@@ -340,16 +357,18 @@ class GetterApp(Singleton, QApplication):
             else:
                 self.show_dialog(
                     'information.package_installed', parent,
-                    description_args=(package, reason)
+                    description_args=(package,)
                 )
 
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
             self.missing_package_dialog('python-dotenv', 'Loading environment variables')
-        if has_package('python-dotenv'):  # Not the same as else, during the dialog, the package may be dynamically installed by user.
-            from dotenv import load_dotenv
-            load_dotenv(verbose=verbose)
+        if has_package('python-dotenv'):  # Check again, during the dialog, the package may be dynamically installed by user.
+            return
+
+        from dotenv import load_dotenv
+        load_dotenv(verbose=verbose)
 
     def load_icons(self) -> None:
         """Load all icons needed for the application.
