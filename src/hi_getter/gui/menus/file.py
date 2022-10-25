@@ -5,9 +5,12 @@
 from __future__ import annotations
 
 __all__ = (
+    'export_data',
     'FileContextMenu',
+    'import_data',
 )
 
+import shutil
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -22,7 +25,53 @@ from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
 
-_ARCHIVE_FILTER: str = ';;'.join(('Archive Files (*.7z *.zip *.tar *.gz)', 'All files (*.*)'))
+# Default file extension is .7z
+_ARCHIVE_FILTER:       str = ';;'.join(('Archive Files (*.7z *.zip *.piz *.tar *.tar.gz *.tgz *.tar.bz2 *.tbz2 *.tar.xz *.txz)', 'All files (*.*)'))
+_EXPORT_EXTENSION_MAP: dict[str, str] = {
+    '.7z': '7z',
+    '.tar': 'tar',
+    '.zip': 'zip', '.piz': 'zip',
+    '.tar.gz': 'gztar', '.tgz': 'gztar',
+    '.tar.bz2': 'bztar', '.tbz2': 'bztar',
+    '.tar.xz': 'xztar', '.txz': 'xztar'
+}
+
+
+def export_data() -> None:
+    """Export cached_requests to an archive file selected by a :py:class:`QFileDialog`.
+
+    The following archive types are supported::
+
+        7z, tar, zip, gztar, bztar, xztar
+    """
+    export_file = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
+                                                   dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
+    if export_file.is_dir():
+        return
+
+    archive_format = _EXPORT_EXTENSION_MAP.get(export_file.suffix)
+
+    if archive_format is None:
+        app().show_dialog('test')
+        return
+
+    shutil.make_archive(str(export_file.with_name(export_file.stem)), archive_format, root_dir=HI_CACHE_PATH, base_dir='./cached_requests')
+
+
+def import_data() -> None:
+    """Import data from an archive file selected by a :py:class:`QFileDialog`.
+
+    The following archive extensions are supported::
+
+        .7z .zip .piz .tar .tar.gz .tgz .tar.bz2 .tbz2 .tar.xz .txz
+    """
+    archive_file = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
+                                                    dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
+
+    if archive_file.is_dir():
+        return
+
+    shutil.unpack_archive(str(archive_file), extract_dir=HI_CACHE_PATH)
 
 
 class FileContextMenu(QMenu):
@@ -51,13 +100,13 @@ class FileContextMenu(QMenu):
             (import_from := QAction(self)): {
                 'text': tr('gui.menus.file.import'),
                 'icon': app().icon_store['import'],
-                'triggered': self.import_data
+                'triggered': import_data
             },
 
             (export_to := QAction(self)): {
                 'text': tr('gui.menus.file.export'),
                 'icon': app().icon_store['export'],
-                'triggered': self.export_data
+                'triggered': export_data
             }
         })
 
@@ -77,13 +126,3 @@ class FileContextMenu(QMenu):
         if do_flush:
             QDir(HI_CACHE_PATH).removeRecursively()
             HI_CACHE_PATH.mkdir()
-
-    def import_data(self) -> None:
-        """Import data from..."""
-        _ = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
-                                             dir=str(HI_CONFIG_PATH), filter=_ARCHIVE_FILTER)[0])
-
-    def export_data(self) -> None:
-        """Export data to..."""
-        _ = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
-                                             dir=str(HI_CONFIG_PATH), filter=_ARCHIVE_FILTER)[0])
