@@ -31,6 +31,7 @@ may or may not be considered abuse by the aforementioned parties.**_
           - [GET](#get)
           - [SCAN](#scan)
      - [Cache Explorer](#cache-explorer)
+     - [Importing and Exporting Cached Requests](#importing-and-exporting-cached-requests)
      - [Outputs](#outputs)
           - [Media Output](#media-output)
           - [Text Output](#text-output)
@@ -117,6 +118,18 @@ Context Menu actions:
 - **Copy File Contents** --- Copy the contents of the file onto your clipboard.
 
 ![Cache Explorer](https://i.imgur.com/KbdOE95l.png)
+
+
+### Importing and Exporting Cached Requests
+You can use the `File` context menu to easily import and export archive files containing cached requests.
+You can then view them in the [Cache Explorer](#cache-explorer).
+
+Supported archive types are:
+- 7Zip Archives (`*.7z`)
+- ZIP Files (`*.zip` & `*.piz`)
+- TAR Files (`*.tar`, `*.tar.gz`, `*.tgz`, `*.tar.bz2`, `*.tbz2`, `*.tar.xz`, `*.txz`)
+   - `gzip`, `bzip2`, and `xz` are the supported compression algorithms
+
 
 ### Outputs:
 Both the media and the text output can be detached and reattached from the main window.
