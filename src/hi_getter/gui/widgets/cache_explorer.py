@@ -88,6 +88,7 @@ class _ColumnContextMenu(QMenu):
         ])
 
 
+# noinspection PyProtectedMember
 class _CachedFileContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
 
@@ -120,7 +121,7 @@ class _CachedFileContextMenu(QMenu):
             (open_in_default_app := QAction(self)): {
                 'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cached_file.open_in_default_app'),
-                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'icon': parent.model().iconProvider()._fallback_provider.icon(parent.model().fileInfo(index)),
                 'triggered': DeferredCallable(
                     QDesktopServices.openUrl, QUrl(file_path.as_uri())
                 )
