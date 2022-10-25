@@ -74,11 +74,16 @@ def import_data() -> None:
     """
     archive_file = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
                                                     dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
-
+    # Return early if no file selected
     if archive_file.is_dir():
         return
 
-    shutil.unpack_archive(str(archive_file), extract_dir=HI_CACHE_PATH)
+    # Attempt to unpack file into temp dir
+    try:
+        shutil.unpack_archive(str(archive_file), extract_dir=HI_CACHE_PATH)
+    except (OSError, ValueError):
+        app().show_dialog('errors.unsupported_archive_type', description_args=(archive_file, archive_file.suffix,))
+        return
 
 
 class FileContextMenu(QMenu):
