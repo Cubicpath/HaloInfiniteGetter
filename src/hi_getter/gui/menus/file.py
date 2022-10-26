@@ -19,7 +19,6 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
-from ...utils.common import get_weakref_object
 from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ..app import app
@@ -44,7 +43,8 @@ def export_data() -> None:
 
         7z, tar, zip, gztar, bztar, xztar
     """
-    export_dest = Path(QFileDialog.getSaveFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.export'),
+    # noinspection PyTypeChecker
+    export_dest = Path(QFileDialog.getSaveFileName(None, caption=tr('gui.menus.file.export'),
                                                    dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
     # Return early if no file selected
     if export_dest.is_dir():
@@ -72,7 +72,8 @@ def import_data() -> None:
 
         .7z .zip .piz .tar .tar.gz .tgz .tar.bz2 .tbz2 .tar.xz .txz
     """
-    archive_file = Path(QFileDialog.getOpenFileName(get_weakref_object(app().windows['app']), caption=tr('gui.menus.file.import'),
+    # noinspection PyTypeChecker
+    archive_file = Path(QFileDialog.getOpenFileName(None, caption=tr('gui.menus.file.import'),
                                                     dir=str(Path.home() / 'Downloads'), filter=_ARCHIVE_FILTER)[0])
     # Return early if no file selected
     if archive_file.is_dir():
