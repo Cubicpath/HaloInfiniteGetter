@@ -122,7 +122,7 @@ Context Menu actions:
 
 ### Importing and Exporting Cached Requests
 You can use the `File` context menu to easily import and export archive files containing cached requests.
-You can then view them in the [Cache Explorer](#cache-explorer).
+Once imported, you can view the data in the [Cache Explorer](#cache-explorer).
 
 Supported archive types are:
 - 7Zip Archives (`*.7z`)
