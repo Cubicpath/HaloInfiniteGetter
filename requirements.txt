@@ -1,6 +1,6 @@
 # Hard-requirements:
 PySide6_Essentials==6.4.0.1  # GUI, Networking stack, etc.
-toml==0.10.2               # Configuration file parser and editor
+toml==0.10.2                 # Configuration file parser and editor
 
 # Soft-requirements:
 py7zr==0.20.0          # To pack/unpack 7Zip archives
