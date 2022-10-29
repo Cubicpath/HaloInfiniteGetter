@@ -129,7 +129,8 @@ class ExternalTextBrowser(QTextBrowser):
 
                 app().session.get(url, finished=handle_reply)
             else:
-                image.loadFromData(self.remote_image_cache[url_string])
+                if cached_data := self.remote_image_cache[url_string]:
+                    image.loadFromData(cached_data)
             return image
 
         return super().loadResource(resource_type, url, **kwargs)
