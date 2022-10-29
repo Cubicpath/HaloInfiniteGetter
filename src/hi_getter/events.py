@@ -79,7 +79,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
         repr_: str = ''
         for event in self:
             repr_ += f'{event.__name__}[{len(self[event])}], '
-        return f'({repr_.rstrip()})'
+        return f'({repr_.rstrip(", ")})'
 
     def add(self, event: type[_ET_co], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list."""

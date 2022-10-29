@@ -471,6 +471,10 @@ class NetworkSession:
         GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
         by web browsers to download HTML pages, images, and other resources.
 
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
+
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
         :keyword data: Bytes to send in the request body.
@@ -497,6 +501,10 @@ class NetworkSession:
 
         HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
         This is useful for checking if a resource exists, or for getting the size of a resource before downloading it.
+
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
 
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
@@ -525,6 +533,10 @@ class NetworkSession:
         POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
         This makes it very common for servers to accept POST requests for a multitude of things.
 
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
+
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
         :keyword data: Bytes to send in the request body.
@@ -550,6 +562,10 @@ class NetworkSession:
         """Create and send a request with the PUT HTTP method.
 
         PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
+
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
 
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
@@ -577,6 +593,10 @@ class NetworkSession:
 
         DELETE is used to delete a specified resource.
 
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
+
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
         :keyword data: Bytes to send in the request body.
@@ -602,6 +622,10 @@ class NetworkSession:
         """Create and send a request with the PATCH HTTP method.
 
         PATCH is used to send a partial update of an existing resource.
+
+        -----
+
+        See :py:meth:`NetworkSession.request` for full kwarg documentation.
 
         :param url: URL to send the request to. Case-sensitive.
         :keyword params: URL parameters to attach to the URL. Case-sensitive.
