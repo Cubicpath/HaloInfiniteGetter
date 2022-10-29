@@ -16,6 +16,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from ...constants import *
 from ...models import DeferredCallable
 from ..app import app
 
@@ -53,17 +54,33 @@ class ExternalTextBrowser(QTextBrowser):
         self.verticalScrollBar().setSliderPosition(scroll)
 
     def set_hot_reloadable_text(self, text: str, text_type: str) -> None:
-        """Set text that is designated to be hot-reloadable."""
+        """Set text that is designated to be hot-reloadable.
 
-        # Inject html anchors to markdown headers to allow relative linking.
+        Injects html anchors to images to allow clickable images.
+        Injects html anchors to markdown headers to allow relative linking.
+        """
+
+        # Inject html anchors in images and headers
         if text_type == 'markdown':
             lines:     list[str] = text.splitlines()
             lines_new: list[str] = []
+            ref_links: dict[str, tuple[str, str | None]] = {
+                match['label']: (match['url'], match['description'])
+                for match in MARKDOWN_REF_LINK_PATTERN.finditer(text)
+            }
 
-            # Find headers and add relative anchors
             for i, line in enumerate(lines):
-                simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
+                # Replace image links with clickable anchor images
+                if match := MARKDOWN_IMG_LINK_PATTERN.findall(line):
+                    # Get ref_link or normal link for anchor href
+                    img_link: tuple[str, str, str] = match[0]
+                    href: str = img_link[2].strip('()') if img_link[2].startswith('(') else ref_links[img_link[2].strip('[]')][0]
+
+                    lines_new.append(f'<a href="{href}"><img src="{img_link[1].strip("()")}" alt="{img_link[0].strip("[]")}"/></a>')
+                    continue
+
+                # Find headers and add relative anchors
                 has_hashtag:   bool = line.strip().startswith('#')
                 has_underline: bool = line and (i < len(lines) - 1) and any(
                     # Line must end and begin with the respective underline
@@ -74,6 +91,8 @@ class ExternalTextBrowser(QTextBrowser):
                 # If line has a header marker, append it with an anchor tag and add it to the new list.
                 # Otherwise, append the unchanged line to the new list.
                 if has_hashtag or has_underline:
+                    simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
+
                     lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}">§</a>')
                     continue
                 lines_new.append(line)

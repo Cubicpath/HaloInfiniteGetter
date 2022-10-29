@@ -13,6 +13,8 @@ __all__ = (
     'HI_RESOURCE_PATH',
     'HI_SAMPLE_RESOURCE',
     'HI_URL_PATTERN',
+    'MARKDOWN_IMG_LINK_PATTERN',
+    'MARKDOWN_REF_LINK_PATTERN',
     'SUPPORTED_IMAGE_EXTENSIONS',
     'SUPPORTED_IMAGE_MIME_TYPES',
 )
@@ -73,3 +75,17 @@ HI_URL_PATTERN:  Final[re.Pattern] = re.compile(
     r'\(\S+?\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’])|'
     r'(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.][a-z]{2,}\b/?(?!@))')
 """Regex pattern for finding URLs. Derived from https://gist.github.com/gruber/8891611."""
+
+MARKDOWN_IMG_LINK_PATTERN:  Final[re.Pattern] = re.compile(
+    r'\[!\s*(?P<alt>\[[^\t\n\r()\[\]]*])\s*'
+    r'(?P<image>\([\S ]+\))]\s*'
+    r'(?P<target>[\[(][^\t\n\r()\[\]]*[)\]])')
+"""Regex pattern for finding image links."""
+
+MARKDOWN_REF_LINK_PATTERN:  Final[re.Pattern] = re.compile(
+    r'\[(?P<label>[ \w()-]+)] *: *'
+    r'(?P<url>(?:(?:[a-zA-Z]+)?://)?'
+    r'\w+(?:\.\w+)*(?::\d{1,5})?'
+    r'(?:/[^\s()]*)?(?:\?(?:\w+=\w+&?)+)?)'
+    r'(?: \"(?P<description>[^\"\t\n\r]*)\")?')
+"""Regex pattern for finding markdown labels."""
