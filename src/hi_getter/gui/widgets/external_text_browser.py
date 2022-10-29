@@ -74,10 +74,16 @@ class ExternalTextBrowser(QTextBrowser):
                 # Replace image links with clickable anchor images
                 if match := MARKDOWN_IMG_LINK_PATTERN.findall(line):
                     # Get ref_link or normal link for anchor href
-                    img_link: tuple[str, str, str] = match[0]
-                    href: str = img_link[2].strip('()') if img_link[2].startswith('(') else ref_links[img_link[2].strip('[]')][0]
+                    alt, src, link = (group.strip('()[]') for group in match[0])
 
-                    lines_new.append(f'<a href="{href}"><img src="{img_link[1].strip("()")}" alt="{img_link[0].strip("[]")}"/></a>')
+                    # Get reference link data if applicable
+                    link_is_ref: bool = match[0][2].startswith('[')
+                    ref_url, ref_desc = ref_links.get(link, (None, None))
+
+                    href: str = link if not link_is_ref else ref_url
+                    title: str = alt if not link_is_ref and ref_desc is not None else ref_desc
+
+                    lines_new.append(f'<a href="{href}"><img src="{src}" alt="{alt}" title="{title}"/></a>')
                     continue
 
                 # Find headers and add relative anchors
