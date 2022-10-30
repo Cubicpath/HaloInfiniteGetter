@@ -40,8 +40,8 @@ from ..network.manager import NetworkSession
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
 from ..utils.gui import set_or_swap_icon
-from ..utils.package import has_package
 from ..utils.network import http_code_map
+from ..utils.package import has_package
 from ..utils.system import hide_windows_file
 
 _DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
@@ -94,6 +94,7 @@ class GetterApp(Singleton, QApplication):
 
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
+        self._thread_pool:  QThreadPool = QThreadPool.globalInstance()
 
         self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
@@ -464,3 +465,7 @@ class GetterApp(Singleton, QApplication):
     def sorted_themes(self) -> list[Theme]:
         """List of themes sorted by their display name."""
         return sorted(self.themes.values(), key=lambda theme: theme.display_name)
+
+    def start_worker(self, runnable: Callable | QRunnable, priority: int = 0) -> None:
+        """Start a runnable from the application :py:class:`QThreadPool`."""
+        self._thread_pool.start(runnable, priority)
