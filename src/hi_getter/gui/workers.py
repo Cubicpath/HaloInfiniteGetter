@@ -2,16 +2,18 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Implementations for worker-thread runnables."""
-import shutil
-from collections.abc import Callable
-from pathlib import Path
-
-from PySide6.QtCore import *
+from __future__ import annotations
 
 __all__ = (
     'ExportData',
     'ImportData',
 )
+
+import shutil
+from collections.abc import Callable
+from pathlib import Path
+
+from PySide6.QtCore import *
 
 
 class _Worker(QRunnable):
