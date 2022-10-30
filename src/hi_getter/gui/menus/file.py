@@ -10,7 +10,6 @@ __all__ = (
     'import_data',
 )
 
-import shutil
 from pathlib import Path
 
 from PySide6.QtCore import *
@@ -23,17 +22,11 @@ from ...utils.gui import add_menu_items
 from ...utils.gui import init_objects
 from ..app import app
 from ..app import tr
+from ..workers import ExportData
+from ..workers import ImportData
 
 # Default file extension is .7z
-_ARCHIVE_FILTER:       str = ';;'.join(('Archive Files (*.7z *.zip *.piz *.tar *.tar.gz *.tgz *.tar.bz2 *.tbz2 *.tar.xz *.txz)', 'All files (*.*)'))
-_EXPORT_EXTENSION_MAP: dict[str, str] = {
-    '.7z': '7z',
-    '.tar': 'tar',
-    '.zip': 'zip', '.piz': 'zip',
-    '.tar.gz': 'gztar', '.tgz': 'gztar',
-    '.tar.bz2': 'bztar', '.tbz2': 'bztar',
-    '.tar.xz': 'xztar', '.txz': 'xztar'
-}
+_ARCHIVE_FILTER: str = ';;'.join(('Archive Files (*.7z *.zip *.piz *.tar *.tar.gz *.tgz *.tar.bz2 *.tbz2 *.tar.xz *.txz)', 'All files (*.*)'))
 
 
 def export_data() -> None:
@@ -50,19 +43,11 @@ def export_data() -> None:
     if export_dest.is_dir():
         return
 
-    # Get archive type from export destination's extension
-    archive_format: str | None = _EXPORT_EXTENSION_MAP.get(export_dest.suffix)
-
-    if archive_format is None:
+    if ExportData.EXTENSION_FORMATS.get(export_dest.suffix) is None:
         app().show_dialog('errors.unsupported_archive_type', description_args=(export_dest, export_dest.suffix,))
         return
 
-    # Create archive in temp directory then move it to destination path
-    temp = Path(QDir.tempPath()) / export_dest
-    shutil.move(
-        src=shutil.make_archive(str(temp), archive_format, root_dir=HI_CACHE_PATH, base_dir='./cached_requests'),
-        dst=export_dest
-    )
+    app().start_worker(ExportData(base=HI_CACHE_PATH / 'cached_requests', dest=export_dest))
 
 
 def import_data() -> None:
@@ -80,11 +65,9 @@ def import_data() -> None:
         return
 
     # Attempt to unpack file into temp dir
-    try:
-        shutil.unpack_archive(str(archive_file), extract_dir=HI_CACHE_PATH)
-    except (OSError, ValueError):
-        app().show_dialog('errors.unsupported_archive_type', description_args=(archive_file, archive_file.suffix,))
-        return
+    app().start_worker(ImportData(archive=archive_file, dest=HI_CACHE_PATH, on_error=lambda _: app().show_dialog(
+        'errors.unsupported_archive_type', description_args=(archive_file, archive_file.suffix,)
+    )))
 
 
 class FileContextMenu(QMenu):
