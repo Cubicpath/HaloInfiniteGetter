@@ -40,54 +40,6 @@ def file_to_clipboard(file_path: Path):
         app().clipboard().setText(file_path.read_text(encoding='utf8'))
 
 
-class _ColumnContextMenu(QMenu):
-    def __init__(self, parent: CacheExplorer):
-        super().__init__(parent)
-
-        enabled_map = [parent.isColumnHidden(i) for i in range(parent.model().columnCount())]
-
-        icons = (
-            # Not Hidden
-            app().get_theme_icon('checkbox_checked') or
-            self.style().standardIcon(QStyle.SP_DialogApplyButton),
-
-            # Hidden
-            app().get_theme_icon('checkbox_unchecked') or
-            self.style().standardIcon(QStyle.SP_DialogCancelButton),
-        )
-
-        init_objects({
-            (name := QAction(self)): {
-                'disabled': not parent.isColumnHidden(0),
-                'text': tr('gui.cache_explorer.columns.name'),
-                'icon': icons[enabled_map[0]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 0, not enabled_map[0])
-            },
-
-            (file_size := QAction(self)): {
-                'text': tr('gui.cache_explorer.columns.file_size'),
-                'icon': icons[enabled_map[1]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 1, not enabled_map[1])
-            },
-
-            (file_type := QAction(self)): {
-                'text': tr('gui.cache_explorer.columns.file_type'),
-                'icon': icons[enabled_map[2]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 2, not enabled_map[2])
-            },
-
-            (date_modified := QAction(self)): {
-                'text': tr('gui.cache_explorer.columns.date_modified'),
-                'icon': icons[enabled_map[3]],
-                'triggered': DeferredCallable(parent.setColumnHidden, 3, not enabled_map[3])
-            },
-        })
-
-        add_menu_items(self, [
-            'Columns', name, file_size, file_type, date_modified
-        ])
-
-
 # noinspection PyProtectedMember
 class _CachedFileContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
@@ -349,7 +301,7 @@ class CacheExplorer(QTreeView):
                     self.delete_index(i)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        """Resize "Name" column on click/expansion."""
+        """Resize "Name" column.py on click/expansion."""
         super().mousePressEvent(event)
         self.resizeColumnToContents(0)
 
@@ -358,10 +310,12 @@ class CacheExplorer(QTreeView):
 
         :param point: The point to place the context menu.
         """
+        from ..menus.column import ColumnContextMenu
+
         index = self.indexAt(point)
 
         if index.isValid():
-            menu = _ColumnContextMenu(self)
+            menu = ColumnContextMenu(self, {0})
             menu.setAttribute(Qt.WA_DeleteOnClose)
 
             menu.exec(self.viewport().mapToGlobal(point))

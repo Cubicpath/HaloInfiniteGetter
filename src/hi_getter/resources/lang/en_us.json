@@ -37,10 +37,6 @@
     "questions.create_shortcut.description": "Please choose the location you would like the shortcut to be in.",
     "questions.create_shortcut.title": "Shortcut Creation Tool",
 
-    "gui.cache_explorer.columns.date_modified": "Date Modified",
-    "gui.cache_explorer.columns.file_size": "Size",
-    "gui.cache_explorer.columns.file_type": "Type",
-    "gui.cache_explorer.columns.name": "Name",
     "gui.exception_reporter.clear": "Clear",
     "gui.exception_reporter.clear_all": "Clear All",
     "gui.exception_reporter.exception_list": "List of all currently logged exceptions:",
