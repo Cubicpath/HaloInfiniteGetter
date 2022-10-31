@@ -16,7 +16,22 @@ from pathlib import Path
 from PySide6.QtCore import *
 
 
+class _SignalHolder(QObject):
+    exceptionRaised = Signal(BaseException, name='exceptionRaised')
+
+
 class _Worker(QRunnable):
+    def __init__(self, **kwargs: Callable | Slot):
+        super().__init__()
+        self.signals = _SignalHolder()
+
+        # Connect signals from keyword arguments
+        for kw, val in kwargs.items():
+            if hasattr(self.signals, kw) and isinstance((signal := getattr(self.signals, kw)), SignalInstance):
+                signal.connect(val)
+            else:
+                raise TypeError(f'"{kw}" is not a valid kwarg or signal name.')
+
     def _run(self) -> None:
         raise NotImplementedError
 
@@ -37,8 +52,8 @@ class ExportData(_Worker):
         '.tar.xz': 'xztar', '.txz': 'xztar'
     }
 
-    def __init__(self, base: Path, dest: Path) -> None:
-        super().__init__()
+    def __init__(self, base: Path, dest: Path, **kwargs: Callable | Slot) -> None:
+        super().__init__(**kwargs)
         self.base = base
         self.dest = dest
 
@@ -56,14 +71,13 @@ class ExportData(_Worker):
 
 class ImportData(_Worker):
     """Extract from archive into a directory."""
-    def __init__(self, archive: Path, dest: Path, on_error: Callable[[BaseException], None] | None = None) -> None:
-        super().__init__()
+    def __init__(self, archive: Path, dest: Path, **kwargs: Callable | Slot) -> None:
+        super().__init__(**kwargs)
         self.archive = archive
         self.dest = dest
-        self.on_error = on_error
 
     def _run(self) -> None:
         try:
             shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
         except (OSError, ValueError) as e:
-            self.on_error(e)
+            self.signals.exceptionRaised.emit(e)

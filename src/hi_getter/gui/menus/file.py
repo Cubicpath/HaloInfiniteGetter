@@ -65,7 +65,7 @@ def import_data() -> None:
         return
 
     # Attempt to unpack file into temp dir
-    app().start_worker(ImportData(archive=archive_file, dest=HI_CACHE_PATH, on_error=lambda _: app().show_dialog(
+    app().start_worker(ImportData(archive=archive_file, dest=HI_CACHE_PATH, exceptionRaised=lambda _: app().show_dialog(
         'errors.unsupported_archive_type', description_args=(archive_file, archive_file.suffix,)
     )))
 
