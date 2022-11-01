@@ -323,12 +323,9 @@ def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list
     :raises ImportError: If winreg is not available.
     :raises OSError: If the registry key could not be read.
     """
+    # noinspection PyCompatibility
+    import winreg
     from os.path import expandvars
-
-    try:
-        import winreg
-    except ImportError as e:
-        raise ImportError('winreg is required to use this function.') from e
 
     parent_key: int = getattr(winreg, key_name.split('\\')[0])
     sub_key:    str = '\\'.join(key_name.split('\\')[1:])
