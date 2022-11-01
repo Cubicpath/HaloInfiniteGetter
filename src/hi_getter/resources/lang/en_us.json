@@ -32,8 +32,8 @@
     "errors.package_install_failure.title": "Package Failed to Install",
     "errors.settings.import_failure.description": "Could not import settings from \"%s\". Make sure both the file and the parent folder exist, and that the file contains valid TOML.",
     "errors.settings.import_failure.title": "Import Error",
-    "errors.unsupported_archive_type.description": "\"%s\" is not a valid path as \"%s\" is not a supported archive type.",
-    "errors.unsupported_archive_type.title": "Unsupported Archive Type",
+    "errors.cache_import_failure.description": "A problem occurred when attempting to import \"%s\".\n\n%s",
+    "errors.cache_import_failure.title": "Cache Import Failure",
     "questions.create_shortcut.description": "Please choose the location you would like the shortcut to be in.",
     "questions.create_shortcut.title": "Shortcut Creation Tool",
 
