@@ -24,9 +24,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-
 _LAYOUT_OBJ: TypeAlias = QLayout | QLayoutItem | QWidget
-
 
 _layout_type_map = {
     QLayout: 'addLayout',
