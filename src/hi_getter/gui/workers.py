@@ -17,13 +17,16 @@ from PySide6.QtCore import *
 
 
 class _SignalHolder(QObject):
-    exceptionRaised = Signal(BaseException, name='exceptionRaised')
+    exceptionRaised = Signal(Exception, name='exceptionRaised')
+    valueReturned = Signal(object, name='valueReturned')
 
 
 class _Worker(QRunnable):
+    _signal_holder = _SignalHolder
+
     def __init__(self, **kwargs: Callable | Slot):
         super().__init__()
-        self.signals = _SignalHolder()
+        self.signals = self._signal_holder()
 
         # Connect signals from keyword arguments
         for kw, val in kwargs.items():
@@ -35,10 +38,21 @@ class _Worker(QRunnable):
     def _run(self) -> None:
         raise NotImplementedError
 
+    # pylint: disable=broad-except
     @Slot()
     def run(self) -> None:
-        """Called by the :py:class:`QThreadPool`."""
-        self._run()
+        """Called by the :py:class:`QThreadPool`.
+
+        Sends non-``None`` return values through the ``valueReturned`` signal.
+            - If you need to return ``None``, I suggest creating a separate object to represent it.
+
+        Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
+        """
+        try:
+            if (ret_val := self._run()) is not None:
+                self.signals.valueReturned.emit(ret_val)
+        except Exception as e:
+            self.signals.exceptionRaised.emit(e)
 
 
 class ExportData(_Worker):
@@ -77,7 +91,4 @@ class ImportData(_Worker):
         self.dest = dest
 
     def _run(self) -> None:
-        try:
-            shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
-        except (OSError, ValueError) as e:
-            self.signals.exceptionRaised.emit(e)
+        shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
