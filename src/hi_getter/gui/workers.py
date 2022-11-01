@@ -54,6 +54,8 @@ class _Worker(QRunnable):
         except Exception as e:
             self.signals.exceptionRaised.emit(e)
 
+        self.signals.deleteLater()
+
 
 class ExportData(_Worker):
     """Build archive in a temp file then remove .tmp extension when finished."""
