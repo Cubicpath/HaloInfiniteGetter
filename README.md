@@ -45,7 +45,7 @@ About:
 HaloInfiniteGetter is a GUI application written using [Qt for Python][PySide] that allows you to easily view data
 hosted on [HaloWaypoint] API endpoints.
 
-You can view both Image and Text output, with these results being cached in the user's `.cache/hi_data/cached_requests` directory,
+You can view both Image and Text output, with these results being cached in the user's `.cache/hi_getter/cached_requests` directory,
 to eliminate unnecessary API calls.
 
 How to Use:
