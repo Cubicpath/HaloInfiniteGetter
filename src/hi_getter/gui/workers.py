@@ -15,6 +15,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import shiboken6
 from PySide6.QtCore import *
 
 from ..constants import SUPPORTED_IMAGE_EXTENSIONS
@@ -58,6 +59,11 @@ class _Worker(QRunnable):
             if (ret_val := self._run()) is not None:
                 self.signals.valueReturned.emit(ret_val)
         except Exception as e:
+            # This occurs when the application is exiting and an internal C++ object is being read after it is deleted.
+            # So, return quietly and allow the process to exit with no errors.
+            if isinstance(e, RuntimeError) and not shiboken6.isValid(self.signals):
+                return
+
             self.signals.exceptionRaised.emit(e)
 
         self.signals.deleteLater()
