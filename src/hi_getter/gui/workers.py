@@ -42,6 +42,9 @@ class _Worker(QRunnable):
             else:
                 raise TypeError(f'"{kw}" is not a valid kwarg or signal name.')
 
+    def _dummy_method(self) -> None:
+        return
+
     def _run(self) -> None:
         raise NotImplementedError
 
@@ -56,7 +59,7 @@ class _Worker(QRunnable):
         Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
         """
         # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
-        QCoreApplication.instance().aboutToQuit.connect(lambda: None, Qt.BlockingQueuedConnection)
+        QCoreApplication.instance().aboutToQuit.connect(self._dummy_method, Qt.BlockingQueuedConnection)
 
         try:
             # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
@@ -70,6 +73,9 @@ class _Worker(QRunnable):
                 return
 
             self.signals.exceptionRaised.emit(e)
+
+        # Disconnect deadlock safeguard if successful to avoid possible leak
+        QCoreApplication.instance().aboutToQuit.disconnect(self._dummy_method)
 
         # Delete if not deleted
         if Shiboken.isValid(self.signals):
