@@ -7,13 +7,19 @@ from __future__ import annotations
 __all__ = (
     'ExportData',
     'ImportData',
+    'RecursiveSearch',
 )
 
 import shutil
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import *
+
+from ..constants import SUPPORTED_IMAGE_EXTENSIONS
+from ..network.client import Client
+from ..utils.common import unique_values
 
 
 class _SignalHolder(QObject):
@@ -94,3 +100,35 @@ class ImportData(_Worker):
 
     def _run(self) -> None:
         shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
+
+
+class RecursiveSearch(_Worker):
+    """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
+    def __init__(self, client: Client, search_path: str, **kwargs: Callable | Slot) -> None:
+        super().__init__(**kwargs)
+        self.client = client
+        self.search_path = search_path
+
+    def _run(self) -> None:
+        self._recursive_search(self.search_path)
+
+    def _recursive_search(self, search_path: str):
+        if self.client.searched_paths.get(search_path, 0) >= 2:
+            return
+
+        data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
+        if isinstance(data, (bytes, int)):
+            return
+
+        for value in unique_values(data):
+            if isinstance(value, str):
+                if '/' not in value:
+                    continue
+
+                end = value.split('.')[-1].lower()
+                if end in ('json',):
+                    path = 'progression/file/' + value
+                    self.client.searched_paths.update({path: self.client.searched_paths.get(path, 0) + 1})
+                    self._recursive_search(path)
+                elif end in SUPPORTED_IMAGE_EXTENSIONS:
+                    self.client.get_hi_data('images/file/' + value)

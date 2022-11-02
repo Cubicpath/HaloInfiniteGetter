@@ -26,7 +26,6 @@ from PySide6.QtWidgets import *
 from ..constants import *
 from ..models import CaseInsensitiveDict
 from ..utils.common import dump_data
-from ..utils.common import unique_values
 from ..utils.network import decode_url
 from ..utils.network import guess_json_utf
 from ..utils.network import is_error_status
@@ -189,28 +188,6 @@ class Client(QObject):
         resource = path.split(self.parent_path, maxsplit=1)[1]
         pre, post = resource.split("/", maxsplit=1)
         return f'{pre}/file/{post}'
-
-    def recursive_search(self, search_path: str) -> None:
-        """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
-        if self.searched_paths.get(search_path, 0) >= 2:
-            return
-
-        data: dict[str, Any] | bytes | int = self.get_hi_data(search_path)
-        if isinstance(data, (bytes, int)):
-            return
-
-        for value in unique_values(data):
-            if isinstance(value, str):
-                if '/' not in value:
-                    continue
-
-                end = value.split('.')[-1].lower()
-                if end in ('json',):
-                    path = 'progression/file/' + value
-                    self.searched_paths.update({path: self.searched_paths.get(path, 0) + 1})
-                    self.recursive_search(path)
-                elif end in SUPPORTED_IMAGE_EXTENSIONS:
-                    self.get_hi_data('images/file/' + value)
 
     def refresh_auth(self) -> None:
         """Refreshes authentication to Halo Waypoint servers.
