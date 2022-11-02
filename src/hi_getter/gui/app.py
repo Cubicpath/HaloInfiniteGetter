@@ -396,7 +396,7 @@ class GetterApp(Singleton, QApplication):
                 set_or_swap_icon(self.icon_store, key, icon)
                 reply.deleteLater()
 
-            app().session.get(url, finished=handle_reply)
+            self.session.get(url, finished=handle_reply)
 
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
