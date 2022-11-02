@@ -1,7 +1,20 @@
 # Hard-requirements:
 PySide6_Essentials==6.4.0.1  # GUI, Networking stack, etc.
+    shiboken6==6.4.0.1       # C++ Binding generator and object API
+
 toml==0.10.2                 # Configuration file parser and editor
 
 # Soft-requirements:
 py7zr==0.20.1          # To pack/unpack 7Zip archives
+    brotli>=1.0.9; platform_python_implementation=='CPython'
+    brotlicffi>=1.0.9.2; platform_python_implementation=='PyPy'
+    inflate64>=0.3.1
+    multivolumefile>=0.2.3
+    psutil
+    pybcj>=0.6.0
+    pycryptodomex>=3.6.6
+    pyppmd>=0.18.1, <1.1.0
+    pyzstd>=0.14.4
+    texttable
+
 python-dotenv==0.21.0  # To load .env files
