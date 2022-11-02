@@ -13,23 +13,20 @@ __all__ = (
 
 import json
 import os
-import random
-import time
 from pathlib import Path
 from typing import Any
 from typing import Final
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
-from PySide6.QtWidgets import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
 from ..utils.common import dump_data
-from ..utils.common import unique_values
 from ..utils.network import decode_url
 from ..utils.network import guess_json_utf
 from ..utils.network import is_error_status
+from ..utils.network import wait_for_reply
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
@@ -114,8 +111,7 @@ class Client(QObject):
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
         reply: QNetworkReply = self.api_session.get(self.api_root + path.strip(), **kwargs)
-        while not reply.isFinished():
-            QApplication.processEvents()
+        wait_for_reply(reply)
 
         # None is returned if the request was aborted
         status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
@@ -127,7 +123,7 @@ class Client(QObject):
 
         return reply
 
-    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
@@ -159,8 +155,6 @@ class Client(QObject):
             dump_data(os_path, data)
 
             reply.deleteLater()
-            if micro_sleep:
-                time.sleep(random.randint(100, 200) / 750)
 
         else:
             print(path)
@@ -190,38 +184,13 @@ class Client(QObject):
         pre, post = resource.split("/", maxsplit=1)
         return f'{pre}/file/{post}'
 
-    def recursive_search(self, search_path: str) -> None:
-        """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
-        if self.searched_paths.get(search_path, 0) >= 2:
-            return
-
-        data: dict[str, Any] | bytes | int = self.get_hi_data(search_path)
-        if isinstance(data, (bytes, int)):
-            return
-
-        for value in unique_values(data):
-            if isinstance(value, str):
-                if '/' not in value:
-                    continue
-
-                end = value.split('.')[-1].lower()
-                if end in ('json',):
-                    path = 'progression/file/' + value
-                    self.searched_paths.update({path: self.searched_paths.get(path, 0) + 1})
-                    self.recursive_search(path)
-                elif end in SUPPORTED_IMAGE_EXTENSIONS:
-                    self.get_hi_data('images/file/' + value)
-
     def refresh_auth(self) -> None:
         """Refreshes authentication to Halo Waypoint servers.
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
         reply: QNetworkReply = self.web_session.get('https://www.halowaypoint.com/')
-
-        # TODO: After moving client to separate thread, remove this and QtWidgets import.
-        while not reply.isFinished():
-            QApplication.processEvents()
+        wait_for_reply(reply)
 
         wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
         token:  str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')

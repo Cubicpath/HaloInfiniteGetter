@@ -7,13 +7,20 @@ from __future__ import annotations
 __all__ = (
     'ExportData',
     'ImportData',
+    'RecursiveSearch',
 )
 
 import shutil
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
+import shiboken6
 from PySide6.QtCore import *
+
+from ..constants import SUPPORTED_IMAGE_EXTENSIONS
+from ..network.client import Client
+from ..utils.common import unique_values
 
 
 class _SignalHolder(QObject):
@@ -48,13 +55,25 @@ class _Worker(QRunnable):
 
         Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
         """
+        # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
+        QCoreApplication.instance().aboutToQuit.connect(lambda: None, Qt.BlockingQueuedConnection)
+
         try:
+            # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
             if (ret_val := self._run()) is not None:
                 self.signals.valueReturned.emit(ret_val)
+
         except Exception as e:
+            # This occurs when the application is exiting and an internal C++ object is being read after it is deleted.
+            # So, return quietly and allow the process to exit with no errors.
+            if isinstance(e, RuntimeError) and not shiboken6.isValid(self.signals):
+                return
+
             self.signals.exceptionRaised.emit(e)
 
-        self.signals.deleteLater()
+        # Delete if not deleted
+        if shiboken6.isValid(self.signals):
+            self.signals.deleteLater()
 
 
 class ExportData(_Worker):
@@ -94,3 +113,35 @@ class ImportData(_Worker):
 
     def _run(self) -> None:
         shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
+
+
+class RecursiveSearch(_Worker):
+    """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
+    def __init__(self, client: Client, search_path: str, **kwargs: Callable | Slot) -> None:
+        super().__init__(**kwargs)
+        self.client = client
+        self.search_path = search_path
+
+    def _run(self) -> None:
+        self._recursive_search(self.search_path)
+
+    def _recursive_search(self, search_path: str) -> None:
+        if self.client.searched_paths.get(search_path, 0) > 1:
+            return
+
+        data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
+        if isinstance(data, (bytes, int)):
+            return
+
+        for value in unique_values(data):
+            if isinstance(value, str):
+                if '/' not in value:
+                    continue
+
+                end = value.split('.')[-1].lower()
+                if end in ('json',):
+                    path = 'progression/file/' + value
+                    self.client.searched_paths.update({path: self.client.searched_paths.get(path, 0) + 1})
+                    self._recursive_search(path)
+                elif end in SUPPORTED_IMAGE_EXTENSIONS:
+                    self.client.get_hi_data('images/file/' + value)

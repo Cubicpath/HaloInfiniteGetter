@@ -13,6 +13,7 @@ __all__ = (
     'http_code_map',
     'is_error_status',
     'query_to_dict',
+    'wait_for_reply',
 )
 
 import codecs
@@ -68,6 +69,16 @@ def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
 def is_error_status(status: int) -> bool:
     """Returns True if the HTTP status code is an error status."""
     return 400 <= status < 600
+
+
+def wait_for_reply(reply: QNetworkReply) -> None:
+    """Process events until the reply is finished.
+
+    :param reply: The QNetworkReply to wait for.
+    :raises RuntimeError: If the internal C++ QNetworkRequest is deleted.
+    """
+    while not reply.isFinished():
+        QCoreApplication.processEvents()
 
 
 # NOTICE:
