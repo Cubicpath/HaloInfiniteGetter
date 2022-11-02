@@ -31,7 +31,7 @@ class _SignalHolder(QObject):
 class _Worker(QRunnable):
     _signal_holder = _SignalHolder
 
-    def __init__(self, **kwargs: Callable | Slot):
+    def __init__(self, **kwargs: Callable | Slot) -> None:
         super().__init__()
         self.signals = self._signal_holder()
 
@@ -69,7 +69,7 @@ class _Worker(QRunnable):
         except Exception as e:
             # This occurs when the application is exiting and an internal C++ object is being read after it is deleted.
             # So, return quietly and allow the process to exit with no errors.
-            if isinstance(e, RuntimeError) and not Shiboken.isValid(self.signals):
+            if not Shiboken.isValid(self.signals):
                 return
 
             self.signals.exceptionRaised.emit(e)
