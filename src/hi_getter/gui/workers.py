@@ -122,8 +122,8 @@ class RecursiveSearch(_Worker):
     def _run(self) -> None:
         self._recursive_search(self.search_path)
 
-    def _recursive_search(self, search_path: str):
-        if self.client.searched_paths.get(search_path, 0) >= 2:
+    def _recursive_search(self, search_path: str) -> None:
+        if self.client.searched_paths.get(search_path, 0) > 1:
             return
 
         data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
