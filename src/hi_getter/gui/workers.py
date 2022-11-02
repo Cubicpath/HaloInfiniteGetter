@@ -55,6 +55,9 @@ class _Worker(QRunnable):
 
         Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
         """
+        # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
+        QCoreApplication.instance().aboutToQuit.connect(lambda: None, Qt.BlockingQueuedConnection)
+
         try:
             # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
             if (ret_val := self._run()) is not None:
