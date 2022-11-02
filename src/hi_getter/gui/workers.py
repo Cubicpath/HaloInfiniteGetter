@@ -56,8 +56,10 @@ class _Worker(QRunnable):
         Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
         """
         try:
+            # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
             if (ret_val := self._run()) is not None:
                 self.signals.valueReturned.emit(ret_val)
+
         except Exception as e:
             # This occurs when the application is exiting and an internal C++ object is being read after it is deleted.
             # So, return quietly and allow the process to exit with no errors.
@@ -66,7 +68,9 @@ class _Worker(QRunnable):
 
             self.signals.exceptionRaised.emit(e)
 
-        self.signals.deleteLater()
+        # Delete if not deleted
+        if shiboken6.isValid(self.signals):
+            self.signals.deleteLater()
 
 
 class ExportData(_Worker):
