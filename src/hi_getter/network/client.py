@@ -21,7 +21,6 @@ from typing import Final
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
-from PySide6.QtWidgets import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
@@ -29,6 +28,7 @@ from ..utils.common import dump_data
 from ..utils.network import decode_url
 from ..utils.network import guess_json_utf
 from ..utils.network import is_error_status
+from ..utils.network import wait_for_reply
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
@@ -113,8 +113,7 @@ class Client(QObject):
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
         reply: QNetworkReply = self.api_session.get(self.api_root + path.strip(), **kwargs)
-        while not reply.isFinished():
-            QApplication.processEvents()
+        wait_for_reply(reply)
 
         # None is returned if the request was aborted
         status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
@@ -195,10 +194,7 @@ class Client(QObject):
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
         reply: QNetworkReply = self.web_session.get('https://www.halowaypoint.com/')
-
-        # TODO: After moving client to separate thread, remove this and QtWidgets import.
-        while not reply.isFinished():
-            QApplication.processEvents()
+        wait_for_reply(reply)
 
         wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
         token:  str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
