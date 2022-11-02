@@ -13,8 +13,6 @@ __all__ = (
 
 import json
 import os
-import random
-import time
 from pathlib import Path
 from typing import Any
 from typing import Final
@@ -125,7 +123,7 @@ class Client(QObject):
 
         return reply
 
-    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH, micro_sleep: bool = True) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
         """Returns data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
@@ -157,8 +155,6 @@ class Client(QObject):
             dump_data(os_path, data)
 
             reply.deleteLater()
-            if micro_sleep:
-                time.sleep(random.randint(100, 200) / 750)
 
         else:
             print(path)
