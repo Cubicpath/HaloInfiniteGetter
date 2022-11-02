@@ -20,6 +20,7 @@ Microsoft Corporation, Xbox Game Studios, or 343 Industries. Depending on how yo
 may or may not be considered abuse by the aforementioned parties.**_
 
 ### Table of Contents
+- [Changelog][changelog_github]
 - [License][license_github]
 - [Disclaimer](#disclaimer)
 - [About](#about)
@@ -184,6 +185,7 @@ The current builtin themes are:
 While the current breeze themes are slightly modified versions, you can view the original themes at [BreezeStyleSheets].
 
 [BreezeStyleSheets]: https://github.com/Alexhuszagh/BreezeStyleSheets "BreezeStyleSheets"
+[changelog_github]: https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/CHANGELOG.md "Changelog"
 [HaloWaypoint]: https://www.halowaypoint.com "Halo Waypoint"
 [homepage]: https://pypi.org/project/hi-getter/ "HaloInfiniteGetter PyPI"
 [license]: https://choosealicense.com/licenses/mit "MIT License"
