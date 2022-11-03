@@ -54,6 +54,7 @@ class ChangelogViewer(QWidget):
             }
         })
 
+        self.text_browser.inject_markdown_anchors = False
         self.update_changelog()
 
     def update_changelog(self) -> None:
