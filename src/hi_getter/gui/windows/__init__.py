@@ -5,6 +5,7 @@
 
 __all__ = (
     'AppWindow',
+    'ChangelogViewer',
     'ExceptionReporter',
     'LicenseViewer',
     'ReadmeViewer',
@@ -12,6 +13,7 @@ __all__ = (
 )
 
 from .application import AppWindow
+from .changelog_viewer import ChangelogViewer
 from .exception_reporter import ExceptionReporter
 from .license_viewer import LicenseViewer
 from .readme_viewer import ReadmeViewer

@@ -164,6 +164,7 @@ class GetterApp(Singleton, QApplication):
     def _create_windows(self, **kwargs) -> None:
         """Create window instances."""
         from .windows import AppWindow
+        from .windows import ChangelogViewer
         from .windows import LicenseViewer
         from .windows import ReadmeViewer
         from .windows import SettingsWindow
@@ -175,6 +176,7 @@ class GetterApp(Singleton, QApplication):
             max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
         ))
 
+        self._windows['changelog_viewer'] = ChangelogViewer()
         self._windows['license_viewer'] = LicenseViewer()
         self._windows['readme_viewer'] = ReadmeViewer()
         self._windows['settings'] = SettingsWindow.instance()

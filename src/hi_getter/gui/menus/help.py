@@ -75,6 +75,12 @@ class HelpContextMenu(QMenu):
                 )
             },
 
+            (changelog := QAction(self)): {
+                'text': tr('gui.menus.help.changelog'),
+                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
+                'triggered': lambda: app().windows['changelog_viewer'].show()
+            },
+
             (license_view := QAction(self)): {
                 'text': tr('gui.menus.help.license'),
                 'icon': app().icon_store['copyright'],
@@ -90,7 +96,7 @@ class HelpContextMenu(QMenu):
 
         add_menu_items(self, [
             'Github', github_view, create_issue,
-            'Information', about_view, about_qt_view, license_view, readme
+            'Information', changelog, about_view, about_qt_view, license_view, readme
         ])
 
     # pylint: disable=not-an-iterable
