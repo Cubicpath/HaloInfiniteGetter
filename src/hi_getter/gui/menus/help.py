@@ -96,7 +96,8 @@ class HelpContextMenu(QMenu):
 
         add_menu_items(self, [
             'Github', github_view, create_issue,
-            'Information', changelog, about_view, about_qt_view, license_view, readme
+            'Docs', changelog, readme,
+            'About', about_view, about_qt_view, license_view
         ])
 
     # pylint: disable=not-an-iterable
