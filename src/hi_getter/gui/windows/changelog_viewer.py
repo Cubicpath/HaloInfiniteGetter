@@ -13,6 +13,7 @@ from PySide6.QtGui import *
 from PySide6.QtNetwork import *
 from PySide6.QtWidgets import *
 
+from ...models import DeferredCallable
 from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ..app import app
@@ -27,7 +28,7 @@ class ChangelogViewer(QWidget):
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.changelog_viewer.title'))
         self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton))
-        self.resize(QSize(750, 750))
+        self.resize(QSize(600, 800))
 
         self.changelog_url: str = 'https://raw.githubusercontent.com/Cubicpath/HaloInfiniteGetter/master/CHANGELOG.md'
         self.text_browser: ExternalTextBrowser
@@ -40,17 +41,33 @@ class ChangelogViewer(QWidget):
             self.text_browser: {
                 'font': QFont(self.text_browser.font().family(), 10),
                 'openExternalLinks': True
+            },
+            (github_button := QPushButton(self)): {
+                'clicked': DeferredCallable(
+                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/CHANGELOG.md')
+                )
+            },
+            (releases_button := QPushButton(self)): {
+                'clicked': DeferredCallable(
+                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/releases')
+                )
             }
         })
 
         app().init_translations({
-            self.setWindowTitle: 'gui.changelog_viewer.title'
+            self.setWindowTitle: 'gui.changelog_viewer.title',
+            github_button.setText: 'gui.changelog_viewer.github',
+            releases_button.setText: 'gui.changelog_viewer.releases'
         })
 
         init_layouts({
+            (buttons := QHBoxLayout()): {
+                'items': [github_button, releases_button]
+            },
+
             # Main layout
             QVBoxLayout(self): {
-                'items': [self.text_browser]
+                'items': [buttons, self.text_browser]
             }
         })
 
