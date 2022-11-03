@@ -4,12 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.12] - 2022-11-3 - [PyPI](https://pypi.org/project/hi-getter/0.12/)
 ### Added
 - `CHANGELOG.md`
 - `py7zr` dependency
 - Menu fade in/out animations
-- Cache importing and exporting
+- Cache Explorer, from [gh-29](https://github.com/Cubicpath/HaloInfiniteGetter/pull/29)
+    - Able to view file type, size, date modified
+    - Opening files in:
+        - Output Views
+        - Default App
+        - Explorer
+  - Live-view of the file structure
+  - Basic folding controls (ex: Collapse, Expand Recursively)
+  - Copying of both the file path and contents
+  - Deletion of both files and directories
+- Cache importing and exporting, from [gh-35](https://github.com/Cubicpath/HaloInfiniteGetter/pull/35)
     - 7Zip Archives (`*.7z`)
     - ZIP Files (`*.zip` & `*.piz`)
     - TAR Files (`*.tar`, `*.tar.gz`, `*.tgz`, `*.tar.bz2`, `*.tbz2`, `*.tar.xz`, `*.txz`)
@@ -227,6 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [Unreleased]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12a1...HEAD
+[0.12]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12a1...v0.12
 [0.12a1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.11.1...v0.12a1
 [0.11.1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.11...v0.11.1
 [0.11]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.10...v0.11
