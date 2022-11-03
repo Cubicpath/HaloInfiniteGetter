@@ -61,9 +61,18 @@ class ChangelogViewer(QWidget):
         """Updates the displayed text to the data from the changelog url."""
 
         def handle_reply(reply: QNetworkReply):
-            # Add separators between versions and remove primary header
             text: str = reply.readAll().data().decode('utf8')
-            text = '\n-----\n## '.join(text.split('\n## ')[1:])
+            # Add separators between versions and remove primary header
+            text = '## ' + '\n-----\n## '.join(text.split('\n## ')[1:])
+
+            # The Markdown Renderer doesn't accept headers with ref_links, so remove them
+            new_lines = []
+            for line in text.splitlines():
+                if line.startswith('## '):
+                    line = line.replace('[', '', 1).replace(']', '', 1)
+
+                new_lines.append(line)
+            text = '\n'.join(new_lines)
 
             self.text_browser.set_hot_reloadable_text(text, 'markdown')
             reply.deleteLater()
