@@ -1,8 +1,10 @@
 # Install every other requirement so all functionality is available
 -r requirements.txt
 
-# Linting
-pylint==2.15.5
+autopep8==2.0.0  # Formatting
+    pycodestyle>=2.9.1
+
+pylint==2.15.5   # Linting
     astroid<=2.14.0-dev0, >=2.12.12
         wrapt<2, >=1.11
         lazy-object-proxy>=1.4.0
@@ -12,4 +14,4 @@ pylint==2.15.5
     mccabe<0.8, >=0.6
     platformdirs>=2.2.0
     tomlkit>=0.10.1
-    tomli>=1.1.0; python_version<'3.11'
+    tomli>=1.1.0

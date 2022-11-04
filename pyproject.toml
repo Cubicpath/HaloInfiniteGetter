@@ -36,7 +36,8 @@ all = [
     "python-dotenv>=0.21.0"
 ]
 dev = [
-    "pylint>=2.15.5",
+    "autopep8>=2.0.0",
+    "pylint>=2.15.5"
 ]
 
 [project.urls]
