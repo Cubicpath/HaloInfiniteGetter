@@ -62,7 +62,7 @@ class Event:
 
 _ET_co = TypeVar('_ET_co', bound=Event, covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
 _EventPredicate: TypeAlias = Callable[[_ET_co], bool]
-_EventRunnable:  TypeAlias = Callable[[_ET_co], None]
+_EventRunnable: TypeAlias = Callable[[_ET_co], None]
 
 
 class _Subscribers(defaultdict[type[Event], list[tuple[

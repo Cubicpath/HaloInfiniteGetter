@@ -112,6 +112,7 @@ class ExportData(_Worker):
 
 class ImportData(_Worker):
     """Extract from archive into a directory."""
+
     def __init__(self, archive: Path, dest: Path, **kwargs: Callable | Slot) -> None:
         super().__init__(**kwargs)
         self.archive = archive
@@ -123,6 +124,7 @@ class ImportData(_Worker):
 
 class RecursiveSearch(_Worker):
     """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
+
     def __init__(self, client: Client, search_path: str, **kwargs: Callable | Slot) -> None:
         super().__init__(**kwargs)
         self.client = client

@@ -33,9 +33,9 @@ class LicenseViewer(QWidget):
         self.setWindowIcon(app().icon_store['copyright'])
         self.resize(QSize(750, 800))
 
-        self.license_dropdown:    QComboBox
+        self.license_dropdown: QComboBox
         self.license_index_label: QLabel
-        self.license_text_edit:   ExternalTextBrowser
+        self.license_text_edit: ExternalTextBrowser
         self.next_license_button: QPushButton
         self.prev_license_button: QPushButton
 
@@ -47,9 +47,9 @@ class LicenseViewer(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.license_dropdown:    QComboBox = QComboBox(self)
+        self.license_dropdown: QComboBox = QComboBox(self)
         self.license_index_label: QLabel = QLabel(self)
-        self.license_text_edit:   ExternalTextBrowser = ExternalTextBrowser(self)
+        self.license_text_edit: ExternalTextBrowser = ExternalTextBrowser(self)
 
         init_objects({
             self.license_dropdown: {

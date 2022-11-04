@@ -62,7 +62,7 @@ class ExternalTextBrowser(QTextBrowser):
 
         # Inject html anchors in images and headers
         if text_type == 'markdown':
-            lines:     list[str] = text.splitlines()
+            lines: list[str] = text.splitlines()
             lines_new: list[str] = []
             ref_links: dict[str, tuple[str, str | None]] = {
                 match['label']: (match['url'], match['description'])
@@ -87,7 +87,7 @@ class ExternalTextBrowser(QTextBrowser):
                     continue
 
                 # Find headers and add relative anchors
-                has_hashtag:   bool = line.strip().startswith('#')
+                has_hashtag: bool = line.strip().startswith('#')
                 has_underline: bool = line and (i < len(lines) - 1) and any(
                     # Line must end and begin with the respective underline
                     lines[i + 1].strip().startswith(line_char) and
@@ -117,7 +117,7 @@ class ExternalTextBrowser(QTextBrowser):
         # See: https://github.com/Cubicpath/HaloInfiniteGetter/pull/30#issuecomment-1279562460
         # QTextDocument.ResourceType.ImageResource = 0x2
         if resource_type == 0x2 and not url.isLocalFile():
-            image:      QImage = QImage()
+            image: QImage = QImage()
             url_string: str = url.toDisplayString()
             if url_string not in self.remote_image_cache:
                 # Add placeholder bytes to show the url is being downloaded.

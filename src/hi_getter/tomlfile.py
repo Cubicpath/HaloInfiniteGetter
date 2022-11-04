@@ -27,7 +27,7 @@ from toml.decoder import CommentValue
 
 from .events import *
 
-_COMMENT_PREFIX:      Final[str] = '# '
+_COMMENT_PREFIX: Final[str] = '# '
 _SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
 TomlTable: TypeAlias = dict[str, 'TomlValue']
@@ -109,6 +109,7 @@ class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
 
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
+
     def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str]:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(_SPECIAL_PATH_PREFIX):
@@ -122,6 +123,7 @@ class PathTomlEncoder(toml.TomlEncoder):
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
     """
+
     def __init__(self, _dict=dict, preserve=False) -> None:
         super().__init__(_dict, preserve)
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
@@ -182,7 +184,7 @@ class TomlFile:
         if not path:
             raise ValueError('Path cannot be an empty string.')
 
-        key:   str = path
+        key: str = path
         scope: dict = self._data
         paths: list[str] = path.split('/')
 

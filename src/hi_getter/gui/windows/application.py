@@ -68,30 +68,30 @@ class AppWindow(Singleton, QMainWindow):
         app().client.receivedData.connect(self.update_image)
         app().client.receivedJson.connect(self.update_text)
 
-        self.current_image:  QPixmap | None = None
-        self.detached:       dict[str, QMainWindow | None] = {'media': None, 'text': None}
+        self.current_image: QPixmap | None = None
+        self.detached: dict[str, QMainWindow | None] = {'media': None, 'text': None}
         self.change_title(tr('app.name') + f' v{__version__}')
         self.resize(size)
 
         for subscribe_params in (
-                (DeferredCallable(self.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
-                (lambda val: self.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
+            (DeferredCallable(self.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
+            (lambda val: self.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
         ): EventBus['settings'].subscribe(*subscribe_params)
 
-        self.exception_reporter:  ExceptionReporter
-        self.input_field:         HistoryComboBox
-        self.media_frame:         QFrame
-        self.image_size_label:    QLabel
+        self.exception_reporter: ExceptionReporter
+        self.input_field: HistoryComboBox
+        self.media_frame: QFrame
+        self.image_size_label: QLabel
         self.image_detach_button: QPushButton
-        self.media_output:        QGraphicsView
-        self.text_frame:          QFrame
-        self.text_size_label:     QLabel
-        self.text_detach_button:  QPushButton
-        self.text_output:         ExternalTextBrowser
-        self.clear_picture:       QPushButton
-        self.copy_picture:        QPushButton
-        self.clear_text:          QPushButton
-        self.copy_text:           QPushButton
+        self.media_output: QGraphicsView
+        self.text_frame: QFrame
+        self.text_size_label: QLabel
+        self.text_detach_button: QPushButton
+        self.text_output: ExternalTextBrowser
+        self.clear_picture: QPushButton
+        self.copy_picture: QPushButton
+        self.clear_text: QPushButton
+        self.copy_text: QPushButton
 
         self._init_toolbar()
         self._init_ui()
@@ -326,7 +326,7 @@ class AppWindow(Singleton, QMainWindow):
             self.copy_text: {
                 'disabled': True,
                 'size': {'maximum': (160, None), 'minimum': (80, None)},
-                'clicked':  DeferredCallable(app().clipboard().setText, self.text_output.toPlainText)
+                'clicked': DeferredCallable(app().clipboard().setText, self.text_output.toPlainText)
             },
             (get_button := QPushButton(self)): {
                 'size': {'maximum': (40, None)},
