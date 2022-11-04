@@ -37,6 +37,8 @@
     "questions.create_shortcut.description": "Please choose the location you would like the shortcut to be in.",
     "questions.create_shortcut.title": "Shortcut Creation Tool",
 
+    "gui.changelog_viewer.github": "View Changelog on GitHub",
+    "gui.changelog_viewer.releases": "View Releases",
     "gui.changelog_viewer.title": "Changelog Viewer",
     "gui.exception_reporter.clear": "Clear",
     "gui.exception_reporter.clear_all": "Clear All",
