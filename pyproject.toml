@@ -47,6 +47,16 @@ dev = [
 hi_getter = "hi_getter.run:main"
 
 
+# AutoPEP8 configuration.
+# ---------------------
+[tool.autopep8]
+max_line_length = 160
+ignore = ["E7"]
+in-place = true
+recursive = true
+aggressive = 3
+
+
 # Pylint configuration.
 # ---------------------
 [tool.pylint.'MASTER']
