@@ -51,12 +51,12 @@ class SettingsWindow(Singleton, QWidget):
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import'
         )
 
-        self.theme_dropdown:          QComboBox
-        self.aspect_ratio_dropdown:   QComboBox
+        self.theme_dropdown: QComboBox
+        self.aspect_ratio_dropdown: QComboBox
         self.transformation_dropdown: QComboBox
-        self.line_wrap_dropdown:      QComboBox
-        self.key_set_button:          QPushButton
-        self.key_field:               QLineEdit
+        self.line_wrap_dropdown: QComboBox
+        self.key_set_button: QPushButton
+        self.key_field: QLineEdit
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -314,10 +314,10 @@ class SettingsWindow(Singleton, QWidget):
         })
 
         for subscribe_params in (
-                (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
-                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
-                (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
-                (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
+            (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
+            (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
+            (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
+            (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
         ): EventBus['settings'].subscribe(*subscribe_params)
 
         self.refresh_dropdowns()

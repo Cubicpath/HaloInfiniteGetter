@@ -36,10 +36,10 @@ class ExceptionLogger(QPushButton):
         super().__init__(*args, **kwargs)
         EventBus['exceptions'].subscribe(self.on_exception, ExceptionEvent)
 
-        self.label:          QLabel = QLabel(self)
-        self.exception_log:  list[LoggedException] = []
-        self.reporter:       ExceptionReporter = ExceptionReporter(self)
-        self.severity:       int = 0
+        self.label: QLabel = QLabel(self)
+        self.exception_log: list[LoggedException] = []
+        self.reporter: ExceptionReporter = ExceptionReporter(self)
+        self.severity: int = 0
 
         self.reporter.setMinimumWidth(300)
 
@@ -100,7 +100,7 @@ class ExceptionLogger(QPushButton):
 
 class LoggedException(NamedTuple):
     """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
-    severity:  int | None = None
+    severity: int | None = None
     exception: Exception | None = None
     traceback: TracebackType | None = None
     timestamp: datetime | None = None

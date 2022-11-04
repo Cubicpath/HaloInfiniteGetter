@@ -76,7 +76,7 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     )
 
     releaselevel = releaselevel.strip()
-    separators:     tuple[str, ...] = ('', '.', '-', '_')
+    separators: tuple[str, ...] = ('', '.', '-', '_')
     post_spellings: tuple[str, ...] = ('post', 'rev', 'r')
     release_levels: tuple[str, ...] = ('a', 'b', 'c', 'rc', 'pre', 'alpha', 'beta', 'candidate', 'preview', 'final', 'release')
 

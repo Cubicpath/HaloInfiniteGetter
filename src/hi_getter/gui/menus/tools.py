@@ -34,10 +34,10 @@ def create_app_shortcut() -> None:
     # Show dialog, return early if user presses cancel
     if (response := app().show_dialog(
         'questions.create_shortcut', None, (
-                (desktop_button, QMessageBox.AcceptRole),
-                (start_menu_button, QMessageBox.AcceptRole),
-                (both_button, QMessageBox.AcceptRole),
-                QMessageBox.Cancel
+            (desktop_button, QMessageBox.AcceptRole),
+            (start_menu_button, QMessageBox.AcceptRole),
+            (both_button, QMessageBox.AcceptRole),
+            QMessageBox.Cancel
         ), default_button=QMessageBox.Cancel
     )).role == QMessageBox.RejectRole:
         return

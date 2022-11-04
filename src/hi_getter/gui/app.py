@@ -68,13 +68,13 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
     button: QAbstractButton = QMessageBox.NoButton
-    role:   QMessageBox.ButtonRole = QMessageBox.NoRole
+    role: QMessageBox.ButtonRole = QMessageBox.NoRole
 
 
 class Theme(NamedTuple):
     """Object containing data about a Theme."""
-    id:           str
-    style:        str
+    id: str
+    style: str
     display_name: str
 
 
@@ -94,7 +94,7 @@ class GetterApp(Singleton, QApplication):
 
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
-        self._thread_pool:  QThreadPool = QThreadPool.globalInstance()
+        self._thread_pool: QThreadPool = QThreadPool.globalInstance()
 
         self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
         self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
@@ -104,12 +104,12 @@ class GetterApp(Singleton, QApplication):
         self._create_paths()
 
         # Must have themes up before load_env
-        self.icon_store:      defaultdict[str, QIcon] = defaultdict(QIcon)  # Null icon generator
-        self.session:         NetworkSession = NetworkSession(self)
-        self.settings:        TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
-        self.themes:          dict[str, Theme] = {}
+        self.icon_store: defaultdict[str, QIcon] = defaultdict(QIcon)  # Null icon generator
+        self.session: NetworkSession = NetworkSession(self)
+        self.settings: TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
+        self.themes: dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self.translator:      Translator = Translator(self.settings['language'])
+        self.translator: Translator = Translator(self.settings['language'])
 
         # Load resources from disk
         self.load_themes()  # Depends on icon_store, settings, themes, theme_index_map
@@ -266,7 +266,7 @@ class GetterApp(Singleton, QApplication):
             dummy_widget = QWidget()
             parent = dummy_widget
 
-        title_args:       Sequence = () if title_args is None else title_args
+        title_args: Sequence = () if title_args is None else title_args
         description_args: Sequence = () if description_args is None else description_args
 
         icon: QMessageBox.Icon
@@ -283,7 +283,7 @@ class GetterApp(Singleton, QApplication):
             case _:
                 icon = QMessageBox.NoIcon
 
-        title_text:       str = self.translator(f'{key}.title', *title_args)
+        title_text: str = self.translator(f'{key}.title', *title_args)
         description_text: str = self.translator(f'{key}.description', *description_args)
 
         msg_box = QMessageBox(icon, title_text, description_text, parent=parent)
@@ -318,7 +318,7 @@ class GetterApp(Singleton, QApplication):
         msg_box.exec()
 
         result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.NoButton
-        result_role:   QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.NoRole
+        result_role: QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.NoRole
 
         if parent is None:
             # noinspection PyUnboundLocalVariable

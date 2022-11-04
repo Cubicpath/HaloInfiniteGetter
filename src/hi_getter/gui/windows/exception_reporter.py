@@ -45,7 +45,7 @@ class ExceptionReporter(QWidget):
         EventBus['exceptions'].subscribe(DeferredCallable(self.reload_exceptions), ExceptionEvent)
 
         self.selected: int = 0
-        self.logger:   ExceptionLogger = logger
+        self.logger: ExceptionLogger = logger
         self.setWindowTitle(tr('gui.exception_reporter.title'))
         self.setWindowIcon(self.logger.icon())
         self.resize(QSize(750, 400))
@@ -137,10 +137,10 @@ class ExceptionReporter(QWidget):
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
         exc_name: str = type(self.logger.exception_log[self.selected].exception).__name__
-        exc_msg:  str = str(self.logger.exception_log[self.selected].exception).rstrip(".")
-        exc_tb:   str = format_tb(self.logger.exception_log[self.selected].traceback).strip().replace(getuser(), '%USERNAME%')
-        base:     str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
-        params:   dict[str, str] = {
+        exc_msg: str = str(self.logger.exception_log[self.selected].exception).rstrip(".")
+        exc_tb: str = format_tb(self.logger.exception_log[self.selected].traceback).strip().replace(getuser(), '%USERNAME%')
+        base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
+        params: dict[str, str] = {
             'template': 'bug-report.yaml',
             'assignees': 'Cubicpath',
             'labels': 'bug',

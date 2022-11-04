@@ -31,8 +31,8 @@ from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
 WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
-TOKEN_PATH:    Final[Path] = HI_CONFIG_PATH / '.token'
-WPAUTH_PATH:   Final[Path] = HI_CONFIG_PATH / '.wpauth'
+TOKEN_PATH: Final[Path] = HI_CONFIG_PATH / '.token'
+WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
 class Client(QObject):
@@ -51,10 +51,10 @@ class Client(QObject):
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
         super().__init__(parent)
-        self.SVC_HOST:       str = 'svc.halowaypoint.com'
-        self.WEB_HOST:       str = 'www.halowaypoint.com'
-        self.parent_path:    str = '/hi/'
-        self.sub_host:       str = 'gamecms-hacs-origin'  # Must be defined before session headers
+        self.SVC_HOST: str = 'svc.halowaypoint.com'
+        self.WEB_HOST: str = 'www.halowaypoint.com'
+        self.parent_path: str = '/hi/'
+        self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
         self.searched_paths: dict = {}
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
@@ -133,9 +133,9 @@ class Client(QObject):
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
-            reply:        QNetworkReply = self.get(path)
+            reply: QNetworkReply = self.get(path)
             encoded_data: bytes = reply.readAll().data()
-            status_code:  int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+            status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
             content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
 
             if status_code and is_error_status(status_code):
@@ -193,7 +193,7 @@ class Client(QObject):
         wait_for_reply(reply)
 
         wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
-        token:  str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
+        token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
 
         if wpauth and self.wpauth != wpauth:
             self.wpauth = wpauth

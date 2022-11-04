@@ -106,18 +106,18 @@ def create_shortcut(target: Path, arguments: str | None = None,
         with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
             # noinspection HttpUrlsUsage
             plist.writelines([
-                    '<?xml version="1.0" encoding="UTF-8"?>\n',
-                    '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
-                    '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
-                    '<plist version="1.0">\n',
-                    '  <dict>\n',
-                    f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
-                    f'  <key>CFBundleName</key> <string>{name}</string>\n',
-                    f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
-                    f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
-                    '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
-                    '  </dict>\n',
-                    '</plist>\n',
+                '<?xml version="1.0" encoding="UTF-8"?>\n',
+                '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
+                '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
+                '<plist version="1.0">\n',
+                '  <dict>\n',
+                f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
+                f'  <key>CFBundleName</key> <string>{name}</string>\n',
+                f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
+                f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
+                '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
+                '  </dict>\n',
+                '</plist>\n',
             ])
 
         with (dest / f'Contents/MacOS/{name}').open('w', encoding='utf8') as shortcut_script:
@@ -232,7 +232,7 @@ def get_desktop_path() -> Path | None:
         return get_desktop_path.__cached__
 
     platform: str = sys.platform.lower()
-    desktop:  Path | None = None
+    desktop: Path | None = None
 
     if platform == 'win32':
         shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
@@ -288,7 +288,7 @@ def get_start_menu_path() -> Path | None:
     if hasattr(get_start_menu_path, '__cached__'):
         return get_start_menu_path.__cached__
 
-    platform:   str = sys.platform.lower()
+    platform: str = sys.platform.lower()
     start_menu: Path | None = None
 
     if platform == 'win32':
@@ -328,7 +328,7 @@ def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list
     from os.path import expandvars
 
     parent_key: int = getattr(winreg, key_name.split('\\')[0])
-    sub_key:    str = '\\'.join(key_name.split('\\')[1:])
+    sub_key: str = '\\'.join(key_name.split('\\')[1:])
     if not isinstance(parent_key, int):
         raise AttributeError('parent_key is not a defined winreg constant.')
 

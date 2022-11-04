@@ -28,10 +28,10 @@ from ..utils.network import encode_url_params
 from ..utils.network import query_to_dict
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
-_ProgressConsumer:     TypeAlias = Callable[[QNetworkReply, int, int], None]
-_StringPair:           TypeAlias = dict[str, str] | list[tuple[str, str]]
-_KnownHeaderValues:    TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
-_HeaderValue:          TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
+_ProgressConsumer: TypeAlias = Callable[[QNetworkReply, int, int], None]
+_StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
+_KnownHeaderValues: TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
+_HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
 
 
 class NetworkSession:
@@ -46,19 +46,19 @@ class NetworkSession:
         - patch
     """
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
-        'Content-Disposition':  (QNetworkRequest.ContentDispositionHeader, str),
-        'Content-Type':         (QNetworkRequest.ContentTypeHeader, str),
-        'Content-Length':       (QNetworkRequest.ContentLengthHeader, bytes),
-        'Cookie':               (QNetworkRequest.CookieHeader, QNetworkCookie),
-        'ETag':                 (QNetworkRequest.ETagHeader, str),
-        'If-Match':             (QNetworkRequest.IfMatchHeader, QStringListModel),
-        'If-Modified-Since':    (QNetworkRequest.IfModifiedSinceHeader, QDateTime),
-        'If-None-Match':        (QNetworkRequest.IfNoneMatchHeader, QStringListModel),
-        'Last-Modified':        (QNetworkRequest.LastModifiedHeader, QDateTime),
-        'Location':             (QNetworkRequest.LocationHeader, QUrl),
-        'Server':               (QNetworkRequest.ServerHeader, str),
-        'Set-Cookie':           (QNetworkRequest.SetCookieHeader, QNetworkCookie),
-        'User-Agent':           (QNetworkRequest.UserAgentHeader, str),
+        'Content-Disposition': (QNetworkRequest.ContentDispositionHeader, str),
+        'Content-Type': (QNetworkRequest.ContentTypeHeader, str),
+        'Content-Length': (QNetworkRequest.ContentLengthHeader, bytes),
+        'Cookie': (QNetworkRequest.CookieHeader, QNetworkCookie),
+        'ETag': (QNetworkRequest.ETagHeader, str),
+        'If-Match': (QNetworkRequest.IfMatchHeader, QStringListModel),
+        'If-Modified-Since': (QNetworkRequest.IfModifiedSinceHeader, QDateTime),
+        'If-None-Match': (QNetworkRequest.IfNoneMatchHeader, QStringListModel),
+        'Last-Modified': (QNetworkRequest.LastModifiedHeader, QDateTime),
+        'Location': (QNetworkRequest.LocationHeader, QUrl),
+        'Server': (QNetworkRequest.ServerHeader, str),
+        'Set-Cookie': (QNetworkRequest.SetCookieHeader, QNetworkCookie),
+        'User-Agent': (QNetworkRequest.UserAgentHeader, str),
     })
 
     def __init__(self, manager_parent: QObject = None) -> None:
@@ -66,9 +66,9 @@ class NetworkSession:
 
         :param manager_parent: Parent of the QNetworkAccessManager.
         """
-        self._headers:                 CaseInsensitiveDict[Any] = CaseInsensitiveDict()
-        self.manager:                  QNetworkAccessManager = QNetworkAccessManager(manager_parent)
-        self.default_redirect_policy:  QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
+        self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
+        self.manager: QNetworkAccessManager = QNetworkAccessManager(manager_parent)
+        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -331,8 +331,8 @@ class NetworkSession:
             if isinstance(vars()[var_name], Sequence):
                 vars()[var_name] = dict(vars()[var_name])
 
-        request_url:     QUrl = QUrl(url)                                              # Ensure url is of type QUrl
-        request_params:  dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
+        request_url: QUrl = QUrl(url)                                              # Ensure url is of type QUrl
+        request_params: dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
         request_headers: CaseInsensitiveDict = self.headers.copy() | headers           # Update session headers with headers argument
         request_cookies: dict[str, str] = self.cookies | cookies                       # Update session cookies with cookies argument
 

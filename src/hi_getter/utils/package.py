@@ -33,7 +33,7 @@ def current_requirement_licenses(package: str, recursive: bool = False, include_
         except DistributionNotFound:
             continue
 
-        name:     str = dist.project_name.replace('-', '_')
+        name: str = dist.project_name.replace('-', '_')
         licenses: list[tuple[str, str]] = []
 
         # Find the distribution's information directory
@@ -96,9 +96,9 @@ def current_requirement_names(package: str, recursive: bool = False, include_ext
 
         # Get the package name from the requirement
         # If no version identifier, assume the requirement string is the package name
-        name:        str = requirement
+        name: str = requirement
         has_version: bool = False
-        split_pos:   int = 0
+        split_pos: int = 0
         for split_pos, char in enumerate(requirement):
             if not char.isalnum() and char not in ('-', '_'):
                 has_version = True

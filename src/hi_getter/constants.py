@@ -45,7 +45,7 @@ SUPPORTED_IMAGE_MIME_TYPES: Final[frozenset[str]] = frozenset({
 
 # Strings
 
-HI_PACKAGE_NAME:    Final[str] = __package__.split('.', maxsplit=1)[0]
+HI_PACKAGE_NAME: Final[str] = __package__.split('.', maxsplit=1)[0]
 """The base package name for this application, for use in sub-packages."""
 
 HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'
@@ -53,10 +53,10 @@ HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalen
 
 # Paths
 
-HI_CACHE_PATH:    Final[Path] = Path.home() / '.cache/hi_getter'
+HI_CACHE_PATH: Final[Path] = Path.home() / '.cache/hi_getter'
 """Directory containing cached API results."""
 
-HI_CONFIG_PATH:   Final[Path] = Path.home() / '.config/hi_getter'
+HI_CONFIG_PATH: Final[Path] = Path.home() / '.config/hi_getter'
 """Directory containing user configuration data."""
 
 HI_RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
@@ -67,7 +67,7 @@ HI_RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
 HI_PATH_PATTERN: Final[re.Pattern] = re.compile(r'([A-Z]:\\)*([\w\-_.]+[/\\])+[\w\-_]*\.\w+|[/\\]\.\w+')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
 
-HI_URL_PATTERN:  Final[re.Pattern] = re.compile(
+HI_URL_PATTERN: Final[re.Pattern] = re.compile(
     r'(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|'
     r'[a-z0-9.\-]+[.][a-z]{2,}/)(?:[^\s()<>{}\[\]]+|'
     r'\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|'
@@ -76,13 +76,13 @@ HI_URL_PATTERN:  Final[re.Pattern] = re.compile(
     r'(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.][a-z]{2,}\b/?(?!@))')
 """Regex pattern for finding URLs. Derived from https://gist.github.com/gruber/8891611."""
 
-MARKDOWN_IMG_LINK_PATTERN:  Final[re.Pattern] = re.compile(
+MARKDOWN_IMG_LINK_PATTERN: Final[re.Pattern] = re.compile(
     r'\[!\s*(?P<alt>\[[^\t\n\r()\[\]]*])\s*'
     r'(?P<image>\([\S ]+\))]\s*'
     r'(?P<target>[\[(][^\t\n\r()\[\]]*[)\]])')
 """Regex pattern for finding image links."""
 
-MARKDOWN_REF_LINK_PATTERN:  Final[re.Pattern] = re.compile(
+MARKDOWN_REF_LINK_PATTERN: Final[re.Pattern] = re.compile(
     r'\[(?P<label>[ \w()-]+)] *: *'
     r'(?P<url>(?:(?:[a-zA-Z]+)?://)?'
     r'\w+(?:\.\w+)*(?::\d{1,5})?'

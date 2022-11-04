@@ -185,12 +185,12 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
         :param _call_types: Whether to call class constructor arguments
         :param kwargs: keyword arguments to store
         """
-        self._extra_pos_args:   int = _extra_pos_args
-        self.call_funcs:        bool = _call_funcs
-        self.call_types:        bool = _call_types
-        self.callable:          Callable = __callable
-        self.args:              tuple[_PT | _PTCallable, ...] = args
-        self.kwargs:            dict[str, _KT | _KTCallable] = kwargs
+        self._extra_pos_args: int = _extra_pos_args
+        self.call_funcs: bool = _call_funcs
+        self.call_types: bool = _call_types
+        self.callable: Callable = __callable
+        self.args: tuple[_PT | _PTCallable, ...] = args
+        self.kwargs: dict[str, _KT | _KTCallable] = kwargs
 
     def __repr__(self) -> str:
         """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
@@ -204,8 +204,8 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
         :return: The called value, if callable.
         """
         return val() if callable(val) and (
-                (isinstance(val, type) and self.call_types) or
-                (not isinstance(val, type) and self.call_funcs)
+            (isinstance(val, type) and self.call_types) or
+            (not isinstance(val, type) and self.call_funcs)
         ) else val
 
     def run(self, *args: Any, **kwargs: Any) -> Any:
@@ -255,8 +255,8 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
         _CT is a Type Generic containing a :py:class:`Collection` of callables.
         """
         self.callables: _CT = __callables
-        self.args:      tuple[_PT, ...] = args
-        self.kwargs:    dict[str, _KT] = kwargs
+        self.args: tuple[_PT, ...] = args
+        self.kwargs: dict[str, _KT] = kwargs
 
     def __repr__(self) -> str:
         """Represents the :py:class:`DistributedCallable` with the stored callable, args, and kwargs."""

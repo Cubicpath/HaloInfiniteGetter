@@ -36,7 +36,8 @@ all = [
     "python-dotenv>=0.21.0"
 ]
 dev = [
-    "pylint>=2.15.5",
+    "autopep8>=2.0.0",
+    "pylint>=2.15.5"
 ]
 
 [project.urls]
@@ -45,6 +46,16 @@ dev = [
 
 [project.gui-scripts]
 hi_getter = "hi_getter.run:main"
+
+
+# AutoPEP8 configuration.
+# ---------------------
+[tool.autopep8]
+max_line_length = 160
+ignore = ["E7"]
+in-place = true
+recursive = true
+aggressive = 3
 
 
 # Pylint configuration.

@@ -43,13 +43,13 @@ def format_value(value: str, *args: Any, _language: Language = None, _key_eval: 
             "c": "%s {0} is the same as above, where \"%s\" is now the 2nd argument since the 1st is used by \"{0}\""
         }
     """
-    list_args:     list[Any] = list(args)
-    replaced:      set[str] = set()
+    list_args: list[Any] = list(args)
+    replaced: set[str] = set()
     pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
-    key_ref:       re.Pattern = re.compile(r'{[\w\-.]*}')
+    key_ref: re.Pattern = re.compile(r'{[\w\-.]*}')
 
     for matches in pos_param_ref.finditer(value):
-        match:   str = matches[0]
+        match: str = matches[0]
         arg_val: Any = args[int(match.strip('{}'))]
         if match not in replaced:
             replaced.add(match)
@@ -125,9 +125,9 @@ class Language:
         )
 
         self._data: dict[str, str] = {}
-        self.tag:  str = ''
+        self.tag: str = ''
 
-        sub_tags:  list[str] = []
+        sub_tags: list[str] = []
         err: Exception | None = None
 
         if primary is None and ext_lang is None and private_use is None:

@@ -35,7 +35,7 @@ class ExceptionHook:
     def __init__(self):
         """Initialize the :py:class:`ExceptionHook` for use in a context manager."""
         self.__old_hook: ExceptHookCallable | None = None
-        self.event_bus:  EventBus | None = None
+        self.event_bus: EventBus | None = None
 
     def __call__(self, type_: type[BaseException], exception: BaseException, traceback: TracebackType) -> None:
         """Called when an exception is raised."""
