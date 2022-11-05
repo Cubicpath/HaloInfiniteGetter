@@ -83,7 +83,7 @@ MARKDOWN_IMG_LINK_PATTERN: Final[re.Pattern] = re.compile(
 """Regex pattern for finding image links."""
 
 MARKDOWN_REF_LINK_PATTERN: Final[re.Pattern] = re.compile(
-    r'\[(?P<label>[ \w()-]+)] *: *'
+    r'\[(?P<label>[^\[\]]+)] *: *'
     r'(?P<url>(?:(?:[a-zA-Z]+)?://)?'
     r'\w+(?:\.\w+)*(?::\d{1,5})?'
     r'(?:/[^\s()]*)?(?:\?(?:\w+=\w+&?)+)?)'
