@@ -101,7 +101,8 @@ class ExternalTextBrowser(QTextBrowser):
                     if has_hashtag or has_underline:
                         simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
-                        lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}">§</a>')
+                        anchor_css = 'font-size: 1px; color: transparent'
+                        lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}" style="{anchor_css}">§</a>')
                         continue
 
                 lines_new.append(line)
