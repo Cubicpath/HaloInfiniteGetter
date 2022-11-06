@@ -200,16 +200,19 @@ class GetterApp(Singleton, QApplication):
         shutil.register_archive_format('7z', pack_7zarchive, description='7Zip Archive File')
         shutil.register_unpack_format('7z', ['7z'], unpack_7zarchive, description='7Zip Archive File')
 
-    def init_translations(self, translation_calls: dict[Callable, str]) -> None:
+    def init_translations(self, translation_calls: dict[Callable, str | tuple[Any, ...]]) -> None:
         """Initialize the translation of all objects.
 
         Register functions to call with their respective translation keys.
         This is used to translate everything in the GUI.
         """
 
-        for func, key in translation_calls.items():
+        for func, args in translation_calls.items():
+            if not isinstance(args, tuple):
+                args = (args,)
+
             # Call the function with the deferred translation of the given key.
-            translate = DeferredCallable(func, DeferredCallable(self.translator, key))
+            translate = DeferredCallable(func, DeferredCallable(self.translator, *args))
 
             # Register the object for dynamic translation
             self._registered_translations.callables.add(translate)
