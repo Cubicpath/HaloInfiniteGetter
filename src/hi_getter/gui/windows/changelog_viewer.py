@@ -13,6 +13,7 @@ from PySide6.QtGui import *
 from PySide6.QtNetwork import *
 from PySide6.QtWidgets import *
 
+from ..._version import __version__
 from ...models import DeferredCallable
 from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
@@ -42,12 +43,20 @@ class ChangelogViewer(QWidget):
                 'font': QFont(self.text_browser.font().family(), 10),
                 'openExternalLinks': True
             },
+
+            (version_label := QLabel(self)): {},
+
+            (spacer := QSpacerItem(0, 0, hData=QSizePolicy.MinimumExpanding)): {},
+
             (github_button := QPushButton(self)): {
+                'size': {'fixed': (180, None)},
                 'clicked': DeferredCallable(
                     QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/CHANGELOG.md')
                 )
             },
+
             (releases_button := QPushButton(self)): {
+                'size': {'fixed': (110, None)},
                 'clicked': DeferredCallable(
                     QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/releases')
                 )
@@ -56,13 +65,14 @@ class ChangelogViewer(QWidget):
 
         app().init_translations({
             self.setWindowTitle: 'gui.changelog_viewer.title',
+            version_label.setText: ('gui.changelog_viewer.current_version', __version__),
             github_button.setText: 'gui.changelog_viewer.github',
             releases_button.setText: 'gui.changelog_viewer.releases'
         })
 
         init_layouts({
             (buttons := QHBoxLayout()): {
-                'items': [github_button, releases_button]
+                'items': [version_label, spacer, github_button, releases_button]
             },
 
             # Main layout
@@ -71,7 +81,6 @@ class ChangelogViewer(QWidget):
             }
         })
 
-        self.text_browser.inject_markdown_anchors = False
         self.update_changelog()
 
     def update_changelog(self) -> None:
