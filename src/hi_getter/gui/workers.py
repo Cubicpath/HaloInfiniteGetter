@@ -18,7 +18,7 @@ from typing import Any
 from PySide6.QtCore import *
 from shiboken6 import Shiboken
 
-from ..constants import SUPPORTED_IMAGE_EXTENSIONS
+from ..constants import *
 from ..network.client import Client
 from ..utils.common import unique_values
 
@@ -136,7 +136,7 @@ class RecursiveSearch(_Worker):
     def _recursive_search(self, search_path: str) -> None:
         # This set is shared between all recursive calls, so no duplicate searches should occur
         searched: set[str] = self.client.searched_paths
-        searched.add(search_path)
+        searched.add(search_path.lower())
 
         # Get data from Client, and return if it's not JSON
         data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
@@ -147,23 +147,28 @@ class RecursiveSearch(_Worker):
         # This process ignores already-searched values
         for value in unique_values(data):
             if isinstance(value, str):
-                if '/' not in value:
-                    continue
-                end = value.split('.')[-1].lower()
+                for match in HI_PATH_PATTERN.finditer(value):
+                    path: str = match[0]
+                    ext: str = match['file_name'].split('.')[-1].lower()
+                    has_pre_path: bool = match['pre_path'] is not None
 
-                # If a value ends in .json, get the data for that path and start the process over again
-                if end in ('json',):
-                    path = 'progression/file/' + value
-                    if path in searched:
-                        continue
+                    # If a value ends in .json, get the data for that path and start the process over again
+                    if ext in {'json'}:
+                        if not has_pre_path:
+                            path = 'progression/file/' + path
 
-                    self._recursive_search(path)
+                        if path.lower() in searched:
+                            continue
 
-                # If it's an image, download it then ignore the result
-                elif end in SUPPORTED_IMAGE_EXTENSIONS:
-                    path = 'images/file/' + value
-                    if path in searched:
-                        continue
+                        self._recursive_search(path)
 
-                    searched.add(path)
-                    self.client.get_hi_data(path)
+                    # If it's an image, download it then ignore the result
+                    elif ext in SUPPORTED_IMAGE_EXTENSIONS:
+                        if not has_pre_path:
+                            path = 'images/file/' + path
+
+                        if path.lower() in searched:
+                            continue
+
+                        searched.add(path.lower())
+                        self.client.get_hi_data(path)
