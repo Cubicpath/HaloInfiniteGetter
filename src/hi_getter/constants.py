@@ -64,7 +64,10 @@ HI_RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
 
 # Patterns
 
-HI_PATH_PATTERN: Final[re.Pattern] = re.compile(r'([A-Z]:\\)*([\w\-_.]+[/\\])+[\w\-_]*\.\w+|[/\\]\.\w+')
+HI_PATH_PATTERN: Final[re.Pattern] = re.compile(
+    r'[/\\]?(?P<pre_path>[\w\-_.]+[/\\]file[/\\])?'
+    r'(?P<dir_name>(?:[\w\-_.]+[/\\])+)'
+    r'(?P<file_name>[\w\-_]*\.\w+)')
 """Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
 
 HI_URL_PATTERN: Final[re.Pattern] = re.compile(
