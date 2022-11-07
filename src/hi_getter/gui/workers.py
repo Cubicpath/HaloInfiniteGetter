@@ -134,22 +134,36 @@ class RecursiveSearch(_Worker):
         self._recursive_search(self.search_path)
 
     def _recursive_search(self, search_path: str) -> None:
-        if self.client.searched_paths.get(search_path, 0) > 1:
-            return
+        # This set is shared between all recursive calls, so no duplicate searches should occur
+        searched: set[str] = self.client.searched_paths
+        searched.add(search_path)
 
+        # Get data from Client, and return if it's not JSON
         data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
         if isinstance(data, (bytes, int)):
             return
 
+        # Iterate over all values in the JSON data
+        # This process ignores already-searched values
         for value in unique_values(data):
             if isinstance(value, str):
                 if '/' not in value:
                     continue
-
                 end = value.split('.')[-1].lower()
+
+                # If a value ends in .json, get the data for that path and start the process over again
                 if end in ('json',):
                     path = 'progression/file/' + value
-                    self.client.searched_paths.update({path: self.client.searched_paths.get(path, 0) + 1})
+                    if path in searched:
+                        continue
+
                     self._recursive_search(path)
+
+                # If it's an image, download it then ignore the result
                 elif end in SUPPORTED_IMAGE_EXTENSIONS:
-                    self.client.get_hi_data('images/file/' + value)
+                    path = 'images/file/' + value
+                    if path in searched:
+                        continue
+
+                    searched.add(path)
+                    self.client.get_hi_data(path)

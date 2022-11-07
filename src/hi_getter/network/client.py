@@ -55,7 +55,7 @@ class Client(QObject):
         self.WEB_HOST: str = 'www.halowaypoint.com'
         self.parent_path: str = '/hi/'
         self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
-        self.searched_paths: dict = {}
+        self.searched_paths: set[str] = set()
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
         if self._token is None and TOKEN_PATH.is_file():
