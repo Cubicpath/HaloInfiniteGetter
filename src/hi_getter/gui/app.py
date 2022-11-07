@@ -365,7 +365,7 @@ class GetterApp(Singleton, QApplication):
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
             self.missing_package_dialog('python-dotenv', 'Loading environment variables')
-        if has_package('python-dotenv'):  # Check again, during the dialog, the package may be dynamically installed by user.
+        if not has_package('python-dotenv'):  # Check again, during the dialog, the package may be dynamically installed by user.
             return
 
         from dotenv import load_dotenv
