@@ -161,9 +161,6 @@ class SettingsWindow(Singleton, QWidget):
             (key_show_button := QPushButton(self)): {
                 'clicked': toggle_key_visibility
             },
-            (key_copy_button := QPushButton(self)): {
-                'clicked': DeferredCallable(app().clipboard().setText, lambda: app().client.wpauth)
-            },
             self.key_set_button: {
                 'size': {'minimum': (40, None)},
                 'clicked': set_key
@@ -260,7 +257,6 @@ class SettingsWindow(Singleton, QWidget):
             export_button.setText: 'gui.settings.export',
             open_editor_button.setText: 'gui.settings.open_editor',
             key_show_button.setText: 'gui.settings.auth.edit',
-            key_copy_button.setText: 'gui.settings.auth.copy',
             self.key_set_button.setText: 'gui.settings.auth.set',
             self.token_clear_button.setText: 'gui.settings.auth.clear_token'
         })
@@ -271,7 +267,7 @@ class SettingsWindow(Singleton, QWidget):
                 'items': [self.token_clear_button]
             },
             (key_layout := QHBoxLayout()): {
-                'items': [key_copy_button, self.key_field, self.key_set_button]
+                'items': [self.key_field, self.key_set_button]
             },
             (bottom := QVBoxLayout()): {
                 'items': [key_show_button, key_layout, token_layout]
@@ -295,12 +291,15 @@ class SettingsWindow(Singleton, QWidget):
                 'items': [theme_label, self.theme_dropdown]
             },
             (middle := QVBoxLayout()): {
-                'items': [open_editor_button, theme_layout, output_layout, cache_layout]
+                'items': [theme_layout, output_layout, cache_layout]
             },
 
             # Add top widgets
-            (top := QHBoxLayout()): {
+            (io_buttons := QHBoxLayout()): {
                 'items': [save_button, reload_button, import_button, export_button]
+            },
+            (top := QVBoxLayout()): {
+                'items': [io_buttons, open_editor_button]
             },
 
             # Main layout

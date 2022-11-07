@@ -105,7 +105,6 @@
     "gui.status_bar.title": "Status Bar",
 
     "gui.settings.auth.clear_token": "Clear API Token (Not Auth Key)",
-    "gui.settings.auth.copy": "Copy to Clipboard",
     "gui.settings.auth.edit": "Edit Auth Key (API Token Generation)",
     "gui.settings.auth.set": "Set",
     "gui.settings.cache.icon_mode": "Icon Mode",
