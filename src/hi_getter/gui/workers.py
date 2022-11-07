@@ -146,29 +146,28 @@ class RecursiveSearch(_Worker):
         # Iterate over all values in the JSON data
         # This process ignores already-searched values
         for value in unique_values(data):
-            if isinstance(value, str):
-                for match in HI_PATH_PATTERN.finditer(value):
-                    path: str = match[0]
-                    ext: str = match['file_name'].split('.')[-1].lower()
-                    has_pre_path: bool = match['pre_path'] is not None
+            if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
+                path: str = match[0]
+                ext: str = match['file_name'].split('.')[-1].lower()
+                has_pre_path: bool = match['pre_path'] is not None
 
-                    # If a value ends in .json, get the data for that path and start the process over again
-                    if ext in {'json'}:
-                        if not has_pre_path:
-                            path = 'progression/file/' + path
+                # If a value ends in .json, get the data for that path and start the process over again
+                if ext in {'json'}:
+                    if not has_pre_path:
+                        path = 'progression/file/' + path
 
-                        if path.lower() in searched:
-                            continue
+                    if path.lower() in searched:
+                        continue
 
-                        self._recursive_search(path)
+                    self._recursive_search(path)
 
-                    # If it's an image, download it then ignore the result
-                    elif ext in SUPPORTED_IMAGE_EXTENSIONS:
-                        if not has_pre_path:
-                            path = 'images/file/' + path
+                # If it's an image, download it then ignore the result
+                elif ext in SUPPORTED_IMAGE_EXTENSIONS:
+                    if not has_pre_path:
+                        path = 'images/file/' + path
 
-                        if path.lower() in searched:
-                            continue
+                    if path.lower() in searched:
+                        continue
 
-                        searched.add(path.lower())
-                        self.client.get_hi_data(path)
+                    searched.add(path.lower())
+                    self.client.get_hi_data(path)

@@ -72,9 +72,9 @@ class ExternalTextBrowser(QTextBrowser):
             for i, line in enumerate(lines):
 
                 # Replace image links with clickable anchor images
-                if match := MARKDOWN_IMG_LINK_PATTERN.findall(line):
+                if match := MARKDOWN_IMG_LINK_PATTERN.match(line):
                     # Get ref_link or normal link for anchor href
-                    alt, src, link = (group.strip('()[]') for group in match[0])
+                    alt, src, link = (group.strip('()[]') for group in match.groups())
 
                     # Get reference link data if applicable
                     link_is_ref: bool = match[0][2].startswith('[')
