@@ -44,6 +44,7 @@ def is_greater_version(version1: str, version2: str) -> bool:
 
 class VersionChecker(QObject):
     """Checks for the latest versions of packages."""
+    checked = Signal(str, name='finished')
     newerVersion = Signal(str, str, name='versionChecked')
 
     def __init__(self, parent: QObject | None = None) -> None:
@@ -55,9 +56,11 @@ class VersionChecker(QObject):
         """Check the latest version of the given package on PyPI.
 
         If the latest version is greater than the current version,
-        emit the ``newerVersion`` signal with the given name and the latest version as arguments
+        emit the ``newerVersion`` signal with the given name and the latest version as arguments.
 
-        :param package_name: The package to look up on PyPI
+        Emit the ``checked`` signal after a successful call.
+
+        :param package_name: The package to look up on PyPI.
         """
         def handle_reply(reply: QNetworkReply):
             # Get PyPI data from reply
@@ -71,12 +74,14 @@ class VersionChecker(QObject):
                 key=lambda v: datetime.strptime(releases[v][0]['upload_time_iso_8601'], date_format)
             )
 
+            # Get local version of given package. Use __version__ attribute for own package.
             local_version: str | None = get_version(package_name) if package_name != HI_PACKAGE_NAME else __version__
 
             # Get the latest version and compare to current version. Emit newerVersion if greater.
             latest: str = versions[-1]
             if is_greater_version(latest, local_version):
                 self.newerVersion.emit(package_name, latest)
+            self.checked.emit(package_name)
 
             reply.deleteLater()
 
