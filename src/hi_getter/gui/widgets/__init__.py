@@ -5,6 +5,7 @@
 
 __all__ = (
     'CacheExplorer',
+    'ComboBox',
     'ExceptionLogger',
     'ExternalTextBrowser',
     'HistoryComboBox',
