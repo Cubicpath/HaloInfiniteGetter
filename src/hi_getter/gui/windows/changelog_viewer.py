@@ -32,11 +32,13 @@ class ChangelogViewer(QWidget):
         self.resize(QSize(600, 800))
 
         self.changelog_url: str = 'https://raw.githubusercontent.com/Cubicpath/HaloInfiniteGetter/master/CHANGELOG.md'
+        self.latest_version: str = __version__
         self.text_browser: ExternalTextBrowser
         self._init_ui()
 
     def _init_ui(self) -> None:
         self.text_browser = ExternalTextBrowser(self)
+        self.version_label = QLabel(self)
 
         init_objects({
             self.text_browser: {
@@ -44,7 +46,13 @@ class ChangelogViewer(QWidget):
                 'openExternalLinks': True
             },
 
-            (version_label := QLabel(self)): {},
+            (check_latest := QPushButton(self)): {
+                'size': {'fixed': (20, 20)},
+                'icon': self.style().standardIcon(QStyle.SP_BrowserReload),
+                'clicked': DeferredCallable(
+                    app().version_checker.check_version
+                )
+            },
 
             (spacer := QSpacerItem(0, 0, hData=QSizePolicy.MinimumExpanding)): {},
 
@@ -65,14 +73,14 @@ class ChangelogViewer(QWidget):
 
         app().init_translations({
             self.setWindowTitle: 'gui.changelog_viewer.title',
-            version_label.setText: ('gui.changelog_viewer.current_version', __version__),
+            self.version_label.setText: ('gui.changelog_viewer.current_version', self.latest_version, __version__),
             github_button.setText: 'gui.changelog_viewer.github',
             releases_button.setText: 'gui.changelog_viewer.releases'
         })
 
         init_layouts({
             (buttons := QHBoxLayout()): {
-                'items': [version_label, spacer, github_button, releases_button]
+                'items': [check_latest, self.version_label, spacer, github_button, releases_button]
             },
 
             # Main layout
@@ -81,6 +89,7 @@ class ChangelogViewer(QWidget):
             }
         })
 
+        app().version_checker.newerVersion.connect(self.update_latest_version)
         self.update_changelog()
 
     def update_changelog(self) -> None:
@@ -104,3 +113,13 @@ class ChangelogViewer(QWidget):
             reply.deleteLater()
 
         app().session.get(self.changelog_url, finished=handle_reply)
+
+    def update_latest_version(self, _, version: str) -> None:
+        """Update the latest version displayed at the top of the changelog to the given string.
+
+        :param version: Latest version string to display
+        """
+        self.latest_version = version
+
+        text = tr('gui.changelog_viewer.current_version', self.latest_version, __version__)
+        self.version_label.setText(f'<b>{text.split("|")[0]}</b>|{text.split("|")[1]}')

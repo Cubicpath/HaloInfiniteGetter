@@ -40,7 +40,7 @@
     "gui.changelog_viewer.github": "View Changelog on GitHub",
     "gui.changelog_viewer.releases": "View Releases",
     "gui.changelog_viewer.title": "Changelog Viewer",
-    "gui.changelog_viewer.current_version": "<b>Current Version: v%s</b>",
+    "gui.changelog_viewer.current_version": "Latest: v%s | Current: v%s",
     "gui.exception_reporter.clear": "Clear",
     "gui.exception_reporter.clear_all": "Clear All",
     "gui.exception_reporter.exception_list": "List of all currently logged exceptions:",
