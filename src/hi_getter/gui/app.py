@@ -37,6 +37,7 @@ from ..models import Singleton
 from ..network.client import Client
 from ..network.client import WEB_DUMP_PATH
 from ..network.manager import NetworkSession
+from ..network.version_check import VersionChecker
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
 from ..utils.gui import set_or_swap_icon
@@ -110,6 +111,7 @@ class GetterApp(Singleton, QApplication):
         self.themes: dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
         self.translator: Translator = Translator(self.settings['language'])
+        self.version_checker: VersionChecker = VersionChecker(self)
 
         # Load resources from disk
         self.load_themes()  # Depends on icon_store, settings, themes, theme_index_map
@@ -130,6 +132,9 @@ class GetterApp(Singleton, QApplication):
 
         # Create window instances
         self._create_windows(**kwargs)
+
+        # Check version after all widgets are created to listen for newerVersion signal
+        self.version_checker.check_version()
 
     @property
     def first_launch(self) -> bool:
