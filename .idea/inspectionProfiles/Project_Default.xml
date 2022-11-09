@@ -63,6 +63,7 @@
           <option value="PySide6.QtNetwork.QNetworkReply.*" />
           <option value="PySide6.QtNetwork.QNetworkRequest.*" />
           <option value="PySide6.QtNetwork.QSsl.*" />
+          <option value="PySide6.QtNetwork.redirected.*" />
           <option value="PySide6.QtWidgets.anchorClicked.*" />
           <option value="PySide6.QtWidgets.buttonClicked.*" />
           <option value="PySide6.QtWidgets.clicked.*" />

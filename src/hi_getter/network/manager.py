@@ -68,7 +68,7 @@ class NetworkSession:
         """
         self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
         self.manager: QNetworkAccessManager = QNetworkAccessManager(manager_parent)
-        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.ManualRedirectPolicy
+        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.UserVerifiedRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -434,6 +434,9 @@ class NetworkSession:
         # Since this is an asynchronous request, we don't immediately have the reply data.
 
         reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
+
+        if allow_redirects:
+            reply.redirected.connect(lambda _: reply.redirectAllowed)
 
         if verify is False:
             reply.ignoreSslErrors()
