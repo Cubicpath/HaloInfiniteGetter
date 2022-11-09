@@ -15,6 +15,7 @@ from PySide6.QtWidgets import *
 
 from ..._version import __version__
 from ...models import DeferredCallable
+from ...models import DistributedCallable
 from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ..app import app
@@ -46,12 +47,14 @@ class ChangelogViewer(QWidget):
                 'openExternalLinks': True
             },
 
-            (check_latest := QPushButton(self)): {
+            (check_latest_button := QPushButton(self)): {
                 'size': {'fixed': (20, 20)},
                 'icon': self.style().standardIcon(QStyle.SP_BrowserReload),
-                'clicked': DeferredCallable(
-                    app().version_checker.check_version
-                )
+                'clicked': DistributedCallable((
+                    DeferredCallable(app().version_checker.check_version),
+                    check_latest_button.setDisabled,
+                    self.version_label.setDisabled
+                ), True)
             },
 
             (spacer := QSpacerItem(0, 0, hData=QSizePolicy.MinimumExpanding)): {},
@@ -80,7 +83,7 @@ class ChangelogViewer(QWidget):
 
         init_layouts({
             (buttons := QHBoxLayout()): {
-                'items': [check_latest, self.version_label, spacer, github_button, releases_button]
+                'items': [check_latest_button, self.version_label, spacer, github_button, releases_button]
             },
 
             # Main layout
@@ -90,6 +93,11 @@ class ChangelogViewer(QWidget):
         })
 
         app().version_checker.newerVersion.connect(self.update_latest_version)
+        app().version_checker.checked.connect(lambda: QTimer.singleShot(750, DistributedCallable((
+            check_latest_button.setDisabled,
+            self.version_label.setDisabled
+        ), False)))
+
         self.update_changelog()
 
     def update_changelog(self) -> None:
