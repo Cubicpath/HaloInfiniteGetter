@@ -19,10 +19,11 @@ _**HaloInfiniteGetter is in no way associated with, endorsed by, or otherwise af
 Microsoft Corporation, Xbox Game Studios, or 343 Industries. Depending on how you use it, use of this app
 may or may not be considered abuse by the aforementioned parties.**_
 
-### Table of Contents
+### Other Documents:
 - [Changelog][changelog_github]
 - [License][license_github]
-- [Disclaimer](#disclaimer)
+
+### Table of Contents
 - [About](#about)
 - [How to Use](#how-to-use)
      - [Installation](#installation)
@@ -91,6 +92,8 @@ indicates data or media (ex: json defaults as `progression/file/`, png and jpg d
 Gets the singular resource from the given path and outputs it.
 
 #### SCAN:
+**Warning: This may display various flashing images in quick succession.**
+
 Recursively scan a given JSON resource for paths to more resources, ignoring already scanned resources.
 This results in caching ALL resources that are referenced by any other resource with some tie to the original
 resource path.
