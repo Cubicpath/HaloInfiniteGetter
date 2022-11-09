@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Changelog Viewer
+    - Ability to see the latest version in **bold**
+
 ## [0.12] - 2022-11-3 - [PyPI](https://pypi.org/project/hi-getter/0.12/)
 ### Added
 - `CHANGELOG.md`
@@ -24,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - ZIP Files (`*.zip` & `*.piz`)
     - TAR Files (`*.tar`, `*.tar.gz`, `*.tgz`, `*.tar.bz2`, `*.tbz2`, `*.tar.xz`, `*.txz`)
         - `gzip`, `bzip2`, and `xz` are the supported compression algorithms
-
 
 ### Changed
 - Cache Explorer `Open in Default App` now shows the default icon for the file

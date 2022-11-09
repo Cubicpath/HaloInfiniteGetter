@@ -24,14 +24,18 @@ __all__ = (
 
 from .app import GetterApp
 from .app import Theme
+from .menus import CacheIndexContextMenu
+from .menus import ColumnContextMenu
 from .menus import FileContextMenu
 from .menus import HelpContextMenu
 from .menus import ToolsContextMenu
+from .widgets import CacheExplorer
 from .widgets import ExceptionLogger
 from .widgets import ExternalTextBrowser
 from .widgets import HistoryComboBox
 from .widgets import PasteLineEdit
 from .windows import AppWindow
+from .windows import ChangelogViewer
 from .windows import ExceptionReporter
 from .windows import LicenseViewer
 from .windows import ReadmeViewer

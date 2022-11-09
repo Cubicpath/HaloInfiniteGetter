@@ -34,6 +34,7 @@ class ExternalTextBrowser(QTextBrowser):
 
         # default factory producing empty DeferredCallables
         self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
+        self.inject_markdown_anchors: bool = True
         self.cached_text: str = ''
         self.cached_type: str = ''
 
@@ -87,20 +88,23 @@ class ExternalTextBrowser(QTextBrowser):
                     continue
 
                 # Find headers and add relative anchors
-                has_hashtag: bool = line.strip().startswith('#')
-                has_underline: bool = line and (i < len(lines) - 1) and any(
-                    # Line must end and begin with the respective underline
-                    lines[i + 1].strip().startswith(line_char) and
-                    lines[i + 1].strip().endswith(line_char) for line_char in ('-', '=')
-                )
+                if self.inject_markdown_anchors:
+                    has_hashtag: bool = line.strip().startswith('#')
+                    has_underline: bool = line and (i < len(lines) - 1) and any(
+                        # Line must end and begin with the respective underline
+                        lines[i + 1].strip().startswith(line_char) and
+                        lines[i + 1].strip().endswith(line_char) for line_char in ('-', '=')
+                    )
 
-                # If line has a header marker, append it with an anchor tag and add it to the new list.
-                # Otherwise, append the unchanged line to the new list.
-                if has_hashtag or has_underline:
-                    simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
+                    # If line has a header marker, append it with an anchor tag and add it to the new list.
+                    # Otherwise, append the unchanged line to the new list.
+                    if has_hashtag or has_underline:
+                        simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
-                    lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}">§</a>')
-                    continue
+                        anchor_css = 'font-size: 1px; color: transparent'
+                        lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}" style="{anchor_css}">§</a>')
+                        continue
+
                 lines_new.append(line)
 
             text = '\n'.join(lines_new)

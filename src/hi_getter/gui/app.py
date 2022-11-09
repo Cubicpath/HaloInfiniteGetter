@@ -37,6 +37,7 @@ from ..models import Singleton
 from ..network.client import Client
 from ..network.client import WEB_DUMP_PATH
 from ..network.manager import NetworkSession
+from ..network.version_check import VersionChecker
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
 from ..utils.gui import set_or_swap_icon
@@ -110,6 +111,7 @@ class GetterApp(Singleton, QApplication):
         self.themes: dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
         self.translator: Translator = Translator(self.settings['language'])
+        self.version_checker: VersionChecker = VersionChecker(self)
 
         # Load resources from disk
         self.load_themes()  # Depends on icon_store, settings, themes, theme_index_map
@@ -130,6 +132,9 @@ class GetterApp(Singleton, QApplication):
 
         # Create window instances
         self._create_windows(**kwargs)
+
+        # Check version after all widgets are created to listen for newerVersion signal
+        self.version_checker.check_version()
 
     @property
     def first_launch(self) -> bool:
@@ -164,6 +169,7 @@ class GetterApp(Singleton, QApplication):
     def _create_windows(self, **kwargs) -> None:
         """Create window instances."""
         from .windows import AppWindow
+        from .windows import ChangelogViewer
         from .windows import LicenseViewer
         from .windows import ReadmeViewer
         from .windows import SettingsWindow
@@ -175,6 +181,7 @@ class GetterApp(Singleton, QApplication):
             max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
         ))
 
+        self._windows['changelog_viewer'] = ChangelogViewer()
         self._windows['license_viewer'] = LicenseViewer()
         self._windows['readme_viewer'] = ReadmeViewer()
         self._windows['settings'] = SettingsWindow.instance()
@@ -198,16 +205,19 @@ class GetterApp(Singleton, QApplication):
         shutil.register_archive_format('7z', pack_7zarchive, description='7Zip Archive File')
         shutil.register_unpack_format('7z', ['7z'], unpack_7zarchive, description='7Zip Archive File')
 
-    def init_translations(self, translation_calls: dict[Callable, str]) -> None:
+    def init_translations(self, translation_calls: dict[Callable, str | tuple[Any, ...]]) -> None:
         """Initialize the translation of all objects.
 
         Register functions to call with their respective translation keys.
         This is used to translate everything in the GUI.
         """
 
-        for func, key in translation_calls.items():
+        for func, args in translation_calls.items():
+            if not isinstance(args, tuple):
+                args = (args,)
+
             # Call the function with the deferred translation of the given key.
-            translate = DeferredCallable(func, DeferredCallable(self.translator, key))
+            translate = DeferredCallable(func, DeferredCallable(self.translator, *args))
 
             # Register the object for dynamic translation
             self._registered_translations.callables.add(translate)

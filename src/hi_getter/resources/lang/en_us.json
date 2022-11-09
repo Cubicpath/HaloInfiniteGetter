@@ -37,6 +37,10 @@
     "questions.create_shortcut.description": "Please choose the location you would like the shortcut to be in.",
     "questions.create_shortcut.title": "Shortcut Creation Tool",
 
+    "gui.changelog_viewer.github": "View Changelog on GitHub",
+    "gui.changelog_viewer.releases": "View Releases",
+    "gui.changelog_viewer.title": "Changelog Viewer",
+    "gui.changelog_viewer.current_version": "Latest: v%s | Current: v%s",
     "gui.exception_reporter.clear": "Clear",
     "gui.exception_reporter.clear_all": "Clear All",
     "gui.exception_reporter.exception_list": "List of all currently logged exceptions:",
@@ -90,6 +94,7 @@
     "gui.menus.help": "Help",
     "gui.menus.help.about": "About",
     "gui.menus.help.about_qt": "About Qt",
+    "gui.menus.help.changelog": "Changelog",
     "gui.menus.help.github": "View on Github",
     "gui.menus.help.issue": "Create an Issue",
     "gui.menus.help.license": "License",
