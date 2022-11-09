@@ -389,7 +389,7 @@ class GetterApp(Singleton, QApplication):
             description_args=(version, __version__)
         ).role:
             case QMessageBox.YesRole:
-                QProcess.execute('pip', arguments=('install', f'{HI_PACKAGE_NAME.replace("_", "-")}=={version}'))
+                QProcess.execute('pip', arguments=('install', '--upgrade', f'{HI_PACKAGE_NAME.replace("_", "-")}'))
                 QProcess.startDetached(sys.executable, arguments=('-m', HI_PACKAGE_NAME))
                 self.exit(0)
             case QMessageBox.NoRole:
