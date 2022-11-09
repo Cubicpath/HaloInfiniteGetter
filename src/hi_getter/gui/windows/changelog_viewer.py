@@ -8,6 +8,8 @@ __all__ = (
     'ChangelogViewer',
 )
 
+import random
+
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtNetwork import *
@@ -93,7 +95,7 @@ class ChangelogViewer(QWidget):
         })
 
         app().version_checker.newerVersion.connect(self.update_latest_version)
-        app().version_checker.checked.connect(lambda: QTimer.singleShot(750, DistributedCallable((
+        app().version_checker.checked.connect(lambda: QTimer.singleShot(random.randint(250, 500), DistributedCallable((
             check_latest_button.setDisabled,
             self.version_label.setDisabled
         ), False)))
