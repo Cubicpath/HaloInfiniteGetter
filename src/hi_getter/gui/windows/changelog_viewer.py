@@ -94,6 +94,7 @@ class ChangelogViewer(QWidget):
             }
         })
 
+        app().version_checker.newerVersion.connect(self.update_changelog)
         app().version_checker.newerVersion.connect(self.update_latest_version)
         app().version_checker.checked.connect(lambda: QTimer.singleShot(random.randint(250, 500), DistributedCallable((
             check_latest_button.setDisabled,
