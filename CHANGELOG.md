@@ -6,8 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Update Checker
+    - Popup that appears when a newer version is released
+        - This allows you to seamlessly upgrade to the newest version without a command line using
+        the `Upgrade and Restart` button
+        - It can be turned off by pressing the `Ignore All` button
 - Changelog Viewer
+    - Open it through the `Changelog` action in the `Help` context menu
     - Ability to see the latest version in **bold**
+
+### Changed
+- Optimized RecursiveSearch (SCAN)
+
+### Fixed
+- RecursiveSearch (SCAN) scanning the same json document multiple times
+
 
 ## [0.12] - 2022-11-3 - [PyPI](https://pypi.org/project/hi-getter/0.12/)
 ### Added
@@ -240,7 +253,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Uploaded to GitHub
 
 
-[Unreleased]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12a1...HEAD
+[Unreleased]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12...v0.12.1
 [0.12]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12a1...v0.12
 [0.12a1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.11.1...v0.12a1
 [0.11.1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.11...v0.11.1

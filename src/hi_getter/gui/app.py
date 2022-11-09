@@ -28,6 +28,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from .._version import __version__
 from ..constants import *
 from ..events import EventBus
 from ..lang import Translator
@@ -122,6 +123,9 @@ class GetterApp(Singleton, QApplication):
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+        if not self.settings['ignore_updates']:
+            self.version_checker.newerVersion.connect(self._upgrade_version_dialog)
 
         # Register formats for use in shutil
         self._register_archive_formats()
@@ -322,7 +326,7 @@ class GetterApp(Singleton, QApplication):
         if default_button is not None:
             msg_box.setDefaultButton(default_button)
 
-        msg_box.buttonClicked.connect((result := set()).add)
+        msg_box.buttonClicked.connect((result := []).append)
         msg_box.exec()
 
         result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.NoButton
@@ -370,6 +374,28 @@ class GetterApp(Singleton, QApplication):
                     'information.package_installed', parent,
                     description_args=(package,)
                 )
+
+    def _upgrade_version_dialog(self, _, version: str) -> None:
+        ignore_button = QPushButton(self.translator('information.upgrade_version.ignore'))
+        upgrade_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('information.upgrade_version.upgrade'))
+
+        match self.show_dialog(
+            'information.upgrade_version', None, (
+                (upgrade_button, QMessageBox.YesRole),
+                (ignore_button, QMessageBox.NoRole),
+                QMessageBox.Cancel
+            ),
+            default_button=QMessageBox.Cancel,
+            description_args=(version, __version__)
+        ).role:
+            case QMessageBox.YesRole:
+                QProcess.execute('pip', arguments=('install', f'{HI_PACKAGE_NAME.replace("_", "-")}=={version}'))
+                QProcess.startDetached(sys.executable, arguments=('-m', HI_PACKAGE_NAME))
+                self.exit(0)
+            case QMessageBox.NoRole:
+                self.version_checker.newerVersion.disconnect(self._upgrade_version_dialog)
+                self.settings['ignore_updates'] = True
+                self.settings.save()
 
     def load_env(self, verbose: bool = True) -> None:
         """Load environment variables from .env file."""

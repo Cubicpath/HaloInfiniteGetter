@@ -1,3 +1,4 @@
+ignore_updates = false
 language = "en-US"
 
 [gui.window]
