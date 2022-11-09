@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Photosensitivity warning for SCAN
+
+### Changed
+- Update Checker `Upgrade and Restart` now uses the `--upgrade` flag with pip install
+
 ## [0.12.1] - 2022-11-8 [PyPI](https://pypi.org/project/hi-getter/0.12.1/)
 ### Added
 - Update Checker
