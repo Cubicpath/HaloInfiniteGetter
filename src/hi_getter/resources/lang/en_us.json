@@ -28,6 +28,8 @@
     "warnings.delete_path.title": "Confirm %s Deletion",
     "warnings.empty_token.description": "The spartan authorization token is not set, please set SPARTAN_AUTH environment variable and restart, or set the auth key value in Settings.\n\nYou will be unable to acquire new data until a new token is provided.",
     "warnings.empty_token.title": "Empty API Token",
+    "warnings.photosensitivity.scan.description": "<h2>Warning: This may display various flashing images in quick succession.</h2><p>This warning will not be repeated for this action.</p>",
+    "warnings.photosensitivity.scan.title": "Photosensitivity Warning",
     "errors.cache_import_failure.description": "A problem occurred when attempting to import \"%s\".\n\n%s",
     "errors.cache_import_failure.title": "Cache Import Failure",
     "errors.missing_package.cancel": "Cancel",

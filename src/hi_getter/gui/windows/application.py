@@ -334,7 +334,7 @@ class AppWindow(Singleton, QMainWindow):
             },
             (scan_button := QPushButton(self)): {
                 'size': {'maximum': (55, None)},
-                'clicked': DeferredCallable(self.use_input, scan=True)
+                'clicked': self.scan_input
             },
 
             # Line editors
@@ -608,6 +608,20 @@ class AppWindow(Singleton, QMainWindow):
 
             # Add image to buffer
             self.media_output.scene().addPixmap(new)
+
+    def scan_input(self) -> None:
+        """Scans the search path.
+
+        Displays a photosensitivity warning for first-time use.
+        """
+        with (HI_CONFIG_PATH / '.warned').open(mode='r+', encoding='utf8') as warned_file:
+            acknowledged_warnings: set[str] = {line.strip() for line in warned_file.readlines()}
+
+            if 'warnings.photosensitivity.scan' not in acknowledged_warnings:
+                app().show_dialog('warnings.photosensitivity.scan')
+                warned_file.write('warnings.photosensitivity.scan\n')
+
+        self.use_input(scan=True)
 
     # # # # # Events
 
