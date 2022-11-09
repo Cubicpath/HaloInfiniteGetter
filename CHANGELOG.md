@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Changelog Viewer
+    - Ability to see the latest version in **bold**
 
 ## [0.12] - 2022-11-3 - [PyPI](https://pypi.org/project/hi-getter/0.12/)
 ### Added
