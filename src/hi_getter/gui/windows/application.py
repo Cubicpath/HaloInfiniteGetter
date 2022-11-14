@@ -70,7 +70,6 @@ class AppWindow(Singleton, QMainWindow):
 
         self.current_image: QPixmap | None = None
         self.detached: dict[str, QMainWindow | None] = {'media': None, 'text': None}
-        self.change_title(tr('app.name') + f' v{__version__}')
         self.resize(size)
 
         for subscribe_params in (
@@ -372,8 +371,6 @@ class AppWindow(Singleton, QMainWindow):
         })
 
         app().init_translations({
-            self.change_title: 'app.name',
-
             # Labels
             self.image_size_label.setText: 'gui.outputs.image.label_empty',
             self.text_size_label.setText: 'gui.outputs.text.label_empty',
@@ -471,10 +468,6 @@ class AppWindow(Singleton, QMainWindow):
 
             self: {'centralWidget': main_widget}
         })
-
-    def change_title(self, name: str) -> None:
-        """Change the window title, includes the version number."""
-        self.setWindowTitle(f'{name} v{__version__}')
 
     def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""

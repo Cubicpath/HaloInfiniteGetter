@@ -87,12 +87,15 @@ class GetterApp(Singleton, QApplication):
     """
     _singleton_base_type = QApplication
     _singleton_check_ref = False
+    updateTranslations = Signal(name='languageChanged')
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker
     def __init__(self, *args, **kwargs) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
+        self.setApplicationName(HI_PACKAGE_NAME)
+        self.setApplicationVersion(__version__)
 
         self._first_launch: bool = not _LAUNCHED_FILE.is_file()  # Check if launched marker exists
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
@@ -121,8 +124,13 @@ class GetterApp(Singleton, QApplication):
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
         EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
-        EventBus['settings'].subscribe(DeferredCallable(self.update_language), TomlEvents.Import)
+        EventBus['settings'].subscribe(DeferredCallable(self.updateTranslations.emit), TomlEvents.Import)
         EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+        self.updateTranslations.connect(lambda: self.translator.__setattr__('language', self.settings['language']))
+        self.updateTranslations.connect(lambda: self.setApplicationDisplayName(self.translator('app.name')))
+        self.updateTranslations.connect(self._registered_translations)
+        self.updateTranslations.connect(self._translate_http_code_map)
 
         if not self.settings['ignore_updates']:
             self.version_checker.newerVersion.connect(self._upgrade_version_dialog)
@@ -134,8 +142,9 @@ class GetterApp(Singleton, QApplication):
         self.load_env(verbose=True)
         self.client = Client(self)
 
-        # Create window instances
+        # Setup window instances
         self._create_windows(**kwargs)
+        self.updateTranslations.emit()
 
         # Check version after all widgets are created to listen for newerVersion signal
         self.version_checker.check_version()
@@ -225,16 +234,6 @@ class GetterApp(Singleton, QApplication):
 
             # Register the object for dynamic translation
             self._registered_translations.callables.add(translate)
-            translate()
-
-    def update_language(self) -> None:
-        """Set the application language to the one currently selected in settings.
-
-        This method dynamically translates all registered text in the GUI to the given language using translation keys.
-        """
-        self.translator.language = self.settings['language']
-        self._translate_http_code_map()
-        self._registered_translations()
 
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
