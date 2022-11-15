@@ -92,3 +92,17 @@ MARKDOWN_REF_LINK_PATTERN: Final[re.Pattern] = re.compile(
     r'(?:/[^\s()]*)?(?:\?(?:\w+=\w+&?)+)?)'
     r'(?: \"(?P<description>[^\"\t\n\r]*)\")?')
 """Regex pattern for finding markdown labels."""
+
+RFC_5646_PATTERN: Final[re.Pattern] = re.compile(
+    r'^(?P<language>(?P<primary>[a-zA-Z]{2,3})(?:-(?P<extlang>[a-zA-Z]{3}))?)'
+    r'(?:-(?P<script>[a-zA-Z]{4}))?'
+    r'(?:-(?P<region>[a-zA-Z]{2}|\d{3}))?'
+    r'(?:-(?P<variants>(?:(?<![a-zA-Z\d])(?:[a-zA-Z\d]{5,8}|\d[a-zA-Z\d]{3})-?)+(?<!-)))?'
+    r'(?:-(?P<extensions>(?:(?<![a-zA-Z\d])[a-wy-zA-WY-Z\d]-[a-zA-Z\d]{2,8}-?)+(?<!-)))?'
+    r'(?:-(?P<private>x-(?:(?<![a-zA-Z\d])[a-zA-Z\d]{1,8}-?)+(?<!-)))?$')
+"""Regex pattern for validating a language tag.
+
+Uniqueness of variant subtags and extension singletons must be done outside of this pattern.
+
+The language subtag is the primary subtag with the optional extlang subtag appended
+"""
