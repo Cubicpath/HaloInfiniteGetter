@@ -108,22 +108,19 @@ class Language:
         :keyword private: Any subtag that is not publicly defined | Section 2.2.7
         """
         self._data: dict[str, str] = {}
-        self.tag = Language.build_tag({'primary': primary, 'region': region} | kwargs)
+        self.tag: str = Language.build_tag({'primary': primary, 'region': region} | kwargs)
+        self.subtags: dict[str, str | None] = RFC_5646_PATTERN.match(self.tag).groupdict()
 
-        for lang_file in _LANG_PATH.iterdir():
-            if lang_file.suffix == '.json' and lang_file.stem.lower() == self.tag.replace('-', '_').lower():
-                # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
+        if (selected_file := self.closest_file()) is not None:
+            # Read the language file corresponding to this Language's tags.
+            file_data: dict[str, Any] = json.loads(selected_file.read_text(encoding='utf8'))
 
-                # Read the language file corresponding to this Language's tags.
-                file_data: dict[str, Any] = json.loads(lang_file.read_text(encoding='utf8'))
+            # Read the parent language file if it exists.
+            if (parent_lang := file_data['meta'].get('inherits_from')) is not None:
+                self._data |= Language.from_tag(parent_lang).data
 
-                # Read the parent language file if it exists.
-                if (parent_lang := file_data['meta'].get('inherits_from')) is not None:
-                    self._data |= to_lang(parent_lang).data
-
-                # Overwrite inherited keys.
-                self._data |= file_data['keys']
-                break
+            # Overwrite inherited keys.
+            self._data |= file_data['keys']
 
     def __repr__(self) -> str:
         return f'<Language data for {self.tag}>'
@@ -137,6 +134,7 @@ class Language:
 
         Breaks tag into sub-tags and verifies compliance with RFC 5646.
         """
+        tag.replace('_', '-')
         if match := RFC_5646_PATTERN.match(tag):
             return cls(**match.groupdict())
         raise ValueError(f'"{tag}" is not a valid language tag.')
@@ -161,23 +159,23 @@ class Language:
         )
 
         checked: set[str] = set()
-        sub_tags: list[str] = []
+        subtags: list[str] = []
         err: Exception | None = None
 
         if primary is None and private is None:
             err = ValueError('The primary and/or private subtag must be filled out.')
 
         if primary is not None:
-            sub_tags.append(primary.lower())
+            subtags.append(primary.lower())
 
         if extlang is not None:
-            sub_tags.append(extlang.lower())
+            subtags.append(extlang.lower())
 
         if script is not None:
-            sub_tags.append(script.title())
+            subtags.append(script.title())
 
         if region is not None:
-            sub_tags.append(region.upper())
+            subtags.append(region.upper())
 
         if variants is not None:
             for subtag in variants.split('-'):
@@ -188,7 +186,7 @@ class Language:
                     err = ValueError(f'Variant subtag "{subtag}" is repeated.')
 
                 checked.add(variant)
-                sub_tags.append(variant)
+                subtags.append(variant)
             checked.clear()
 
         if extensions is not None:
@@ -201,14 +199,14 @@ class Language:
                         err = ValueError(f'Singleton subtag "{subtag}" is repeated.')
 
                     checked.add(singleton)
-                sub_tags.append(subtag.lower())
+                subtags.append(subtag.lower())
             checked.clear()
 
         if private is not None:
             for subtag in private.split('-'):
-                sub_tags.append(subtag.lower())
+                subtags.append(subtag.lower())
 
-        tag: str = '-'.join(sub_tags)
+        tag: str = '-'.join(subtags)
 
         if err is not None:
             raise ValueError(str(err)[:-1] + f' in language tag "{tag}".') from err
@@ -219,6 +217,44 @@ class Language:
     def data(self) -> dict[str, Any]:
         """:returns: a copy of the internal key dictionary."""
         return self._data.copy()
+
+    def closest_file(self) -> Path | None:
+        """Finds the most relevant file in the ``_LANG_DIR`` to represent this :py:class:`Language`'s tag.
+
+        The primary language subtag MUST match for a lang file to be considered. ex::
+
+            "en-Latn-US-1994" would regress to en_us.json, as they both share their primary and region subtags.
+            "es-US" would NOT regress to en_us.json, as they do not share their primary subtags.
+
+        """
+        most_relevant: tuple[Path | None, int] = (None, 0)
+
+        for lang_file in _LANG_PATH.iterdir():
+            if lang_file.suffix == '.json':
+                file_tag: str = lang_file.stem.split('.')[0].replace('_', '-').lower()
+
+                # For exact match
+                if self.tag.lower() == file_tag:
+                    most_relevant = (lang_file, 1000)
+                    break
+
+                file_subtags: dict[str, str | None] = RFC_5646_PATTERN.match(file_tag).groupdict()
+
+                # Count how close our tag is to this file's tag
+                intersection = {a: b for ((a, b), (c, d))
+                                in zip(self.subtags.items(), file_subtags.items())
+                                if a == c and b is not None and d is not None and b.lower() == d.lower()}
+
+                # Ensure that the primary language subtag is the same
+                if intersection.get('primary') is not None:
+                    relevance = len(intersection)
+                else:
+                    relevance = 0
+
+                if relevance > most_relevant[1]:
+                    most_relevant = (lang_file, relevance)
+
+        return most_relevant[0]
 
     def get(self, key: str, *args: Any, default: str | None = None, key_eval: bool = True) -> str:
         """Get a translation key and format with the given arguments if required.
