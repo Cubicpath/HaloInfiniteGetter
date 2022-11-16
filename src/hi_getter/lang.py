@@ -319,8 +319,11 @@ class Translator:
         translate('a.translation.key') -> german value
     """
 
-    def __init__(self, language: Language | str) -> None:
-        self._language = to_lang(language)
+    def __init__(self, language: Language | str | None = None) -> None:
+        if language is not None:
+            self._language = to_lang(language)
+        else:
+            self._language = Language.from_path(default_language_file())
 
     def __bool__(self) -> bool:
         """Return whether the Translator is available."""
