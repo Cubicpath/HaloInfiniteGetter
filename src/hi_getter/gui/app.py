@@ -114,8 +114,16 @@ class GetterApp(Singleton, QApplication):
         self.settings: TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
         self.themes: dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
-        self.translator: Translator = Translator(self.settings['language'])
+        self.translator: Translator
         self.version_checker: VersionChecker = VersionChecker(self)
+
+        # Correct malformed language tag with default language selected by Translator
+        try:
+            self.translator = Translator(self.settings['language'])
+        except ValueError:
+            self.translator = Translator()
+            self.settings['language'] = self.translator.language.tag
+            self.settings.save()
 
         # Load resources from disk
         self.load_themes()  # Depends on icon_store, settings, themes, theme_index_map
