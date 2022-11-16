@@ -139,6 +139,7 @@ class Client(QObject):
             content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
 
             if status_code and is_error_status(status_code):
+                print(f"ERROR [{status_code}] for {path} ")
                 self.receivedError.emit(path, status_code)
                 return status_code
 
