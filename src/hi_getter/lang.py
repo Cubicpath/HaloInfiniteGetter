@@ -22,6 +22,12 @@ from typing import Final
 
 from .constants import *
 
+_POS_PARAM_REF: Final[re.Pattern] = re.compile(r'{([1-9]\d*|0)}')
+"""Pattern for finding positional parameter references."""
+
+_KEY_REF: Final[re.Pattern] = re.compile(r'{[\w\-.]*}')
+"""Pattern for finding lang key references."""
+
 _LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
@@ -42,10 +48,8 @@ def format_value(value: str, *args: Any, _language: Language = None, _key_eval: 
     """
     list_args: list[Any] = list(args)
     replaced: set[str] = set()
-    pos_param_ref: re.Pattern = re.compile(r'{([1-9]\d*|0)}')
-    key_ref: re.Pattern = re.compile(r'{[\w\-.]*}')
 
-    for matches in pos_param_ref.finditer(value):
+    for matches in _POS_PARAM_REF.finditer(value):
         match: str = matches[0]
         arg_val: Any = args[int(match.strip('{}'))]
         if match not in replaced:
@@ -62,7 +66,7 @@ def format_value(value: str, *args: Any, _language: Language = None, _key_eval: 
             # Limit of 50 to prevent an infinite loop.
 
             found: bool = False
-            for rec_matches in key_ref.finditer(value):
+            for rec_matches in _KEY_REF.finditer(value):
                 found = True
                 rec_match = rec_matches[0]
                 if rec_match not in replaced:
