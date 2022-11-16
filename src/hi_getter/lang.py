@@ -123,7 +123,7 @@ class Language:
             self._data |= file_data['keys']
 
     def __repr__(self) -> str:
-        return f'<Language data for {self.tag}>'
+        return f'<Language data for {self.tag} ({len(self.data)} keys)>'
 
     def __getitem__(self, key) -> str:
         return self.get_raw(key)
