@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'default_language_file',
     'format_value',
     'Language',
     'to_lang',
@@ -30,6 +31,16 @@ _KEY_REF: Final[re.Pattern] = re.compile(r'{[\w\-.]*}')
 
 _LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
+
+
+def default_language_file() -> Path | None:
+    """Return the first path found that has ".default" in its extension.
+
+    ex: en.default.json
+    """
+    for lang_file in _LANG_PATH.iterdir():
+        if '.default' in lang_file.suffixes:
+            return lang_file
 
 
 def format_value(value: str, *args: Any, _language: Language = None, _key_eval: bool = True) -> str:
