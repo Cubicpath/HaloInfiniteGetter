@@ -6,7 +6,6 @@ from __future__ import annotations
 
 __all__ = (
     'format_value',
-    'LANG_PATH',
     'Language',
     'to_lang',
     'Translator',
@@ -17,15 +16,13 @@ import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from string import ascii_letters
-from string import digits
 from typing import Annotated
 from typing import Any
 from typing import Final
 
 from .constants import *
 
-LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
+_LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 
@@ -85,9 +82,7 @@ def to_lang(language: str | Language) -> Language:
         language = str(language)  # Stringify non-language object
 
     if isinstance(language, str):
-        # TODO: Move this to Language.from_tag
-        language = language.replace(' ', '-').replace('_', '-').strip()
-        language = Language(*language.split('-'))  # For basic primary and region subtag compilation (ex: 'en-US' -> primary: 'en', region: 'US')
+        language = Language.from_tag(language)
     return language
 
 
@@ -102,130 +97,16 @@ class Language:
         :param primary: The first part of the language code. i.e. [en]-US | Section 2.2.1
         :param region: The (commonly) second part of the language code. i.e. en-[US] | Section 2.2.4
 
-        :keyword ext_lang: Extension to primary subtag | Section 2.2.2
+        :keyword extlang: Extension to primary subtag | Section 2.2.2
         :keyword script: Script used to write the language | Section 2.2.3
         :keyword variants: A variant of the given language subtag | Section 2.2.5
         :keyword extensions: Extension to the given language, prefixed with a singleton | Section 2.2.6
-        :keyword private_use: Any subtag that is not publicly defined | Section 2.2.7
-        :type ext_lang: Annotated[str, 3] | None
-        :type script: Annotated[str, 4] | None = None
-        :type variants: Sequence[str] | None
-        :type extensions: Sequence[tuple[Annotated[str, 1], str]] | None
-        :type private_use: Sequence[str] | None
-
-        :raises ValueError: If a given subtag is invalid.
+        :keyword private: Any subtag that is not publicly defined | Section 2.2.7
         """
-
-        (ext_lang, script, variants, extensions, private_use) = (
-            kwargs.pop('ext_lang', None),
-            kwargs.pop('script', None),
-            kwargs.pop('variants', None),
-            kwargs.pop('extensions', None),
-            kwargs.pop('private_use', None),
-        )
-
         self._data: dict[str, str] = {}
-        self.tag: str = ''
+        self.tag = Language.build_tag({'primary': primary, 'region': region} | kwargs)
 
-        sub_tags: list[str] = []
-        err: Exception | None = None
-
-        if primary is None and ext_lang is None and private_use is None:
-            err = ValueError('The primary and/or ext_lang and/or private_use subtag must be filled out.')
-
-        if primary is not None:
-            primary = primary.lower()
-
-            # RFC 5646 section 2.2.1.1 and 2.2.1.2
-            if not primary.isalpha() or not 3 >= len(primary) >= 2:
-                err = ValueError(f'Primary language subtag "{primary}" is not valid.')
-
-            sub_tags.append(primary)
-
-        if ext_lang is not None:
-            ext_lang = ext_lang.lower()
-
-            # RFC 5646 section 2.2.2.1
-            if not ext_lang.isalpha() or not len(ext_lang) == 3:
-                err = ValueError(f'Extended language subtag "{ext_lang}" is not valid.')
-
-            sub_tags.append(ext_lang)
-
-        if script is not None:
-            script = script.title()
-
-            # RFC 5646 section 2.2.3.2
-            if not script.isalpha() or not len(script) == 4:
-                err = ValueError(f'Script subtag "{script}" is not valid.')
-
-            sub_tags.append(script)
-
-        if region is not None:
-            region = region.upper()
-
-            # ISO 3166-1 or UN M.49
-            if not (len(region) == 2 and region.isalpha()) and not (len(region) == 5 and region[:2].isalpha() and region[2:].isnumeric()):
-                err = ValueError(f'Region subtag "{region}" is not valid.')
-
-            sub_tags.append(region)
-
-        if variants is not None:
-            checked = []
-            for variant in variants:
-
-                # RFC 5646 section 2.2.5.4
-                if not (variant[0] in ascii_letters and 8 >= len(variant) >= 5) or not (variant[0] in digits and 8 >= len(variant) >= 4):
-                    err = ValueError(f'Variant subtag "{variant}" is not valid.')
-
-                # RFC 5646 section 2.2.5.5
-                if variant in checked:
-                    err = ValueError(f'Variant subtag "{variant}" is repeated.')
-
-                checked.append(variant)
-                sub_tags.append(variant)
-
-        if extensions is not None:
-            checked = []
-            for singleton, extension in extensions:
-                extension = extension.lower()
-
-                if not (len(singleton) == 1 and (singleton in digits or singleton in ascii_letters)):
-                    err = ValueError(f'Singleton subtag "{singleton}" is not valid.')
-
-                # RFC 5646 section 2.2.6.3
-                if singleton in checked:
-                    err = ValueError(f'Singleton subtag "{singleton}" is repeated.')
-
-                # RFC 5646 section 2.2.6.5
-                if not (extension.isalnum() and 8 >= len(extension) >= 2):
-                    err = ValueError(f'Extension subtag "{extension}" is not valid.')
-
-                checked.append(singleton)
-                sub_tags.extend((singleton, extension))
-
-        if private_use is not None:
-            sub_tags.append('x')
-            for i, private_sub_tag in enumerate(private_use):
-                private_sub_tag = private_sub_tag.lower()
-
-                # If previous subtag was not a singleton
-                if i != 0 and len(private_use[i - 1]) != 1:
-                    if len(private_sub_tag) == 4:
-                        private_sub_tag = private_sub_tag.title()
-                    elif len(private_sub_tag) == 2:
-                        private_sub_tag = private_sub_tag.upper()
-
-                if not (private_sub_tag.isalnum() and 8 >= len(private_sub_tag) >= 1):
-                    err = ValueError(f'The private subtag "{private_sub_tag}" is not valid.')
-
-                sub_tags.append(private_sub_tag)
-
-        self.tag = '-'.join(sub_tags)
-
-        if err is not None:
-            raise ValueError(str(err)[:-1] + f' in language tag "{self.tag}".') from err
-
-        for lang_file in LANG_PATH.iterdir():
+        for lang_file in _LANG_PATH.iterdir():
             if lang_file.suffix == '.json' and lang_file.stem.lower() == self.tag.replace('-', '_').lower():
                 # TODO: Find closest related language file. Ex: en-EN would find en_us.json if en_en.json does not exist.
 
@@ -252,7 +133,83 @@ class Language:
 
         Breaks tag into sub-tags and verifies compliance with RFC 5646.
         """
-        # TODO: Add functionality
+        if match := RFC_5646_PATTERN.match(tag):
+            return cls(**match.groupdict())
+        raise ValueError(f'"{tag}" is not a valid language tag.')
+
+    @staticmethod
+    def build_tag(tag_dict: dict[str, str]) -> str:
+        """Build tag from a tag dictionary.
+
+        :param tag_dict: Dictionary obtained from RFC_5646_PATTERN.match(tag).groupdict()
+        :return: String representation of tag with correct case formatting.
+
+        :raises ValueError: If a given subtag is invalid.
+        """
+        (primary, extlang, script, region, variants, extensions, private) = (
+            tag_dict.pop('primary', None),
+            tag_dict.pop('extlang', None),
+            tag_dict.pop('script', None),
+            tag_dict.pop('region', None),
+            tag_dict.pop('variants', None),
+            tag_dict.pop('extensions', None),
+            tag_dict.pop('private', None),
+        )
+
+        checked: set[str] = set()
+        sub_tags: list[str] = []
+        err: Exception | None = None
+
+        if primary is None and private is None:
+            err = ValueError('The primary and/or private subtag must be filled out.')
+
+        if primary is not None:
+            sub_tags.append(primary.lower())
+
+        if extlang is not None:
+            sub_tags.append(extlang.lower())
+
+        if script is not None:
+            sub_tags.append(script.title())
+
+        if region is not None:
+            sub_tags.append(region.upper())
+
+        if variants is not None:
+            for subtag in variants.split('-'):
+                variant = subtag.lower()
+
+                # RFC 5646 section 2.2.5.5
+                if variant in checked:
+                    err = ValueError(f'Variant subtag "{subtag}" is repeated.')
+
+                checked.add(variant)
+                sub_tags.append(variant)
+            checked.clear()
+
+        if extensions is not None:
+            for i, subtag in enumerate(extensions.split('-')):
+                if i % 2 == 0:
+                    singleton = subtag.lower()
+
+                    # RFC 5646 section 2.2.6.3
+                    if singleton in checked:
+                        err = ValueError(f'Singleton subtag "{subtag}" is repeated.')
+
+                    checked.add(singleton)
+                sub_tags.append(subtag.lower())
+            checked.clear()
+
+        if private is not None:
+            for subtag in private.split('-'):
+                sub_tags.append(subtag.lower())
+
+        tag: str = '-'.join(sub_tags)
+
+        if err is not None:
+            raise ValueError(str(err)[:-1] + f' in language tag "{tag}".') from err
+
+        return tag
 
     @property
     def data(self) -> dict[str, Any]:
