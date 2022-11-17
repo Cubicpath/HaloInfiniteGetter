@@ -137,7 +137,7 @@ class ExceptionReporter(QWidget):
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
         exc_name: str = type(self.logger.exception_log[self.selected].exception).__name__
-        exc_msg: str = str(self.logger.exception_log[self.selected].exception).rstrip(".")
+        exc_msg: str = str(self.logger.exception_log[self.selected].exception).rstrip('.')
         exc_tb: str = format_tb(self.logger.exception_log[self.selected].traceback).strip().replace(getuser(), '%USERNAME%')
         base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params: dict[str, str] = {
@@ -189,7 +189,7 @@ class ExceptionReporter(QWidget):
                 key_eval=False
             )))
 
-            button.setStyleSheet("text-align:left;")
+            button.setStyleSheet('text-align:left;')
             button.setMaximumWidth((self.size().width() // 3) - 50)
 
             self.scroll_widget.layout().addWidget(button)

@@ -140,7 +140,7 @@ class Client(QObject):
             content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
 
             if status_code and is_error_status(status_code):
-                print(f"ERROR [{status_code}] for {path} ")
+                print(f'ERROR [{status_code}] for {path} ')
                 self.receivedError.emit(path, status_code)
                 return status_code
 
@@ -153,7 +153,7 @@ class Client(QObject):
             else:
                 raise ValueError(f'Unsupported content type received: {content_type}')
 
-            print(f"DOWNLOADED {path} >>> {content_type}")
+            print(f'DOWNLOADED {path} >>> {content_type}')
             dump_data(os_path, data)
 
             reply.deleteLater()
@@ -183,7 +183,7 @@ class Client(QObject):
     def to_get_path(self, path: str) -> str:
         """Translate a given cache location to the equivalent GET path."""
         resource = path.split(self.parent_path, maxsplit=1)[1]
-        pre, post = resource.split("/", maxsplit=1)
+        pre, post = resource.split('/', maxsplit=1)
         return f'{pre}/file/{post}'
 
     def refresh_auth(self) -> None:
