@@ -47,7 +47,7 @@ class _IconProvider(QAbstractFileIconProvider):
         :param info: File info to associate icon with.
         :return: Icon read from image, or icon from the fallback QFileIconProvider.
         """
-        if self._icon_mode == 0:
+        if not self._icon_mode:
             return _IconProvider.NULL_ICON
 
         if isinstance(info, QFileInfo):

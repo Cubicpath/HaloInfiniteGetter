@@ -16,5 +16,5 @@ from .run import main
 exit_code = main(*sys.argv)
 
 # If imported, do not exit
-if '__main__' != __name__:
+if __name__ != '__main__':
     sys.exit(exit_code)

@@ -55,7 +55,7 @@ class ExceptionLogger(QPushButton):
         if self.exception_log:
             self.exception_log.pop(index)
 
-        if len(self.exception_log) == 0:
+        if not len(self.exception_log):
             self.clear_exceptions()
         else:
             logged = len(self.exception_log)

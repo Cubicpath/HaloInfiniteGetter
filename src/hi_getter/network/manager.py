@@ -249,6 +249,7 @@ class NetworkSession:
         cookie.setPath(path or '/')
         return self.manager.cookieJar().insertCookie(cookie)
 
+    # pylint: disable=compare-to-zero
     def request(self, method: str, url: QUrl | str,
                 params: _StringPair | None = None,
                 data: bytes | _StringPair | None = None,

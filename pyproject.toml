@@ -76,6 +76,8 @@ load-plugins = [
     "pylint.extensions.bad_builtin",
     "pylint.extensions.check_elif",
     "pylint.extensions.code_style",
+    "pylint.extensions.comparetozero",
+    "pylint.extensions.comparison_placement",
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
     "pylint.extensions.for_any_all",
@@ -180,6 +182,8 @@ enable = [
     "use-maxsplit-arg",             # C0207
     "line-too-long",                # C0301 # Max line length is defined in [tool.pylint.'FORMAT']
     "consider-using-any-or-all",    # C0501
+    "comparison-placement",         # C2001
+    "compare-to-zero",              # C2201
 ]
 
 [tool.pylint.'MISCELLANEOUS']

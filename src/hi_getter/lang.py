@@ -214,7 +214,7 @@ class Language:
 
         if extensions is not None:
             for i, subtag in enumerate(extensions.split('-')):
-                if i % 2 == 0:
+                if not i % 2:
                     # RFC 5646 section 2.2.6.3
                     if (singleton := subtag.lower()) in checked:
                         err = ValueError(f'Singleton subtag "{subtag}" is repeated.')

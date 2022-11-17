@@ -409,7 +409,7 @@ class Singleton:
             If singleton instance could not be destroyed.
             If singleton is not currently instantiated.
         """
-        if cls._check_ref_count() is False:
+        if not cls._check_ref_count():
             raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '
                                f'Please remove all outside references to the internal instance before calling {cls.__name__}.destroy().')
 
