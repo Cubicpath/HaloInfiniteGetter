@@ -6,10 +6,10 @@ build-backend = "flit_core.buildapi"
 # ---------------------------
 [project]
 name = "hi_getter"
-authors = [{name = "Cubicpath", email = "cubicpath@pm.me"}]
+authors = [{name = "Cubicpath", email = "cubicpath@pm.me"},]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
-keywords = ["halo", "waypoint", "infinite", "gui", "app", "getter", "client", "unofficial", "HaloInfiniteGetter"]
+keywords = ["halo", "waypoint", "infinite", "gui", "app", "getter", "client", "unofficial", "HaloInfiniteGetter",]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: X11 Applications :: Qt",
@@ -21,24 +21,24 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: User Interfaces",
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
 requires-python = ">=3.10"
-dynamic = ["version", "description"]
+dynamic = ["version", "description",]
 dependencies = [
     "PySide6_Essentials>=6.4.0.1",
-    "toml>=0.10.2"
+    "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]
 all = [
     "py7zr>=0.20.2",
-    "python-dotenv>=0.21.0"
+    "python-dotenv>=0.21.0",
 ]
 dev = [
     "autopep8>=2.0.0",
     "bandit>=1.7.4",
-    "pylint>=2.15.5"
+    "pylint>=2.15.5",
 ]
 
 [project.urls]
@@ -53,7 +53,7 @@ hi_getter = "hi_getter.run:main"
 # ---------------------
 [tool.autopep8]
 max_line_length = 160
-ignore = ["E7"]
+ignore = ["E7",]
 in-place = true
 recursive = true
 aggressive = 3
@@ -107,17 +107,9 @@ defining-attr-methods = [
     "_init_ui",
     "setUp",
 ]
-exclude-protected = [
-    "_asdict",
-    "_dump_str",
-    "_fields",
-    "_replace",
-    "_source",
-    "_make",
-]
+exclude-protected = ["_dump_str",]
 
 [tool.pylint.'DESIGN']
-# Maximum number of arguments for function / method.
 max-args = 999
 max-attributes = 999
 max-bool-expr = 999
@@ -139,8 +131,7 @@ good-names = [
     "i", "j", "k", "l",
     "o",
     "x", "y", "z",
-    "_",
-    "__",
+    "_", "__",
 ]
 max-line-length = 160
 max-module-lines = 1000
@@ -150,35 +141,28 @@ allow-wildcard-with-all = true
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
-    "C",  # Conventions
-
+    # Conventions
+    "C",                             # CXXXX
     # Inspections (?)
     "c-extension-no-member",         # I1101
-
     # Refactors
     "duplicate-code",                # R0801
     "inconsistent-return-statements",# R1710
-
     # These do not work with custom bitshifts that return None
     "pointless-statement",           # W0104
     "expression-not-assigned",       # W0106
-
     # These don't work with the general design choices of the project
     "unnecessary-lambda",            # W0108
     "wildcard-import",               # W0401
     "unused-wildcard-import",        # W0614
     "redefined-builtin",             # W0622
-
     # Doesn't work with (positional arguments with a default value) before a backslash and *args
     "keyword-arg-before-vararg",     # W1113
-
     # Will implement complete docs later
     "missing-return-doc",            # W9011
-
     # These do not work with starred parameter names
     "missing-param-doc",             # W9015
     "differing-param-doc",           # W9017
-
     # These do not work with wildcard imports using __all__
     "import-error",                  # E0401
     "undefined-variable",            # E0602
@@ -222,6 +206,4 @@ check-quote-consistency = true
 check-str-concat-over-line-jumps = false
 
 [tool.pylint.'VARIABLES']
-allowed-redefined-builtins = [
-    "help", "id"
-]
+allowed-redefined-builtins = ["help", "id",]
