@@ -75,7 +75,8 @@ jobs = 0
 load-plugins = [
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
-    "pylint.extensions.typing"
+    "pylint.extensions.for_any_all",
+    "pylint.extensions.typing",
 ]
 py-version = "3.10"
 
@@ -136,6 +137,7 @@ disable = [
     "c-extension-no-member",         # I1101
 
     # Refactors
+    "duplicate-code",                # R0801
     "inconsistent-return-statements",# R1710
 
     # These do not work with custom bitshifts that return None
@@ -173,6 +175,7 @@ enable = [
     "consider-iterating-dictionary",# C0201
     "use-maxsplit-arg",             # C0207
     "line-too-long",                # C0301 # Max line length is defined in [tool.pylint.'FORMAT']
+    "consider-using-any-or-all",    # C0501
 ]
 
 [tool.pylint.'MISCELLANEOUS']

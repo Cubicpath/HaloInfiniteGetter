@@ -116,12 +116,17 @@ class _EventBusMeta(type):
     def __getitem__(mcs, id: str) -> EventBus | None: ...
 
     @classmethod
-    def __getitem__(mcs, id):
+    def __getitem__(mcs, id) -> EventBus | None:
         return mcs._id_bus_map.get(id.lower())
 
     @classmethod
     def __setitem__(mcs, id: str, bus: EventBus) -> None:
-        """Set an :py:class:`EventBus` from the bus map."""
+        """Set an :py:class:`EventBus` from the bus map.
+
+        :raises TypeError:
+            If id is not a str.
+            If bus is not an Eventbus.
+        """
         if not isinstance(id, str):
             raise TypeError(f'parameter {id=} is not of type {str}.')
         if not isinstance(bus, EventBus):

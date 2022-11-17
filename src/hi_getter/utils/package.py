@@ -134,8 +134,9 @@ def has_package(package: str) -> bool:
     :return: Whether the given package name is installed to the current environment.
     """
     from pkg_resources import WorkingSet
+    package = package.replace('-', '_')
 
-    for pkg in WorkingSet():
-        if package.replace('-', '_') == pkg.project_name.replace('-', '_'):
-            return True
-    return False
+    return any(
+        package == pkg.project_name.replace('-', '_')
+        for pkg in WorkingSet()
+    )

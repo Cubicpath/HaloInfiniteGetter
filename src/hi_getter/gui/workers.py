@@ -42,6 +42,7 @@ class _Worker(QRunnable):
             else:
                 raise TypeError(f'"{kw}" is not a valid kwarg or signal name.')
 
+    # pylint: disable=no-self-use
     def _dummy_method(self) -> None:
         return
 
