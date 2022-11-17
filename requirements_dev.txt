@@ -1,10 +1,17 @@
 # Install every other requirement so all functionality is available
 -r requirements.txt
 
-autopep8==2.0.0  # Formatting
+# Formatting
+autopep8==2.0.0
     pycodestyle>=2.9.1
 
-pylint==2.15.5   # Linting
+# Linting
+bandit==1.7.4
+    GitPython>=1.0.1
+    PyYAML>=5.3.1
+    stevedore>=1.20.0
+
+pylint==2.15.5
     astroid<=2.14.0-dev0, >=2.12.12
         wrapt<2, >=1.11
         lazy-object-proxy>=1.4.0

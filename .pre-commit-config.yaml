@@ -17,6 +17,17 @@ repos:
     hooks:
       - id: autopep8
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.4
+    hooks:
+      - id: bandit
+        additional_dependencies: ["bandit[toml]",]
+        args:
+          [
+            "-c", "pyproject.toml", # Use config located at [tool.bandit] in pyproject.toml
+            "-r", "src",            # Recursively scan src
+          ]
+
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v2.6.0
     hooks:

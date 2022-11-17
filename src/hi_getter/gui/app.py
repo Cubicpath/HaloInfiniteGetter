@@ -369,8 +369,8 @@ class GetterApp(Singleton, QApplication):
 
         if consent_to_install:
             try:
-                # Install the package
-                subprocess.run([exec_path, '-m', 'pip', 'install', package], check=True)
+                # Install the package, Path(sys.executable) contains 0 user input.
+                subprocess.run([exec_path, '-m', 'pip', 'install', package], check=True)  # nosec B603:subprocess_without_shell_equals_true
             except (OSError, subprocess.SubprocessError) as e:
                 self.show_dialog(
                     'errors.package_install_failure', parent,

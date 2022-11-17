@@ -37,6 +37,7 @@ all = [
 ]
 dev = [
     "autopep8>=2.0.0",
+    "bandit>=1.7.4",
     "pylint>=2.15.5"
 ]
 
@@ -56,6 +57,15 @@ ignore = ["E7"]
 in-place = true
 recursive = true
 aggressive = 3
+
+
+# Bandit configuration.
+# ---------------------
+[tool.bandit]
+skips = [
+    "B311",  # random is not used for security/cryptographic purposes.
+    "B404",  # subprocess is used with minimal user input.
+]
 
 
 # Pylint configuration.

@@ -206,7 +206,8 @@ def create_shortcut(target: Path, arguments: str | None = None,
             f'-{key}:{factory(value)}' for (key, (value, factory)) in arg_factories.items() if value is not None
         ])
 
-        subprocess.run(
+        # All user input is passed in as a controlled powershell.exe argument.
+        subprocess.run(  # nosec B603:subprocess_without_shell_equals_true
             powershell_arguments,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             universal_newlines=True, check=True
