@@ -54,13 +54,14 @@ class _AbstractCallable(ABC):
         """
         raise NotImplementedError
 
-
+##########
 # NOTICE:
-#
+##########
 # Requests
 # Copyright 2019 Kenneth Reitz
 # Apache 2.0 License
 # https://github.com/psf/requests/blob/main/LICENSE
+
 
 class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     """A case-insensitive :py:class:`dict`-like object.

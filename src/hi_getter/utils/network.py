@@ -80,9 +80,9 @@ def wait_for_reply(reply: QNetworkReply) -> None:
     while not reply.isFinished():
         QCoreApplication.processEvents()
 
-
+##########
 # NOTICE:
-#
+##########
 # Requests
 # Copyright 2019 Kenneth Reitz
 # Apache 2.0 License

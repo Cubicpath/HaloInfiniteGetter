@@ -81,6 +81,8 @@ load-plugins = [
     "pylint.extensions.consider_ternary_expression",
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
+    "pylint.extensions.empty_comment",
+    "pylint.extensions.emptystring",
     "pylint.extensions.for_any_all",
     "pylint.extensions.typing",
 ]
@@ -183,6 +185,7 @@ enable = [
     "use-maxsplit-arg",             # C0207
     "line-too-long",                # C0301 # Max line length is defined in [tool.pylint.'FORMAT']
     "consider-using-any-or-all",    # C0501
+    "compare-to-empty-string",      # C1901
     "comparison-placement",         # C2001
     "compare-to-zero",              # C2201
 ]
