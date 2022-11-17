@@ -64,10 +64,7 @@ class ExceptionLogger(QPushButton):
 
     def on_exception(self, event: ExceptionEvent) -> None:
         """Update the exception log and change set the max level."""
-        if isinstance(event.exception, Warning) and self.severity < 1:
-            level = 1
-        else:
-            level = 2
+        level = 1 if isinstance(event.exception, Warning) and self.severity < 1 else 2
 
         self.severity = max(self.severity, level)
 

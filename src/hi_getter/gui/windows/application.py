@@ -541,18 +541,13 @@ class AppWindow(Singleton, QMainWindow):
         display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
 
         # Load up to 8 MiB of text data
-        if len(data) <= BYTE_UNITS['MiB'] * 8:
-            output = data
-        else:
-            output = tr(
-                'gui.outputs.text.errors.too_large',
-                app().client.to_os_path(search_path)
-            )
-
-        original_output = output
+        output = data if len(data) <= BYTE_UNITS['MiB'] * 8 else tr(
+            'gui.outputs.text.errors.too_large',
+            app().client.to_os_path(search_path)
+        )
 
         replaced = set()
-        for match in HI_PATH_PATTERN.finditer(original_output):
+        for match in HI_PATH_PATTERN.finditer(output):
             if (match := match[0].replace('"', '')) not in replaced:
                 output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                 replaced.add(match)
