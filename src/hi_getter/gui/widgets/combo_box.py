@@ -69,8 +69,7 @@ class HistoryComboBox(ComboBox):
     # noinspection PyTypeChecker
     def addItem(self, text: str, *args, **kwargs) -> None:
         """Filters already-present strings from being added using addItem."""
-        result = self.findText(text, Qt.MatchFlag.MatchFixedString)
-        if result != -1:
+        if (result := self.findText(text, Qt.MatchFlag.MatchFixedString)) != -1:
             self.removeItem(result)
 
         super().addItem(text, *args, **kwargs)

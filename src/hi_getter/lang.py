@@ -79,8 +79,7 @@ def format_value(value: str, *args: Any, _language: Language = None, _key_eval: 
             found: bool = False
             for rec_matches in _KEY_REF.finditer(value):
                 found = True
-                rec_match = rec_matches[0]
-                if rec_match not in replaced:
+                if (rec_match := rec_matches[0]) not in replaced:
                     replaced.add(rec_match)
                     value = value.replace(rec_match, _language.get_raw(rec_match.strip('{}')))
 
@@ -122,9 +121,7 @@ class Language:
         self.tag: str = Language.build_tag({'primary': primary, 'region': region} | kwargs)
         self.subtags: dict[str, str | None] = RFC_5646_PATTERN.match(self.tag).groupdict()
 
-        _selected_file = self.closest_file() if _selected_file is None else _selected_file
-
-        if _selected_file is not None:
+        if (_selected_file := self.closest_file() if _selected_file is None else _selected_file) is not None:
             # Read the language file corresponding to this Language's tags.
             file_data: dict[str, Any] = json.loads(_selected_file.read_text(encoding='utf8'))
 
@@ -207,10 +204,8 @@ class Language:
 
         if variants is not None:
             for subtag in variants.split('-'):
-                variant = subtag.lower()
-
                 # RFC 5646 section 2.2.5.5
-                if variant in checked:
+                if (variant := subtag.lower()) in checked:
                     err = ValueError(f'Variant subtag "{subtag}" is repeated.')
 
                 checked.add(variant)
@@ -220,10 +215,8 @@ class Language:
         if extensions is not None:
             for i, subtag in enumerate(extensions.split('-')):
                 if i % 2 == 0:
-                    singleton = subtag.lower()
-
                     # RFC 5646 section 2.2.6.3
-                    if singleton in checked:
+                    if (singleton := subtag.lower()) in checked:
                         err = ValueError(f'Singleton subtag "{subtag}" is repeated.')
 
                     checked.add(singleton)
@@ -294,9 +287,8 @@ class Language:
         """
         # Default value is key if not overridden
         default = default if default is not None else key
-        result: str = self._data.get(key, default)
 
-        if result is not default:
+        if (result := self._data.get(key, default)) is not default:
             return format_value(result, *args, _language=self, _key_eval=key_eval)
 
         # Dont format default value

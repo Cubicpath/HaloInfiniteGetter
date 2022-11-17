@@ -493,8 +493,7 @@ class AppWindow(Singleton, QMainWindow):
 
         :param scan: Whether to recursively scan a resource.
         """
-        user_input = self.input_field.currentText()
-        if not user_input:
+        if not (user_input := self.input_field.currentText()):
             return
 
         search_path = user_input.strip()
@@ -554,8 +553,7 @@ class AppWindow(Singleton, QMainWindow):
 
         replaced = set()
         for match in HI_PATH_PATTERN.finditer(original_output):
-            match = match[0].replace('"', '')
-            if match not in replaced:
+            if (match := match[0].replace('"', '')) not in replaced:
                 output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                 replaced.add(match)
 

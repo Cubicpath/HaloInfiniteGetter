@@ -74,16 +74,13 @@ def create_shortcut(target: Path, arguments: str | None = None,
         }
     }
 
-    data = PLATFORM_SHORTCUT_DATA.get(sys.platform)
-
-    if not data:
+    if not (data := PLATFORM_SHORTCUT_DATA.get(sys.platform)):
         return
 
     if icon and icon.suffix not in data['icon_exts']:
         raise ValueError(f'Icon must be one of {data["icon_exts"]} for {sys.platform}')
 
-    platform = sys.platform.lower()
-    if platform == 'darwin':
+    if (platform := sys.platform.lower()) == 'darwin':
         # macOS doesn't support start menu shortcuts, so return if not creating a desktop shortcut
         if not desktop:
             return
@@ -345,7 +342,7 @@ def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list
     return val
 
 
-# pylint: disable=no-else-return
+# pylint: disable=R
 def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | None:
     """Hide an existing Windows file. If not running windows, do nothing.
 

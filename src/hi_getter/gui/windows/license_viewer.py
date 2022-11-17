@@ -124,8 +124,7 @@ class LicenseViewer(QWidget):
 
     def prev_license(self) -> None:
         """View the previous license."""
-        index = self.license_dropdown.currentIndex() - 1
-        if index < 0:
+        if (index := self.license_dropdown.currentIndex() - 1) < 0:
             index = self.license_dropdown.count() - 1
         self.view_index(index)
 
@@ -147,8 +146,7 @@ class LicenseViewer(QWidget):
         output = license_text
         replaced = set()
         for match in HI_URL_PATTERN.finditer(license_text):
-            match = match[0]
-            if match not in replaced:
+            if (match := match[0]) not in replaced:
                 output = output.replace(match, f'<a href="{match}" style="color: #2A5DB0">{match}</a>')
                 replaced.add(match)
 

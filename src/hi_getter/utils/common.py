@@ -61,8 +61,7 @@ def get_parent_doc(__type: type, /) -> str | None:
     """
     doc = None
     for parent in __type.__mro__:
-        doc = parent.__doc__
-        if doc:
+        if doc := parent.__doc__:
             break
     return doc
 

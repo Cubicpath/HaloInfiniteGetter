@@ -122,8 +122,7 @@ class ExternalTextBrowser(QTextBrowser):
         # QTextDocument.ResourceType.ImageResource = 0x2
         if resource_type == 0x2 and not url.isLocalFile():
             image: QImage = QImage()
-            url_string: str = url.toDisplayString()
-            if url_string not in self.remote_image_cache:
+            if (url_string := url.toDisplayString()) not in self.remote_image_cache:
                 # Add placeholder bytes to show the url is being downloaded.
                 # Otherwise, unneeded replies are sent out and cause application stutter.
                 self.remote_image_cache[url_string] = bytes()

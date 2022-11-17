@@ -96,8 +96,7 @@ class SettingsWindow(Singleton, QWidget):
 
         def set_key() -> None:
             """Set the client's auth_key to the current text in the key field."""
-            text = self.key_field.text().strip()
-            if text:
+            if text := self.key_field.text().strip():
                 app().client.wpauth = text
             else:
                 del app().client.wpauth

@@ -221,8 +221,7 @@ class Client(QObject):
     @token.setter
     def token(self, value: str) -> None:
         value = decode_url(value)
-        key_start_index = value.find('v4=')
-        if key_start_index == -1:
+        if (key_start_index := value.find('v4=')) == -1:
             raise ValueError('token value is missing version identifier ("v4=") to signify start.')
 
         self._token = value[key_start_index:].rstrip()

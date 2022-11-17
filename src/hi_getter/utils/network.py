@@ -89,6 +89,7 @@ def wait_for_reply(reply: QNetworkReply) -> None:
 # https://github.com/psf/requests/blob/main/LICENSE
 
 
+# pylint: disable=consider-using-assignment-expr
 def guess_json_utf(data: bytes) -> str | None:
     """:return: String representing the detected encoding of the given data. None if not detected."""
     # JSON always starts with two ASCII characters, so detection is as
