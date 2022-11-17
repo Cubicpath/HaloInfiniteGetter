@@ -166,12 +166,11 @@ def init_objects(object_data: dict[object, dict[str, Any]]) -> None:
             if not isinstance(obj, QComboBox):
                 # Set directly for non-dropdowns
                 obj.setItems(items)
+            elif hasattr(obj, 'addItems'):
+                obj.addItems(items)
             else:
-                if hasattr(obj, 'addItems'):
-                    obj.addItems(items)
-                else:
-                    for key in items:
-                        obj.addItem(key)
+                for key in items:
+                    obj.addItem(key)
 
         # Set size
         if size_dict is not None:

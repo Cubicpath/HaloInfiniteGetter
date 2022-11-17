@@ -73,6 +73,8 @@ skips = [
 [tool.pylint.'MASTER']
 jobs = 0
 load-plugins = [
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.check_elif",
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
     "pylint.extensions.for_any_all",
@@ -137,6 +139,7 @@ disable = [
     "c-extension-no-member",         # I1101
 
     # Refactors
+    "useless-option-value",          # R0022
     "duplicate-code",                # R0801
     "inconsistent-return-statements",# R1710
 

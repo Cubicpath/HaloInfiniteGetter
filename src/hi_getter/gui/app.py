@@ -313,16 +313,15 @@ class GetterApp(Singleton, QApplication):
         standard_buttons = None
         if buttons is not None:
             if isinstance(buttons, Sequence):
+                # If the button is not a tuple, assume it's a QMessageBox.StandardButton.
+                # Build a StandardButtons from all StandardButton objects in buttons.
                 for button in buttons:
                     if isinstance(button, tuple):
                         msg_box.addButton(*button)
+                    elif standard_buttons is None:
+                        standard_buttons = button
                     else:
-                        # If the button is not a tuple, assume it's a QMessageBox.StandardButton.
-                        # Build a StandardButtons from all StandardButton objects in buttons.
-                        if standard_buttons is None:
-                            standard_buttons = button
-                        else:
-                            standard_buttons |= button
+                        standard_buttons |= button
             else:
                 # If the buttons is not a sequence, assume it's QMessageBox.StandardButtons.
                 standard_buttons = buttons
