@@ -345,6 +345,7 @@ def get_winreg_value(key_name: str, value_name: str) -> str | int | bytes | list
     return val
 
 
+# pylint: disable=no-else-return
 def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | None:
     """Hide an existing Windows file. If not running windows, do nothing.
 

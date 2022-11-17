@@ -35,7 +35,7 @@ TomlValue: TypeAlias = TomlTable | list | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 
-def make_comment_val(val: TomlValue, comment: str | None = None, new_line=False) -> CommentValue:
+def make_comment_val(val: TomlValue, comment: str | None = None, new_line: bool = False) -> CommentValue:
     """Build and return :py:class:`CommentValue`."""
     return CommentValue(
         val=val,
@@ -110,7 +110,7 @@ class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
     With native support for pathlib :py:class:`Path` values; not abandoning the TOML specification.
     """
 
-    def load_value(self, v: str, strictly_valid=True) -> tuple[Any, str]:
+    def load_value(self, v: str, strictly_valid: bool = True) -> tuple[Any, str]:
         """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
         if v[1:].startswith(_SPECIAL_PATH_PREFIX):
             v_path = Path(v[1:].removeprefix(_SPECIAL_PATH_PREFIX)[:-1])

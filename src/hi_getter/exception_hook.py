@@ -60,6 +60,6 @@ class ExceptionHook:
         del EventBus['exceptions']
 
     @property
-    def old_hook(self):
+    def old_hook(self) -> ExceptHookCallable:
         """The original exception hook."""
         return self.__old_hook

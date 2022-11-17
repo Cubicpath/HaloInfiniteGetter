@@ -370,7 +370,11 @@ class Singleton:
 
     @classmethod
     def create(cls, *args, **kwargs) -> None:
-        """The preferred way of creating the :py:class:`Singleton` instance."""
+        """The preferred way of creating the :py:class:`Singleton` instance.
+
+        :raises RuntimeError: If singleton instance currently exists.
+        :raises TypeError: If __init__ is not overridden.
+        """
         # All subclasses of Singleton should override __init__
         if cls.__init__ is Singleton.__init__:
             raise TypeError(f'Could not instantiate abstract class {cls.__name__} with abstract method __init__.')
@@ -384,7 +388,10 @@ class Singleton:
 
     @classmethod
     def instance(cls) -> Singleton:  # Real return type is weakref.ProxyType[Singleton]
-        """Return a weak reference to the :py:class:`Singleton` instance."""
+        """Return a weak reference to the :py:class:`Singleton` instance.
+
+        :raises RuntimeError: If singleton is not currently instantiated.
+        """
         cls._check_ref_count()
 
         if not cls.is_instantiated():
@@ -397,6 +404,10 @@ class Singleton:
         """Destroy the :py:class:`Singleton` instance.
 
         This results in the destruction of all weak references to the previous instance.
+
+        :raises RuntimeError:
+            If singleton instance could not be destroyed.
+            If singleton is not currently instantiated.
         """
         if cls._check_ref_count() is False:
             raise RuntimeError(f'Could not destroy weak references to the {cls.__name__} instance. '

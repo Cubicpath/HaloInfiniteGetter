@@ -468,7 +468,7 @@ class NetworkSession:
 
         return reply
 
-    def get(self, url: QUrl | str, **kwargs):
+    def get(self, url: QUrl | str, **kwargs) -> QNetworkReply:
         """Create and send a request with the GET HTTP method.
 
         GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used

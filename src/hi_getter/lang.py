@@ -146,6 +146,8 @@ class Language:
         """Build a :py:class:`Language` object using a plain string tag.
 
         Breaks tag into sub-tags and verifies compliance with RFC 5646.
+
+        :raises ValueError: If tag is not a valid language tag.
         """
         if match := RFC_5646_PATTERN.match(tag):
             return cls(**match.groupdict())
@@ -156,6 +158,8 @@ class Language:
         """Build a :py:class:`Language` object using a plain string tag.
 
         Breaks tag into sub-tags and verifies compliance with RFC 5646.
+
+        :raises ValueError: If tag from the path's filename is not a valid language tag.
         """
         path = Path(path)
         tag: str = Path(path).stem.split('.')[0].replace('_', '-')

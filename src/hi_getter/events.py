@@ -82,7 +82,13 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
         return f'({repr_.rstrip(", ")})'
 
     def add(self, event: type[_ET_co], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
-        """Add a callable pair to an Event subscriber list."""
+        """Add a callable pair to an Event subscriber list.
+
+        :raises TypeError:
+            If event is not a subclass of Event.
+            If subscriber is not callable.
+            If subscriber's predicate is defined but not a callable.
+        """
         if not issubclass(event, Event):
             raise TypeError(f'event is not subclass to {Event}.')
         if not callable(callable_pair[0]):

@@ -100,7 +100,10 @@ class AppWindow(Singleton, QMainWindow):
         from .settings import SettingsWindow
 
         def context_menu_handler(menu_class: type[QMenu]) -> None:
-            """Create a new :py:class:`QMenu` and show it at the cursor's position."""
+            """Create a new :py:class:`QMenu` and show it at the cursor's position.
+
+            :raises TypeError: If menu_class is not an instance of QMenu.
+            """
             if not issubclass(menu_class, QMenu):
                 raise TypeError(f'{menu_class} is not a subclass of {QMenu}')
 

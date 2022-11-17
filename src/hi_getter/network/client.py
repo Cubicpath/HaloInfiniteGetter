@@ -212,7 +212,10 @@ class Client(QObject):
 
     @property
     def token(self) -> str | None:
-        """343 auth token to authenticate self to API endpoints."""
+        """343 auth token to authenticate self to API endpoints.
+
+        :raises ValueError: If the value being set doesn't contain the version identifier ("v4=").
+        """
         return self._token
 
     @token.setter
