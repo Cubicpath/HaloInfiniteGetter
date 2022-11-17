@@ -1,0 +1,69 @@
+{
+  "endpoints": {
+		"commsService": {
+			"subdomain": "wpcomms"
+		},
+		"economyService": {
+			"subdomain": "economy"
+		},
+		"fireteamRavenService": {
+			"subdomain": "halo-fireteam-raven"
+		},
+		"flightingService": {
+			"subdomain": "flighting"
+		},
+		"gameCmsService": {
+			"subdomain": "gamecms-hacs"
+		},
+		"halo5GatewayService": {
+			"subdomain": "halo5-api-gateway"
+		},
+		"haloCmsService": {
+			"subdomain": "content-hacs"
+		},
+		"haloPlayerService": {
+			"subdomain": "haloplayer"
+		},
+		"haloStatsService": {
+			"subdomain": "halostats"
+		},
+		"iUgcService": {
+			"subdomain": "discovery-infiniteugc"
+		},
+		"iUgcAuthoringService": {
+			"subdomain": "authoring-infiniteugc"
+		},
+		"iUgcDiscoveryService": {
+			"subdomain": "discovery-infiniteugc"
+		},
+		"legacyGatewayService": {
+			"subdomain": "legacy-gateway"
+		},
+		"mccGatewayService": {
+			"subdomain": "mcc-gateway"
+		},
+		"packsService": {
+			"subdomain": "packs"
+		},
+		"profileService": {
+			"subdomain": "profile"
+		},
+		"settingsService": {
+			"subdomain": "settings"
+		},
+		"skillService": {
+			"subdomain": "skill"
+		},
+		"spartanStatsService": {
+			"subdomain": "spartanstats"
+		},
+		"voucherService": {
+			"subdomain": "voucher"
+		},
+		"waypointContentService": {
+			"subdomain": "wpcontent"
+		}
+	},
+  "svcHost": "svc.halowaypoint.com",
+  "webHost": "www.halowaypoint.com"
+}

@@ -30,8 +30,9 @@ from ..utils.network import wait_for_reply
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
-WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
+_ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
 TOKEN_PATH: Final[Path] = HI_CONFIG_PATH / '.token'
+WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
 WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
@@ -51,10 +52,10 @@ class Client(QObject):
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
         super().__init__(parent)
-        self.SVC_HOST: str = 'svc.halowaypoint.com'
-        self.WEB_HOST: str = 'www.halowaypoint.com'
+        self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
+
         self.parent_path: str = '/hi/'
-        self.sub_host: str = 'gamecms-hacs-origin'  # Must be defined before session headers
+        self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']  # Must be defined before session headers
         self.searched_paths: set[str] = set()
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
@@ -87,7 +88,7 @@ class Client(QObject):
         self.web_session: NetworkSession = NetworkSession(self)
         self.web_session.headers = self.api_session.headers | {
             'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
-            'Host': self.WEB_HOST,
+            'Host': self.endpoints['webHost'],
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-Site': 'none',
@@ -203,11 +204,11 @@ class Client(QObject):
 
     def delete_cookie(self, name: str) -> None:
         """Delete given cookie if cookie exists."""
-        self.web_session.clear_cookies(self.WEB_HOST, '/', name)
+        self.web_session.clear_cookies(self.endpoints['webHost'], '/', name)
 
     def set_cookie(self, name: str, value: str) -> None:
         """Set cookie value in Cookie jar. Defaults cookie domain as the WEB_HOST."""
-        self.web_session.set_cookie(name, value, self.WEB_HOST)
+        self.web_session.set_cookie(name, value, self.endpoints['webHost'])
 
     @property
     def token(self) -> str | None:
@@ -268,7 +269,7 @@ class Client(QObject):
     @property
     def host(self) -> str:
         """Host to send to."""
-        return f'{self.sub_host}.{self.SVC_HOST}'
+        return f'{self.sub_host}.{self.endpoints["svcHost"]}'
 
     @host.setter
     def host(self, value: str) -> None:
