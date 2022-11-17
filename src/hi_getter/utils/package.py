@@ -91,7 +91,7 @@ def current_requirement_names(package: str, recursive: bool = False, include_ext
             continue
 
         # Don't include testing extras
-        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in ('dev', 'develop', 'development', 'test', 'testing'):
+        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in {'dev', 'develop', 'development', 'test', 'testing'}:
             continue
 
         # Get the package name from the requirement

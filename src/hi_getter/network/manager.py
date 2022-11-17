@@ -112,7 +112,7 @@ class NetworkSession:
         :param kwargs: Keyword arguments to check.
         """
 
-        if method in ('GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'):
+        if method in {'GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'}:
             if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
                 warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
 

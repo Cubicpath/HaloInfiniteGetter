@@ -95,9 +95,9 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     v_number += f'.{micro}' if micro else ''
 
     if releaselevel and releaselevel not in ('final', 'release'):
-        if releaselevel in ('candidate', 'c'):
+        if releaselevel in {'candidate', 'c'}:
             releaselevel = 'rc'
-        if releaselevel in ('alpha', 'beta'):
+        if releaselevel in {'alpha', 'beta'}:
             releaselevel = releaselevel[0]
         if releaselevel == 'preview':
             releaselevel = 'pre'
