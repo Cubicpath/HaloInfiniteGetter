@@ -12,12 +12,12 @@ __all__ = (
 import json
 from datetime import datetime
 from importlib.metadata import version
-# noinspection PyProtectedMember, PyUnresolvedReferences
-from setuptools._vendor.packaging.version import Version
 from typing import Any
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
+# noinspection PyProtectedMember, PyUnresolvedReferences
+from setuptools._vendor.packaging.version import Version
 
 from .._version import __version__
 from ..constants import *

@@ -55,6 +55,7 @@ class Event:
         Defaults to the first line of the nearest type doc in the mro.
         """
         doc: str | None = self.__doc__
+        # pylint: disable=unidiomatic-typecheck
         if doc is None and isinstance(self, Event) and type(self) is not Event:
             doc = get_parent_doc(type(self))
         return doc.splitlines()[0] if doc is not None else ''
