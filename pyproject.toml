@@ -79,30 +79,89 @@ load-plugins = [
 ]
 py-version = "3.10"
 
+[tool.pylint.'CLASSES']
+defining-attr-methods = [
+    "__init__",
+    "__new__",
+    "__post_init__",
+    "_init_ui",
+    "setUp",
+]
+exclude-protected = [
+    "_asdict",
+    "_dump_str",
+    "_fields",
+    "_replace",
+    "_source",
+    "_make",
+]
+
+[tool.pylint.'DESIGN']
+# Maximum number of arguments for function / method.
+max-args = 999
+max-attributes = 999
+max-bool-expr = 999
+max-branches = 999
+max-locals = 999
+max-parents = 999
+max-public-methods = 999
+max-returns = 999
+max-statements = 999
+min-public-methods = 0
+
+[tool.pylint.'EXCEPTIONS']
+overgeneral-exceptions = []
+
+[tool.pylint.'FORMAT']
+good-names = [
+    "a", "b", "c",
+    "e",
+    "i", "j", "k", "l",
+    "o",
+    "x", "y", "z",
+    "_",
+    "__",
+]
+max-line-length = 160
+max-module-lines = 1000
+
+[tool.pylint.'IMPORTS']
+allow-wildcard-with-all = true
+
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
-    "C",    # Conventions
-    "R",    # Reformats
-    "c-extension-no-member",    # I1101
+    "C",  # Conventions
+
+    # Inspections (?)
+    "c-extension-no-member",         # I1101
+
+    # Refactors
+    "inconsistent-return-statements",# R1710
+
     # These do not work with custom bitshifts that return None
-    "pointless-statement",      # W0104
-    "expression-not-assigned",  # W0106
+    "pointless-statement",           # W0104
+    "expression-not-assigned",       # W0106
+
     # These don't work with the general design choices of the project
-    "unnecessary-lambda",       # W0108
-    "protected-access",         # W0212
-    "wildcard-import",          # W0401
-    "fixme",                    # W0511
-    "unused-wildcard-import",   # W0614
-    "redefined-builtin",        # W0622
+    "unnecessary-lambda",            # W0108
+    "wildcard-import",               # W0401
+    "unused-wildcard-import",        # W0614
+    "redefined-builtin",             # W0622
+
     # Doesn't work with (positional arguments with a default value) before a backslash and *args
-    "keyword-arg-before-vararg",# W1113
+    "keyword-arg-before-vararg",     # W1113
+
+    # Will implement complete docs later
+    "missing-return-doc",            # W9011
+
     # These do not work with starred parameter names
-    "missing-param-doc",        # W9015
-    "differing-param-doc",      # W9017
+    "missing-param-doc",             # W9015
+    "differing-param-doc",           # W9017
+
     # These do not work with wildcard imports using __all__
-    "import-error",             # E0401
-    "undefined-variable",       # E0602
-    "undefined-all-variable",   # E0603
+    "import-error",                  # E0401
+    "undefined-variable",            # E0602
+    "undefined-all-variable",        # E0603
 ]
 enable = [
     "disallowed-name",              # C0104
@@ -114,29 +173,29 @@ enable = [
     "consider-iterating-dictionary",# C0201
     "use-maxsplit-arg",             # C0207
     "line-too-long",                # C0301 # Max line length is defined in [tool.pylint.'FORMAT']
-    "literal-comparison",           # R0123
-    "comparison-with-itself",       # R0124
-    "consider-using-ternary",       # R1706
-    "consider-using-in",            # R1714
-    "unnecessary-comprehension",    # R1721
-    "consider-using-min-builtin",   # R1730
-    "consider-using-max-builtin",   # R1731
-    "use-list-literal",             # R1734
-    "use-dict-literal",             # R1735
 ]
+
+[tool.pylint.'MISCELLANEOUS']
+notes = [] # This disables warnings caused by TO|DO, FIX|ME, etc.
+
+[tool.pylint.'PARAMETER DOCUMENTATION']
+accept-no-param-doc = false
+accept-no-raise-doc = false
+accept-no-return-doc = false
+accept-no-yields-doc = true
+
+[tool.pylint.'REFACTORING']
+max-nested-blocks = 999
 
 [tool.pylint.'REPORTS']
 output-format = "parseable"
 reports = "no"
 
-[tool.pylint.'FORMAT']
-good-names = [
-    "a", "b", "c",
-    "e",
-    "i", "id", "j", "k", "l",
-    "o",
-    "x", "y", "z",
-    "_",
-    "__",
+[tool.pylint.'STRING']
+check-quote-consistency = true
+check-str-concat-over-line-jumps = false
+
+[tool.pylint.'VARIABLES']
+allowed-redefined-builtins = [
+    "help", "id"
 ]
-max-line-length=160

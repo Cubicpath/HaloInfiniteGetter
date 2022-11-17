@@ -49,7 +49,6 @@ repos:
     hooks:
       - id: pylint
         name: pylint
-        exclude: ^tests/
         args:
           [
             "src", # Only lint src
