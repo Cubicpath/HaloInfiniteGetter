@@ -54,6 +54,7 @@ class TomlEvents:
         __slots__ = ('toml_file',)
 
         def __init__(self, toml_file: TomlFile) -> None:
+            """Create a new :py:class:`TomlEvents.TomlEvent` event with the given file."""
             self.toml_file = toml_file
 
     class File(TomlEvent):
@@ -62,6 +63,7 @@ class TomlEvents:
         __slots__ = ('path',)
 
         def __init__(self, toml_file: TomlFile, path: Path) -> None:
+            """Create a new :py:class:`TomlEvents.File` event with the given file and path."""
             super().__init__(toml_file=toml_file)
             self.path = path
 
@@ -81,6 +83,7 @@ class TomlEvents:
         __slots__ = ('key',)
 
         def __init__(self, toml_file: TomlFile, key: str) -> None:
+            """Create a new :py:class:`TomlEvents.KeyAccess` event with the given file and key."""
             super().__init__(toml_file=toml_file)
             self.key: str = key
 
@@ -90,6 +93,7 @@ class TomlEvents:
         __slots__ = ('value',)
 
         def __init__(self, toml_file: TomlFile, key: str, value: TomlValue) -> None:
+            """Create a new :py:class:`TomlEvents.Get` event with the given file, key, and value."""
             super().__init__(toml_file=toml_file, key=key)
             self.value = value
 
@@ -98,10 +102,11 @@ class TomlEvents:
 
         __slots__ = ('old', 'new')
 
-        def __init__(self, toml_file: TomlFile, key: str, old: TomlValue, new: TomlValue) -> None:
+        def __init__(self, toml_file: TomlFile, key: str, old: TomlValue | None, new: TomlValue) -> None:
+            """Create a new :py:class:`TomlEvents.Set` event with the given file, key, old value, and new value."""
             super().__init__(toml_file=toml_file, key=key)
             self.old: TomlValue | None = old
-            self.new: TomlValue | None = new
+            self.new: TomlValue = new
 
     class Fail(TomlEvent):
         """General Failure."""
@@ -109,6 +114,7 @@ class TomlEvents:
         __slots__ = ('failure',)
 
         def __init__(self, toml_file: TomlFile, failure: str) -> None:
+            """Create a new :py:class:`TomlEvents.Fail` event with the given file and failure value."""
             super().__init__(toml_file=toml_file)
             self.failure = failure
 
@@ -134,6 +140,7 @@ class PathTomlEncoder(toml.TomlEncoder):
     """
 
     def __init__(self, _dict=dict, preserve=False) -> None:
+        """Map extra ``dump_funcs`` for :py:class:`CommentValue` and :py:class:`PurePath`."""
         super().__init__(_dict, preserve)
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[PurePath] = self._dump_pathlib_path

@@ -19,6 +19,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Generator
+from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import MutableMapping
 from typing import Any
@@ -93,7 +94,12 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
 
     __slots__ = ('_store',)
 
-    def __init__(self, data=None, **kwargs) -> None:
+    def __init__(self, data: Iterable[tuple[str, _VT]] | Mapping[str, _VT] | None = None, **kwargs) -> None:
+        """Create a :py:class:`CaseInsensitiveDict` with the given data.
+
+        :param data: Data to turn into a CaseInsensitiveDict
+        :param kwargs: key-values in form of kwargs
+        """
         self._store: OrderedDict[str, tuple[str, _VT]] = OrderedDict()
         if data is None:
             data = {}
@@ -376,8 +382,12 @@ class Singleton:
         """
         raise TypeError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
+    # pylint: disable=useless-super-delegation
     def __init__(self, *args, **kwargs) -> None:
-        # pylint: disable=useless-super-delegation
+        """Bare ``__init__`` used as placeholder.
+
+        When replaced, its replacement is called by :py:class:`Singleton`.create()
+        """
         super().__init__(*args, **kwargs)
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
@@ -455,3 +465,6 @@ class Singleton:
     def is_instantiated(cls) -> bool:
         """Return whether the :py:class:`Singleton` instance exists."""
         return isinstance(cls.__instance, cls)
+
+
+Singleton()

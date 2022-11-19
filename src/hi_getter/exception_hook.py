@@ -26,6 +26,7 @@ class ExceptionEvent(Event):
     __slots__ = ('exception', 'traceback')
 
     def __init__(self, exception: BaseException, traceback: TracebackType) -> None:
+        """Create a new :py:class:`ExceptionEvent` event with the given exception and its associated traceback."""
         self.exception: BaseException = exception
         self.traceback: TracebackType = traceback
 

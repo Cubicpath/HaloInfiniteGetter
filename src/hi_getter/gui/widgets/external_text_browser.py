@@ -30,6 +30,7 @@ class ExternalTextBrowser(QTextBrowser):
     remote_image_cache: dict[str, bytes] = {}
 
     def __init__(self, *args, **kwargs) -> None:
+        """Initialize :py:class:`ExternalTextBrowser` values."""
         super().__init__(*args, **kwargs)
         self.anchorClicked.connect(lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#')))
 

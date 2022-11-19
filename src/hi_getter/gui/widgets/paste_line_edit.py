@@ -21,6 +21,7 @@ class PasteLineEdit(QLineEdit):
     pasted = Signal(name='pasted')
 
     def __init__(self, *args, pasted: Callable[[], None] | None = None, **kwargs) -> None:
+        """Initialize the ``pasted`` keyword argument onto the ``self.pasted`` signal."""
         super().__init__(*args, **kwargs)
         if pasted is not None:
             self.pasted.connect(pasted)

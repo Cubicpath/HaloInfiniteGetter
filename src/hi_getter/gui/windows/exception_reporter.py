@@ -41,6 +41,7 @@ class ExceptionReporter(QWidget):
     """A :py:class:`QWidget` that displays logged exceptions and their traceback."""
 
     def __init__(self, logger: ExceptionLogger) -> None:
+        """Create a new :py:class:`ExceptionReporter` and initialize UI."""
         super().__init__()
         EventBus['exceptions'].subscribe(DeferredCallable(self.reload_exceptions), ExceptionEvent)
 

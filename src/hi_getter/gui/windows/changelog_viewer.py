@@ -29,6 +29,7 @@ class ChangelogViewer(QWidget):
     """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
 
     def __init__(self, *args, **kwargs) -> None:
+        """Create a new :py:class:`ChangelogViewer` and initialize UI."""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.changelog_viewer.title'))
         self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton))

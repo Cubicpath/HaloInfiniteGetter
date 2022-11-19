@@ -29,6 +29,7 @@ class ReadmeViewer(QWidget):
     README_TEXT: Final[str] = metadata(HI_PACKAGE_NAME)['Description']
 
     def __init__(self, *args, **kwargs) -> None:
+        """Create a new :py:class:`ReadmeViewer` and initialize UI."""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.readme_viewer.title'))
         self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton))

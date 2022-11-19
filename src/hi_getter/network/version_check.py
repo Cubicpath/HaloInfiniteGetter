@@ -49,6 +49,7 @@ class VersionChecker(QObject):
     newerVersion = Signal(str, str, name='versionChecked')
 
     def __init__(self, parent: QObject | None = None) -> None:
+        """Create a new :py:class:`VersionChecker` and initialize its :py:class:`NetworkSession`."""
         super().__init__(parent)
 
         self.session: NetworkSession = NetworkSession(self)

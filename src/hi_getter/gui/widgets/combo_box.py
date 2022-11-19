@@ -25,6 +25,7 @@ class ComboBox(QComboBox):
     """Iterable :py:class:`QComboBox`."""
 
     def __init__(self, *args, **kwargs) -> None:
+        """Initialize :py:class:`ComboBox` values."""
         super().__init__(*args, **kwargs)
         self._iter_index = -1
 
@@ -58,6 +59,7 @@ class HistoryComboBox(ComboBox):
     line_edit_class = PasteLineEdit
 
     def __init__(self, *args, **kwargs) -> None:
+        """Initialize :py:class:`HistoryComboBox` values."""
         super().__init__(*args, **kwargs)
 
         init_objects({

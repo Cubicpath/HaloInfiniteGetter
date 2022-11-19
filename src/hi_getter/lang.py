@@ -318,6 +318,12 @@ class Translator:
     """
 
     def __init__(self, language: Language | str | None = None) -> None:
+        """Create a :py:class:`Translator` for the given :py:class:`Language`.
+
+        If not langauge is supplied, it defaults to the default_language_file.
+
+        :param language: Language to use for translator.
+        """
         if language is not None:
             self._language = to_lang(language)
         else:

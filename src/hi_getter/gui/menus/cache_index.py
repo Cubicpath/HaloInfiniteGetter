@@ -44,6 +44,7 @@ class CacheIndexContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
 
     def __init__(self, parent: CacheExplorer, index: QModelIndex):
+        """Create a new :py:class:`CacheIndexContextMenu` for the given :py:class:`CacheExplorer` and :py:class:`QModelIndex`."""
         super().__init__(parent)
 
         file_path = Path(parent.model().filePath(index))

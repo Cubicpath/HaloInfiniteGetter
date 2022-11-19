@@ -71,11 +71,13 @@ skips = [
 # PyDocStyle configuration.
 # ---------------------
 [tool.pydocstyle]
+# View error_code meanings at https://www.pydocstyle.org/en/stable/error_codes.html
 ignore = [
-    "D107",
     # Conflicts with other rules
     "D203", "D213",
-    "D400", "D407", "D413",
+    "D400",
+    # Weird section rules that don't work
+    "D407", "D413",
 ]
 match = ".*.py"
 match_dir = "(?!venv|tests|__pycache__)[^\\.].*"

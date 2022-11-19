@@ -96,6 +96,7 @@ class ExportData(_Worker):
     }
 
     def __init__(self, base: Path, dest: Path, **kwargs: Callable | Slot) -> None:
+        """Create a new :py:class:`ExportData` worker to run with the given ``base`` path and ``dest`` file."""
         super().__init__(**kwargs)
         self.base = base
         self.dest = dest
@@ -116,6 +117,7 @@ class ImportData(_Worker):
     """Extract from archive into a directory."""
 
     def __init__(self, archive: Path, dest: Path, **kwargs: Callable | Slot) -> None:
+        """Create a new :py:class:`ImportData` worker to run with the given ``archive`` file and ``dest`` path."""
         super().__init__(**kwargs)
         self.archive = archive
         self.dest = dest
@@ -128,6 +130,7 @@ class RecursiveSearch(_Worker):
     """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
 
     def __init__(self, client: Client, search_path: str, **kwargs: Callable | Slot) -> None:
+        """Create a new :py:class:`RecursiveSearch` worker to use the given ``client`` and base ``search_path``."""
         super().__init__(**kwargs)
         self.client = client
         self.search_path = search_path
