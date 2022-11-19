@@ -435,9 +435,9 @@ class GetterApp(Singleton, QApplication):
         for key, url in external_icon_links.items():
             # Create a new handler for every key being requested.
             def handle_reply(reply):
-                icon = icon_from_bytes(reply.readAll())
+                icon = icon_from_bytes(reply.data)
                 set_or_swap_icon(self.icon_store, key, icon)
-                reply.deleteLater()
+                reply.delete()
 
             self.session.get(url, finished=handle_reply)
 

@@ -6,7 +6,9 @@
 __all__ = (
     'Client',
     'NetworkSession',
+    'Response',
 )
 
 from .client import Client
 from .manager import NetworkSession
+from .manager import Response

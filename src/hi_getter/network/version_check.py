@@ -15,7 +15,6 @@ from importlib.metadata import version
 from typing import Any
 
 from PySide6.QtCore import *
-from PySide6.QtNetwork import *
 # noinspection PyProtectedMember, PyUnresolvedReferences
 from setuptools._vendor.packaging.version import Version
 
@@ -24,6 +23,7 @@ from ..constants import *
 from ..utils.network import guess_json_utf
 from ..utils.package import has_package
 from .manager import NetworkSession
+from .manager import Response
 
 
 def get_version(package_name: str) -> Version | None:
@@ -64,9 +64,9 @@ class VersionChecker(QObject):
 
         :param package_name: The package to look up on PyPI.
         """
-        def handle_reply(reply: QNetworkReply):
+        def handle_reply(reply: Response):
             # Get PyPI data from reply
-            data_bytes: bytes = reply.readAll().data()
+            data_bytes: bytes = reply.data
             data: dict[str, Any] = json.loads(data_bytes.decode(guess_json_utf(data_bytes)))
             date_format: str = '%Y-%m-%dT%H:%M:%S.%fZ'
 
@@ -85,6 +85,6 @@ class VersionChecker(QObject):
                 self.newerVersion.emit(package_name, latest)
             self.checked.emit(package_name)
 
-            reply.deleteLater()
+            reply.delete()
 
         self.session.get(f'https://pypi.org/pypi/{package_name.replace("_", "-").strip()}/json', finished=handle_reply)

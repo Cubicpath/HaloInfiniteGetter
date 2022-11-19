@@ -28,6 +28,7 @@ from ..utils.network import guess_json_utf
 from ..utils.network import is_error_status
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
+from .manager import Response
 
 _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
 TOKEN_PATH: Final[Path] = HI_CONFIG_PATH / '.token'
@@ -104,17 +105,17 @@ class Client(QObject):
             self.api_session.headers['x-343-authorization-spartan'] = self.token
             self.set_cookie('343-spartan-token', self.token)
 
-    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> QNetworkReply:
+    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
         """Get a :py:class:`Response` from HaloWaypoint.
 
         :param path: path to append to the API root
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
-        reply: QNetworkReply = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
+        reply: Response = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
 
         # None is returned if the request was aborted
-        status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+        status_code: int | None = reply.code
         if status_code and is_error_status(status_code):
             # Handle errors
             if status_code == 401 and update_auth_on_401 and self.wpauth is not None:
@@ -133,10 +134,10 @@ class Client(QObject):
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
-            reply: QNetworkReply = self.get(path)
-            encoded_data: bytes = reply.readAll().data()
-            status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-            content_type: str = reply.header(QNetworkRequest.ContentTypeHeader) or ''
+            response: Response = self.get(path)
+            encoded_data: bytes = response.data
+            status_code: int | None = response.code
+            content_type: str | None = response.headers.get('Content-Type')
 
             if status_code and is_error_status(status_code):
                 print(f'ERROR [{status_code}] for {path} ')
@@ -155,7 +156,7 @@ class Client(QObject):
             print(f'DOWNLOADED {path} >>> {content_type}')
             dump_data(os_path, data)
 
-            reply.deleteLater()
+            del response
 
         else:
             print(path)

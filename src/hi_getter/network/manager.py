@@ -6,20 +6,24 @@ from __future__ import annotations
 
 __all__ = (
     'NetworkSession',
+    'Response',
 )
 
 import datetime
+import re
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 from json import dumps as json_dumps
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
+from typing import Final
 from typing import TypeAlias
 from warnings import warn
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
+from shiboken6 import Shiboken
 
 from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
@@ -28,15 +32,17 @@ from ..utils.network import encode_url_params
 from ..utils.network import query_to_dict
 from ..utils.network import wait_for_reply
 
-_NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
-_ProgressConsumer: TypeAlias = Callable[[QNetworkReply, int, int], None]
 _StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
 _KnownHeaderValues: TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
 _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
 
+_RT = TypeVar('_RT', bound=Callable)
+
+_INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
+
 
 class NetworkSession:
-    """Requests-like wrapper over a QNetworkAccessManager.
+    """Requests-like wrapper over a :py:class:`QNetworkAccessManager`.
 
     The following convenience methods are supported:
         - get
@@ -268,8 +274,8 @@ class NetworkSession:
                 cert: str | tuple[str, str] | None = None,
                 json: dict[str, Any] | None = None,
                 wait_until_finished: bool = False,
-                finished: _NetworkReplyConsumer | None = None,
-                progress: _ProgressConsumer | None = None) -> QNetworkReply:
+                finished: _ResponseConsumer | None = None,
+                progress: _ProgressConsumer | None = None) -> Response:
         """Send an HTTP request to the given URL with the given data.
 
         :param method: HTTP method/verb to use for the request. Case-sensitive.
@@ -316,10 +322,10 @@ class NetworkSession:
             the reply is finished, so when it is returned you can immediately access data.
 
         :param finished: Callback when the request finishes,
-            with request supplied as an argument.
+            with reply supplied as an argument.
 
         :param progress: Callback to update download progress,
-            with the request, received bytes, and total bytes supplied as arguments.
+            with the reply, received bytes, and total bytes supplied as arguments.
 
         :return: QNetworkReply object, which is not guaranteed to be finished.
         :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
@@ -439,6 +445,7 @@ class NetworkSession:
         # Since this is an asynchronous request, we don't immediately have the reply data.
 
         reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
+        _response = Response(self, reply)
 
         if allow_redirects:
             reply.redirected.connect(lambda _: reply.redirectAllowed)
@@ -447,10 +454,10 @@ class NetworkSession:
             reply.ignoreSslErrors()
 
         if finished is not None:
-            reply.finished.connect(DeferredCallable(finished, reply))
+            reply.finished.connect(DeferredCallable(finished, _response))
 
         if progress is not None:
-            reply.downloadProgress.connect(DeferredCallable(progress, reply, _extra_pos_args=2))
+            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
 
         if self.manager.cookieJar() is not original_cookie_jar:
             self.manager.setCookieJar(original_cookie_jar)
@@ -474,9 +481,9 @@ class NetworkSession:
         if wait_until_finished:
             wait_for_reply(reply)
 
-        return reply
+        return _response
 
-    def get(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def get(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the GET HTTP method.
 
         GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
@@ -508,7 +515,7 @@ class NetworkSession:
 
         return self.request(method=method, url=url, **kwargs)
 
-    def head(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def head(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the HEAD HTTP method.
 
         HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
@@ -540,7 +547,7 @@ class NetworkSession:
 
         return self.request(method=method, url=url, **kwargs)
 
-    def post(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def post(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the POST HTTP method.
 
         POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
@@ -572,7 +579,7 @@ class NetworkSession:
 
         return self.request(method=method, url=url, **kwargs)
 
-    def put(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def put(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the PUT HTTP method.
 
         PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
@@ -603,7 +610,7 @@ class NetworkSession:
 
         return self.request(method=method, url=url, **kwargs)
 
-    def delete(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def delete(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the DELETE HTTP method.
 
         DELETE is used to delete a specified resource.
@@ -634,7 +641,7 @@ class NetworkSession:
 
         return self.request(method=method, url=url, **kwargs)
 
-    def patch(self, url: QUrl | str, **kwargs) -> QNetworkReply:
+    def patch(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the PATCH HTTP method.
 
         PATCH is used to send a partial update of an existing resource.
@@ -664,3 +671,85 @@ class NetworkSession:
         self._check_method_kwargs(method, **kwargs)
 
         return self.request(method=method, url=url, **kwargs)
+
+
+class Response:
+    """Requests-like wrapper over a :py:class:`QNetworkReply`."""
+
+    def __init__(self, session: NetworkSession, reply: QNetworkReply):
+        """Initialize the :py:class:`Response`."""
+        self._reply: QNetworkReply = reply
+        self.request: QNetworkRequest = reply.request()
+        self.session: NetworkSession = session
+
+    def __del__(self):
+        """Usually the last reference to this :py:class:`Response` is connected to a :py:class:`QNetworkReply` signal.
+
+        So, when the :py:class:`QNetworkReply` is deleted using py:class:`Response`.delete(), ``__del__`` is usually called.
+        If this is not the case, and the :py:class:`QNetworkReply` was not yet deleted, delete it now to prevent a possible memory leak.
+        """
+        if Shiboken.isValid(self._reply):
+            self._reply.deleteLater()
+
+    @property
+    def code(self) -> int | None:
+        """Return the HTTP status code of the :py:class:`Response`.
+
+        ``None`` is returned if the Request is not finished or has been aborted.
+        """
+        return self._reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+
+    @property
+    def data(self) -> bytes:
+        """Return the :py:class:`Response` data as ``bytes``."""
+        self._reply.seek(0)
+        return self._reply.readAll().data()
+
+    @property
+    def finished(self) -> bool:
+        """Return whether the internal :py:class:`QNetworkReply` is marked as finished."""
+        return self._reply.isFinished()
+
+    @property
+    def headers(self) -> CaseInsensitiveDict:
+        """Return a :py:class:`CaseInsensitiveDict` containing the :py:class:`Response`'s HTTP headers."""
+        headers = CaseInsensitiveDict()
+
+        # Update with known headers
+        for name, (enum_value, _) in NetworkSession.KNOWN_HEADERS.lower_items():
+            if (value := self._reply.header(enum_value)) is not None:
+                headers[name] = value
+
+        # Update with raw headers
+        for rawName, rawValue in self._reply.rawHeaderPairs():
+            if (name := rawName.toStdString()) not in headers:
+                value: bool | int | str
+                string_val: str = rawValue.toStdString()
+
+                if string_val.lower() == 'true':
+                    value = True
+
+                elif string_val.lower() == 'false':
+                    value = False
+
+                elif match := _INT_PATTERN.match(string_val):
+                    value = int(match[0])
+
+                else:
+                    value = string_val
+
+                headers[name] = value
+
+        return headers
+
+    def delete(self) -> None:
+        """Delete internal :py:class:`QNetworkReply`.
+
+        If this :py:class:`Response` was connected to a signal (such as finished or progress),
+        you will have to call this method before the :py:class:`Response` can be garbage collected.
+        """
+        self._reply.deleteLater()
+
+
+_ResponseConsumer: TypeAlias = Callable[[Response], None]
+_ProgressConsumer: TypeAlias = Callable[[Response, int, int], None]

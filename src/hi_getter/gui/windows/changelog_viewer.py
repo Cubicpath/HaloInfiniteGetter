@@ -12,7 +12,6 @@ import random
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from PySide6.QtNetwork import *
 from PySide6.QtWidgets import *
 
 from ..._version import __version__
@@ -107,8 +106,8 @@ class ChangelogViewer(QWidget):
     def update_changelog(self) -> None:
         """Update the displayed text to the data from the changelog url."""
 
-        def handle_reply(reply: QNetworkReply):
-            text: str = reply.readAll().data().decode('utf8')
+        def handle_reply(reply):
+            text: str = reply.data.decode('utf8')
             # Add separators between versions and remove primary header
             text = '## ' + '\n-----\n## '.join(text.split('\n## ')[1:])
 
@@ -122,7 +121,7 @@ class ChangelogViewer(QWidget):
             text = '\n'.join(new_lines)
 
             self.text_browser.set_hot_reloadable_text(text, 'markdown')
-            reply.deleteLater()
+            reply.delete()
 
         app().session.get(self.changelog_url, finished=handle_reply)
 
