@@ -465,6 +465,3 @@ class Singleton:
     def is_instantiated(cls) -> bool:
         """Return whether the :py:class:`Singleton` instance exists."""
         return isinstance(cls.__instance, cls)
-
-
-Singleton()
