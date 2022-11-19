@@ -26,7 +26,6 @@ from ..utils.common import dump_data
 from ..utils.network import decode_url
 from ..utils.network import guess_json_utf
 from ..utils.network import is_error_status
-from ..utils.network import wait_for_reply
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 
@@ -112,8 +111,7 @@ class Client(QObject):
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
-        reply: QNetworkReply = self.api_session.get(self.api_root + path.strip(), **kwargs)
-        wait_for_reply(reply)
+        reply: QNetworkReply = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
 
         # None is returned if the request was aborted
         status_code: int | None = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
@@ -192,8 +190,7 @@ class Client(QObject):
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
-        reply: QNetworkReply = self.web_session.get('https://www.halowaypoint.com/')
-        wait_for_reply(reply)
+        self.web_session.get('https://www.halowaypoint.com/', wait_until_finished=True)
 
         wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
         token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')

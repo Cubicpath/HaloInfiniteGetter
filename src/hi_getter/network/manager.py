@@ -26,6 +26,7 @@ from ..models import DeferredCallable
 from ..utils.network import dict_to_query
 from ..utils.network import encode_url_params
 from ..utils.network import query_to_dict
+from ..utils.network import wait_for_reply
 
 _NetworkReplyConsumer: TypeAlias = Callable[[QNetworkReply], None]
 _ProgressConsumer: TypeAlias = Callable[[QNetworkReply, int, int], None]
@@ -266,6 +267,7 @@ class NetworkSession:
                 verify: bool | str | None = None,
                 cert: str | tuple[str, str] | None = None,
                 json: dict[str, Any] | None = None,
+                wait_until_finished: bool = False,
                 finished: _NetworkReplyConsumer | None = None,
                 progress: _ProgressConsumer | None = None) -> QNetworkReply:
         """Send an HTTP request to the given URL with the given data.
@@ -309,6 +311,9 @@ class NetworkSession:
         :param json: JSON data to send in the request body.
             Automatically encodes to bytes and updates Content-Type header.
             Incompatible with the data and files parameters.
+
+        :param wait_until_finished: Process the application eventLoop until
+            the reply is finished, so when it is returned you can immediately access data.
 
         :param finished: Callback when the request finishes,
             with request supplied as an argument.
@@ -466,6 +471,9 @@ class NetworkSession:
             timer.timeout.connect(handle_connection_timeout)
             timer.start()
 
+        if wait_until_finished:
+            wait_for_reply(reply)
+
         return reply
 
     def get(self, url: QUrl | str, **kwargs) -> QNetworkReply:
@@ -489,6 +497,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
@@ -520,6 +529,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
@@ -551,6 +561,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
@@ -581,6 +592,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
@@ -611,6 +623,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
@@ -641,6 +654,7 @@ class NetworkSession:
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
         :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
 
