@@ -39,7 +39,7 @@ for _value, _description in {
 
 
 def dict_to_cookie_list(cookie_values: dict[str, str]) -> list[QNetworkCookie]:
-    """Transforms a name and value pair into a list of :py:class:`QNetworkCookie` objects."""
+    """Transform a name and value pair into a list of :py:class:`QNetworkCookie` objects."""
     return [QNetworkCookie(
         name=name.encode('utf8'),
         value=value.encode('utf8')
@@ -48,7 +48,7 @@ def dict_to_cookie_list(cookie_values: dict[str, str]) -> list[QNetworkCookie]:
 
 # noinspection PyTypeChecker
 def dict_to_query(params: dict[str, str]) -> QUrlQuery:
-    """Transforms a param name and value pair into a :py:class:`QUrlQuery` object."""
+    """Transform a param name and value pair into a :py:class:`QUrlQuery` object."""
     query = QUrlQuery()
     query.setQueryItems(list(params.items()))
     return query
@@ -67,7 +67,7 @@ def query_to_dict(query: QUrlQuery | str) -> dict[str, str]:
 
 
 def is_error_status(status: int) -> bool:
-    """Returns True if the HTTP status code is an error status."""
+    """Return True if the HTTP status code is an error status."""
     return 400 <= status < 600
 
 

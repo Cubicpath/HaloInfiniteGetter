@@ -25,6 +25,7 @@ from ..widgets import ExternalTextBrowser
 
 class ReadmeViewer(QWidget):
     """Widget that formats and shows the project's README.md, stored in the projects 'Description' metadata tag."""
+
     README_TEXT: Final[str] = metadata(HI_PACKAGE_NAME)['Description']
 
     def __init__(self, *args, **kwargs) -> None:

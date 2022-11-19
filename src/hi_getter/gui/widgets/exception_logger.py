@@ -97,6 +97,7 @@ class ExceptionLogger(QPushButton):
 
 class LoggedException(NamedTuple):
     """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
+
     severity: int | None = None
     exception: Exception | None = None
     traceback: TracebackType | None = None

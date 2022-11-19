@@ -57,6 +57,7 @@ def size_label_for(num: int) -> str:
 
 class AppWindow(Singleton, QMainWindow):
     """Main window for the HaloInfiniteGetter application."""
+
     _singleton_base_type = QMainWindow
     _singleton_check_ref = False
     shown_key_warning: bool = False
@@ -200,7 +201,7 @@ class AppWindow(Singleton, QMainWindow):
             return window
 
         def toggle_media_detach() -> None:
-            """Handler for detaching and reattaching the media output."""
+            """Handle the detaching and reattaching the media output."""
             if self.detached['media'] is None:
                 self.detached['media'] = window = setup_detached_window(
                     'media',
@@ -219,7 +220,7 @@ class AppWindow(Singleton, QMainWindow):
                 self.image_detach_button.setText(tr('gui.outputs.detach'))
 
         def toggle_text_detach() -> None:
-            """Handler for detaching and reattaching the text output."""
+            """Handle the detaching and reattaching the text output."""
             if self.detached['text'] is None:
                 self.detached['text'] = window = setup_detached_window(
                     'text',
@@ -599,7 +600,7 @@ class AppWindow(Singleton, QMainWindow):
             self.media_output.scene().addPixmap(new)
 
     def scan_input(self) -> None:
-        """Scans the search path.
+        """Scan the search path.
 
         Displays a photosensitivity warning for first-time use.
         """
@@ -634,7 +635,7 @@ class AppWindow(Singleton, QMainWindow):
         event.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        """Closes all detached/children windows and quit application."""
+        """Close all detached/children windows and quit application."""
         super().closeEvent(event)
         # Remember window size
         app().settings.reload()

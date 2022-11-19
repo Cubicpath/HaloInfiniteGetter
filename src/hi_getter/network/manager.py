@@ -45,6 +45,7 @@ class NetworkSession:
         - delete
         - patch
     """
+
     KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
         'Content-Disposition': (QNetworkRequest.ContentDispositionHeader, str),
         'Content-Type': (QNetworkRequest.ContentTypeHeader, str),
@@ -72,7 +73,7 @@ class NetworkSession:
 
     @property
     def cookies(self) -> dict[str, str]:
-        """:return: Dictionary representation of the internal QNetworkCookieJar"""
+        """Return dictionary representation of the internal QNetworkCookieJar."""
         return {cookie.name().toStdString(): cookie.value().toStdString() for cookie in self.manager.cookieJar().allCookies()}
 
     @cookies.deleter
@@ -111,7 +112,6 @@ class NetworkSession:
         :param method: HTTP method to check.
         :param kwargs: Keyword arguments to check.
         """
-
         if method in {'GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'}:
             if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
                 warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
@@ -319,7 +319,6 @@ class NetworkSession:
         :return: QNetworkReply object, which is not guaranteed to be finished.
         :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
         """
-
         # Setup values for the request
 
         params = {} if params is None else params

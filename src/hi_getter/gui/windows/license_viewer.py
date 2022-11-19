@@ -134,7 +134,7 @@ class LicenseViewer(QWidget):
         self.view_current_index()
 
     def view_current_index(self) -> None:
-        """Views the license data at the current index."""
+        """View the license data at the current index."""
         current_data: tuple[str, str, str] = self.license_data[self.license_dropdown.currentIndex()]
 
         license_text = current_data[2] or tr('gui.license_viewer.not_found')

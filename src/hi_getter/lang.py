@@ -44,7 +44,7 @@ def default_language_file() -> Path | None:
 
 
 def format_value(value: str, *args: Any, _language: Language = None, _key_eval: bool = True) -> str:
-    """Format a str with positional arguments.
+    r"""Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
     If the notation chars are replaced with the argument, you can no longer use it as a normal positional argument.
@@ -133,9 +133,11 @@ class Language:
             self._data |= file_data['keys']
 
     def __repr__(self) -> str:
+        """Representation of the :py:class:`Language` with its tag and number of loaded language keys."""
         return f'<Language data for {self.tag} ({len(self.data)} keys)>'
 
-    def __getitem__(self, key) -> str:
+    def __getitem__(self, key: str) -> str:
+        """Get the raw value of the given key (No formatting)."""
         return self.get_raw(key)
 
     @classmethod
@@ -236,11 +238,11 @@ class Language:
 
     @property
     def data(self) -> dict[str, Any]:
-        """:returns: a copy of the internal key dictionary."""
+        """Return a copy of the internal key dictionary."""
         return self._data.copy()
 
     def closest_file(self) -> Path | None:
-        """Finds the most relevant file in the ``_LANG_DIR`` to represent this :py:class:`Language`'s tag.
+        """Find the most relevant file in the ``_LANG_DIR`` to represent this :py:class:`Language`'s tag.
 
         The primary language subtag MUST match for a lang file to be considered. ex::
 
@@ -322,16 +324,21 @@ class Translator:
             self._language = Language.from_path(default_language_file())
 
     def __bool__(self) -> bool:
-        """Return whether the Translator is available."""
+        """Return whether the :py:class:`Translator` is available."""
         return True
 
     def __call__(self, key: str, *args: Any, **kwargs) -> str:
         """Syntax sugar for get_translation."""
         return self.get_translation(key, *args, **kwargs)
 
+    def __repr__(self) -> str:
+        """Representation of the :py:class:`Translator` with its tag and number of loaded language keys."""
+        language = self.language
+        return f'<Translator {language=}>'
+
     @property
     def language(self) -> Language:
-        """Current :py:class:`Language` for this translator."""
+        """Return current :py:class:`Language` for this translator."""
         return self._language
 
     @language.setter

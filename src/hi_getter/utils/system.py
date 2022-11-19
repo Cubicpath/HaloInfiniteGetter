@@ -28,7 +28,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
                     version: str | None = None, terminal: bool = True) -> None:
     """Create a shortcut on the given path.
 
-    Notes:
+    Notes
         * start_menu is ignored on macOS
         * terminal is ignored by Windows
         * working_dir is Windows only

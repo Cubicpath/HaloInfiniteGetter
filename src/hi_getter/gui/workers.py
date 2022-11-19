@@ -52,7 +52,7 @@ class _Worker(QRunnable):
     # pylint: disable=broad-except
     @Slot()
     def run(self) -> None:
-        """Called by the :py:class:`QThreadPool`.
+        """Ran by the :py:class:`QThreadPool`.
 
         Sends non-``None`` return values through the ``valueReturned`` signal.
             - If you need to return ``None``, I suggest creating a separate object to represent it.
@@ -85,6 +85,7 @@ class _Worker(QRunnable):
 
 class ExportData(_Worker):
     """Build archive in a temp file then remove .tmp extension when finished."""
+
     EXTENSION_FORMATS: dict[str, str] = {
         '.7z': '7z',
         '.tar': 'tar',

@@ -104,7 +104,7 @@ class ChangelogViewer(QWidget):
         self.update_changelog()
 
     def update_changelog(self) -> None:
-        """Updates the displayed text to the data from the changelog url."""
+        """Update the displayed text to the data from the changelog url."""
 
         def handle_reply(reply: QNetworkReply):
             text: str = reply.readAll().data().decode('utf8')

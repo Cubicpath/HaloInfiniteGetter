@@ -11,6 +11,9 @@ bandit==1.7.4
     PyYAML>=5.3.1
     stevedore>=1.20.0
 
+pydocstyle==6.1.1
+    snowballstemmer
+
 pylint==2.15.5
     astroid<=2.14.0-dev0, >=2.12.12
         wrapt<2, >=1.11

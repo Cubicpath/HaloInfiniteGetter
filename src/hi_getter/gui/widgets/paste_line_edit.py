@@ -17,6 +17,7 @@ from PySide6.QtWidgets import *
 
 class PasteLineEdit(QLineEdit):
     """A :py:class:`QLineEdit` with an added paste listener."""
+
     pasted = Signal(name='pasted')
 
     def __init__(self, *args, pasted: Callable[[], None] | None = None, **kwargs) -> None:

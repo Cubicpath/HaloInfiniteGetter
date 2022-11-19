@@ -23,6 +23,7 @@ from collections.abc import Mapping
 from collections.abc import MutableMapping
 from typing import Any
 from typing import Generic
+from typing import NoReturn
 from typing import TypeAlias
 from typing import TypeVar
 from warnings import warn
@@ -42,7 +43,7 @@ class _AbstractCallable(ABC):
     """
 
     def __call__(self, *args, **kwargs) -> Any:
-        """Syntax sugar for self.run()"""
+        """Syntax sugar for self.run()."""
         return self.run(*args, **kwargs)
 
     @abstractmethod
@@ -89,6 +90,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
     operations are given keys that have equal ``.lower()``s, the
     behavior is undefined.
     """
+
     __slots__ = ('_store',)
 
     def __init__(self, data=None, **kwargs) -> None:
@@ -98,23 +100,36 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         self.update(data, **kwargs)
 
     def __setitem__(self, key: str, value: _VT) -> None:
-        # Use the lowercased key for lookups, but store the actual
-        # key alongside the value.
+        """Set the associated value of the given key.
+
+        Use the lowercased key for lookups, but store the actual key alongside the value.
+        """
         self._store[key.lower()] = (key, value)
 
     def __getitem__(self, key: str) -> _VT:
+        """Get the associated value of the given key.
+
+        Use the lowercased key for lookups.
+        """
         return self._store[key.lower()][1]
 
     def __delitem__(self, key: str) -> None:
+        """Delete the key and associated value from the dictionary."""
         del self._store[key.lower()]
 
     def __iter__(self) -> Generator[str, None, None]:
+        """Return a :py:class:`Generator` containing all original (cased) keys."""
         return (cased_key for cased_key, mapped_value in self._store.values())
 
     def __len__(self) -> int:
+        """Return amount of key-value pairs."""
         return len(self._store)
 
     def __or__(self, other: Mapping) -> CaseInsensitiveDict:
+        """Update operator for :py:class:`Mapping`'s.
+
+        :return: A new :py:class`CaseInsensitiveDict` with the updated pairs of this and the other :py:class:`Mapping`.
+        """
         if not isinstance(other, Mapping):
             return NotImplemented
 
@@ -123,6 +138,10 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         return new
 
     def __ror__(self, other: Mapping) -> CaseInsensitiveDict:
+        """Update operator for :py:class:`Mapping`'s that don't support the syntax.
+
+        :return: A new :py:class`CaseInsensitiveDict` with the updated pairs of this and the other :py:class:`Mapping`.
+        """
         if not isinstance(other, Mapping):
             return NotImplemented
 
@@ -131,6 +150,10 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         return new
 
     def __ior__(self, other: Mapping) -> CaseInsensitiveDict:
+        """Update setter operator for :py:class:`Mapping`'s.
+
+        :return: This :py:class`CaseInsensitiveDict` with the updated pairs of the other :py:class:`Mapping`.
+        """
         self.update(other)
 
         return self
@@ -143,7 +166,8 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
             in self._store.items()
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Mapping) -> bool:
+        """Compare items of other :py:class:`Mapping` case-insensitively."""
         if not isinstance(other, Mapping):
             return NotImplemented
 
@@ -157,6 +181,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         return self.__class__(self._store.values())
 
     def __repr__(self) -> str:
+        """Representation of the :py:class:`CaseInsensitiveDict`."""
         return str(dict(self.items()))
 
 
@@ -167,6 +192,7 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
     This allows the value of the stored arguments to dynamically change depending on
     when the :py:class:`DeferredCallable` is executed.
     """
+
     __slots__ = ('_extra_pos_args', 'call_funcs', 'call_types', 'callable', 'args', 'kwargs')
 
     def __init__(self, __callable: Callable = lambda: None, /, *args: _PT | _PTCallable,
@@ -174,7 +200,7 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
                  _call_funcs: bool = True,
                  _call_types: bool = False,
                  **kwargs: _KT | _KTCallable) -> None:
-        """Creates a new :py:class:`DeferredCallable`.
+        """Create a new :py:class:`DeferredCallable`.
 
         When called, any additional arguments must be expected with _extra_pos_args.
         Any arguments that exceed the extra positional argument limit will be trimmed off.
@@ -194,12 +220,12 @@ class DeferredCallable(_AbstractCallable, Generic[_PT, _KT]):
         self.kwargs: dict[str, _KT | _KTCallable] = kwargs
 
     def __repr__(self) -> str:
-        """Represents the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
+        """Representation of the :py:class:`DeferredCallable` with the stored callable, args, and kwargs."""
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {self.callable} with {args=}, {kwargs=}>'
 
     def _evaluate_value(self, val: Any) -> Any:
-        """Evaluates any callables to their called values.
+        """Evaluate the given value to its called value if we want to know it.
 
         :param val: Value to evaluate.
         :return: The called value, if callable.
@@ -248,10 +274,11 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
         # And
         foo2.callables.append(baz)
     """
+
     __slots__ = ('callables', 'args', 'kwargs')
 
     def __init__(self, __callables: _CT = (), /, *args: _PT, **kwargs: _KT) -> None:
-        """Creates a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs.
+        """Create a new :py:class:`DistributedCallable` with the stored callables, args, and kwargs.
 
         _CT is a Type Generic containing a :py:class:`Collection` of callables.
         """
@@ -260,7 +287,7 @@ class DistributedCallable(_AbstractCallable, Generic[_CT, _PT, _KT]):
         self.kwargs: dict[str, _KT] = kwargs
 
     def __repr__(self) -> str:
-        """Represents the :py:class:`DistributedCallable` with the stored callable, args, and kwargs."""
+        """Representation of the :py:class:`DistributedCallable` with the stored callable, args, and kwargs."""
         args, kwargs = self.args, self.kwargs
         return f'<{type(self).__name__} {len(self.callables)} functions with {args=}, {kwargs=}>'
 
@@ -331,6 +358,7 @@ class Singleton:
 
         Attempting to use ``destroy()`` before the :py:class:`Singleton` is created will raise a :py:class:`RuntimeError`.
     """
+
     __slots__: tuple[str, ...] = ()
 
     _singleton_base_type: type(type) = object
@@ -341,7 +369,11 @@ class Singleton:
     Singleton.__instance is never used, all subclasses have their own __instance class attribute.
     """
 
-    def __new__(cls, *args, **kwargs) -> None:
+    def __new__(cls, *args, **kwargs) -> NoReturn:
+        """Call the :py:class:`Singleton`.create() classmethod instead.
+
+        :raises TypeError: When called.
+        """
         raise TypeError(f'Do not call default constructor for {cls.__name__}, instead call {cls.__name__}.create() explicitly.')
 
     def __init__(self, *args, **kwargs) -> None:
@@ -371,7 +403,7 @@ class Singleton:
 
     @classmethod
     def create(cls, *args, **kwargs) -> None:
-        """The preferred way of creating the :py:class:`Singleton` instance.
+        """Preferred way of creating the :py:class:`Singleton` instance.
 
         :raises RuntimeError: If singleton instance currently exists.
         :raises TypeError: If __init__ is not overridden.

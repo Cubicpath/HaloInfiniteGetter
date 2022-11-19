@@ -22,6 +22,7 @@ ExceptHookCallable: TypeAlias = Callable[[type[BaseException], BaseException, Tr
 
 class ExceptionEvent(Event):
     """Event fired when an exception is caught by an :py:class:`ExceptionHook`."""
+
     __slots__ = ('exception', 'traceback')
 
     def __init__(self, exception: BaseException, traceback: TracebackType) -> None:
@@ -30,7 +31,7 @@ class ExceptionEvent(Event):
 
 
 class ExceptionHook:
-    """Object that intercepts :py:class:`Exception`'s and handles them"""
+    """Object that intercepts :py:class:`Exception`'s and handles them."""
 
     def __init__(self):
         """Initialize the :py:class:`ExceptionHook` for use in a context manager."""
@@ -38,7 +39,7 @@ class ExceptionHook:
         self.event_bus: EventBus | None = None
 
     def __call__(self, type_: type[BaseException], exception: BaseException, traceback: TracebackType) -> None:
-        """Called when an exception is raised."""
+        """When an exception is raised."""
         # Don't handle BaseExceptions
         if not issubclass(type_, Exception):
             return self.__old_hook(type_, exception, traceback)
@@ -46,6 +47,7 @@ class ExceptionHook:
         EventBus['exceptions'] << ExceptionEvent(exception, traceback)
 
     def __repr__(self) -> str:
+        """Representation of the :py:class:`ExceptionHook` with the old hook."""
         return f'<{type(self).__name__} (old_hook={self.__old_hook})>'
 
     def __enter__(self) -> None:
@@ -61,5 +63,5 @@ class ExceptionHook:
 
     @property
     def old_hook(self) -> ExceptHookCallable:
-        """The original exception hook."""
+        """Return the original exception hook."""
         return self.__old_hook

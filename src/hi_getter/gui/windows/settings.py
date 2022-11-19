@@ -33,6 +33,7 @@ class SettingsWindow(Singleton, QWidget):
 
     :py:class:`SettingsWindow` is a singleton and can be accessed via the class using the SettingsWindow.instance() class method.
     """
+
     _singleton_base_type = QWidget
     _singleton_check_ref = False
 

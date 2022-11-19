@@ -44,6 +44,7 @@ def is_greater_version(version1: str, version2: str) -> bool:
 
 class VersionChecker(QObject):
     """Checks for the latest versions of packages."""
+
     checked = Signal(str, name='finished')
     newerVersion = Signal(str, str, name='versionChecked')
 

@@ -29,11 +29,12 @@ class ComboBox(QComboBox):
         self._iter_index = -1
 
     def __iter__(self) -> Iterable[tuple[str, str]]:
+        """Iterate over items and their associated data."""
         self._iter_index = -1
         return self
 
     def __next__(self) -> tuple[str, str]:
-        """Returns the next item and its data.
+        """Return the next item and its data.
 
         :return: display text and key, packaged into a tuple.
         :raises StopIteration: When iteration index reaches the last item.
@@ -53,6 +54,7 @@ class ComboBox(QComboBox):
 
 class HistoryComboBox(ComboBox):
     """Editable :py:class:`ComboBox` acting as a history wrapper over :py:class:`PasteLineEdit`; has no duplicate values."""
+
     line_edit_class = PasteLineEdit
 
     def __init__(self, *args, **kwargs) -> None:
@@ -68,7 +70,7 @@ class HistoryComboBox(ComboBox):
 
     # noinspection PyTypeChecker
     def addItem(self, text: str, *args, **kwargs) -> None:
-        """Filters already-present strings from being added using addItem."""
+        """Filter already-present strings from being added using addItem."""
         if (result := self.findText(text, Qt.MatchFlag.MatchFixedString)) != -1:
             self.removeItem(result)
 
@@ -86,5 +88,5 @@ class TranslatableComboBox(ComboBox):
 
     # noinspection PyTypeChecker
     def addItem(self, text: str, *args, **kwargs) -> None:
-        """Translates strings from being added using addItem."""
+        """Translate strings from being added using addItem."""
         super().addItem(tr(text), *args, userData=text, **kwargs)

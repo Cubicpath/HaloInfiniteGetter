@@ -38,12 +38,13 @@ WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 class Client(QObject):
     """Asynchronous HTTP REST Client that interfaces with Halo Waypoint to get data."""
+
     receivedData = Signal(str, bytes, name='receivedData')
     receivedError = Signal(str, int, name='receivedError')
     receivedJson = Signal(str, dict, name='receivedJson')
 
     def __init__(self, parent: QObject, **kwargs) -> None:
-        """Initializes Halo Waypoint Client
+        """Initialize Halo Waypoint Client.
 
         token is first taken from token kwarg, then HI_SPARTAN_AUTH environment variable, then from user's .token file.
         wpauth is first taken from wpauth kwarg, then HI_WAYPOINT_AUTH environment variable, then from the user's .wpauth file.
@@ -125,7 +126,7 @@ class Client(QObject):
         return reply
 
     def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
-        """Returns data from a path. Return type depends on the resource.
+        """Return data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
         :raises ValueError: If the response is not JSON or a supported image type.
@@ -187,7 +188,7 @@ class Client(QObject):
         return f'{pre}/file/{post}'
 
     def refresh_auth(self) -> None:
-        """Refreshes authentication to Halo Waypoint servers.
+        """Refresh authentication to Halo Waypoint servers.
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """

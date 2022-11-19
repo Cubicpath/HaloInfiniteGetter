@@ -26,6 +26,7 @@ class ExternalTextBrowser(QTextBrowser):
 
     Also supports external image loading and caching.
     """
+
     remote_image_cache: dict[str, bytes] = {}
 
     def __init__(self, *args, **kwargs) -> None:
@@ -60,7 +61,6 @@ class ExternalTextBrowser(QTextBrowser):
         Injects html anchors to images to allow clickable images.
         Injects html anchors to markdown headers to allow relative linking.
         """
-
         # Inject html anchors in images and headers
         if text_type == 'markdown':
             lines: list[str] = text.splitlines()

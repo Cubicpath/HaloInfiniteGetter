@@ -47,8 +47,10 @@ def make_comment_val(val: TomlValue, comment: str | None = None, new_line: bool 
 
 class TomlEvents:
     """Namespace for all events relating to :py:class:`TomlFile` objects."""
+
     class TomlEvent(Event):
-        """Generic event for TomlFiles"""
+        """Generic event for TomlFiles."""
+
         __slots__ = ('toml_file',)
 
         def __init__(self, toml_file: TomlFile) -> None:
@@ -56,6 +58,7 @@ class TomlEvents:
 
     class File(TomlEvent):
         """Accessing a File on disk."""
+
         __slots__ = ('path',)
 
         def __init__(self, toml_file: TomlFile, path: Path) -> None:
@@ -64,14 +67,17 @@ class TomlEvents:
 
     class Import(File):
         """Loading a TomlFile."""
+
         __slots__ = ()
 
     class Export(File):
-        """Exporting a TomlFile to disk"""
+        """Exporting a TomlFile to disk."""
+
         __slots__ = ()
 
     class KeyAccess(TomlEvent):
         """A key's value is accessed."""
+
         __slots__ = ('key',)
 
         def __init__(self, toml_file: TomlFile, key: str) -> None:
@@ -80,6 +86,7 @@ class TomlEvents:
 
     class Get(KeyAccess):
         """Value is given."""
+
         __slots__ = ('value',)
 
         def __init__(self, toml_file: TomlFile, key: str, value: TomlValue) -> None:
@@ -88,6 +95,7 @@ class TomlEvents:
 
     class Set(KeyAccess):
         """Value is set."""
+
         __slots__ = ('old', 'new')
 
         def __init__(self, toml_file: TomlFile, key: str, old: TomlValue, new: TomlValue) -> None:
@@ -97,6 +105,7 @@ class TomlEvents:
 
     class Fail(TomlEvent):
         """General Failure."""
+
         __slots__ = ('failure',)
 
         def __init__(self, toml_file: TomlFile, failure: str) -> None:
@@ -164,12 +173,15 @@ class TomlFile:
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
     def __getitem__(self, key: str) -> TomlValue | None:
+        """Get the associated TOML value from the key."""
         return self.get_key(key)
 
     def __setitem__(self, key: str, value: TomlValue) -> None:
+        """Set the key's associated TOML value."""
         self.set_key(key, value)
 
     def __delitem__(self, key: str) -> None:
+        """Delete the key and it's associated TOML value."""
         del self._data[key]
 
     def _search_scope(self, path: str, mode: str) -> tuple[dict[str, TomlValue | CommentValue], str]:
@@ -217,7 +229,7 @@ class TomlFile:
         self._path = Path(value)
 
     def get_key(self, key: str) -> TomlValue:
-        """Get a key from path. Searches with each '/' defining a new table to check.
+        """Get a value from the key path. Searches with each '/' defining a new table to check.
 
         :param key: Key to get value from.
         :return: Value of key.
@@ -299,7 +311,6 @@ class TomlFile:
         :param update: If True, will update existing keys with new values, instead of replacing the internal dictionary.
         :return: True if successful, otherwise False.
         """
-
         path = Path(path)  # Make sure path is of type Path
         if path.is_file():
             try:

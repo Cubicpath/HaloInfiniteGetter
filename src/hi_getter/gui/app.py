@@ -52,7 +52,7 @@ _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
 
 def app() -> GetterApp:
-    """:return: GetterApp.instance()"""
+    """:return: GetterApp.instance()."""
     return GetterApp.instance()
 
 
@@ -69,12 +69,14 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
 
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
+
     button: QAbstractButton = QMessageBox.NoButton
     role: QMessageBox.ButtonRole = QMessageBox.NoRole
 
 
 class Theme(NamedTuple):
     """Object containing data about a Theme."""
+
     id: str
     style: str
     display_name: str
@@ -85,6 +87,7 @@ class GetterApp(Singleton, QApplication):
 
     :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() class method or the app() function.
     """
+
     _singleton_base_type = QApplication
     _singleton_check_ref = False
     updateTranslations = Signal(name='languageChanged')
@@ -168,7 +171,6 @@ class GetterApp(Singleton, QApplication):
     @property
     def windows(self) -> dict[str, QWidget]:
         """Return a copy of the self._windows dictionary."""
-
         return self._windows.copy()
 
     def _create_paths(self) -> None:
@@ -232,7 +234,6 @@ class GetterApp(Singleton, QApplication):
         Register functions to call with their respective translation keys.
         This is used to translate everything in the GUI.
         """
-
         for func, args in translation_calls.items():
             if not isinstance(args, tuple):
                 args = (args,)

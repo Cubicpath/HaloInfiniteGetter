@@ -68,6 +68,19 @@ skips = [
 ]
 
 
+# PyDocStyle configuration.
+# ---------------------
+[tool.pydocstyle]
+ignore = [
+    "D107",
+    # Conflicts with other rules
+    "D203", "D213",
+    "D400", "D407", "D413",
+]
+match = ".*.py"
+match_dir = "(?!venv|tests|__pycache__)[^\\.].*"
+
+
 # Pylint configuration.
 # ---------------------
 [tool.pylint.'MASTER']

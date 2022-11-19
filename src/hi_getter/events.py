@@ -26,14 +26,16 @@ class Event:
 
         Event() >> EventBus['foo']
     """
+
     __slots__: tuple[str, ...] = ()
 
     def __repr__(self) -> str:
+        """Representation of the :py:class:`Event` with its attributes' values."""
         values = {attr: getattr(self, attr) for attr in self.__slots__}
         return f'<"{self.name}" Event {values=}>' if self.__slots__ else f'<Empty {self.name}>'
 
     def __rshift__(self, __bus: EventBus, /) -> None:
-        """Syntax sugar for __bus.fire(event)"""
+        """Syntax sugar for __bus.fire(event)."""
         return __bus.fire(event=self)
 
     def __rlshift__(self, __bus: EventBus, /) -> None:
@@ -106,6 +108,7 @@ class _EventBusMeta(type):
     Maps :py:class:`EventBus` objects to :py:class:`str` ids
     and allows accessing those ids using subscripts on :py:class:`EventBus`.
     """
+
     _id_bus_map: dict[str, EventBus] = {}
 
     @classmethod
@@ -186,10 +189,11 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
             type(self)[__id] = self
 
     def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
-        """Syntax sugar for self.fire(event)"""
+        """Syntax sugar for self.fire(event)."""
         return self.fire(__event)
 
     def __repr__(self) -> str:
+        """Representation of the :py:class:`EventBus` with its id and :py:class:`_Subscribers`."""
         return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'
 
     def clear(self, event: type[_ET_co] | None = None) -> None:

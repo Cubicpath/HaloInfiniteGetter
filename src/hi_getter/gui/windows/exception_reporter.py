@@ -165,7 +165,7 @@ class ExceptionReporter(QWidget):
         delete_layout_widgets(self.scroll_widget.layout())
 
     def clear_current_exception(self) -> None:
-        """Clears the currently selected exception and removes it from the log."""
+        """Clear the currently selected exception and removes it from the log."""
         if (item := self.scroll_widget.layout().takeAt(self.selected)) is not None:
             self.logger.remove_exception(self.selected)
             item.widget().deleteLater()
