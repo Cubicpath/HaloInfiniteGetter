@@ -437,7 +437,6 @@ class GetterApp(Singleton, QApplication):
             def handle_reply(reply):
                 icon = icon_from_bytes(reply.data)
                 set_or_swap_icon(self.icon_store, key, icon)
-                reply.delete()
 
             self.session.get(url, finished=handle_reply)
 

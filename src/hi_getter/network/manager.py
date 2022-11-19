@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'gc_response',
     'NetworkSession',
     'Response',
 )
@@ -39,6 +40,20 @@ _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _Known
 _RT = TypeVar('_RT', bound=Callable)
 
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
+
+
+def gc_response(func: _RT) -> _RT:
+    """Wrap the given function to delete a :py:class:`Response` after being called.
+
+    This should only be used for one-time calls, such as a "handling reply" function.
+    """
+    def wrapper(response: Response, *args, **kwargs) -> Any:
+        """Call ``delete()`` on first argument after being called."""
+        ret_val: Any = func(response, *args, **kwargs)
+        response.delete()
+        return ret_val
+
+    return wrapper
 
 
 class NetworkSession:
@@ -454,7 +469,7 @@ class NetworkSession:
             reply.ignoreSslErrors()
 
         if finished is not None:
-            reply.finished.connect(DeferredCallable(finished, _response))
+            reply.finished.connect(DeferredCallable(gc_response(finished), _response))
 
         if progress is not None:
             reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
@@ -745,7 +760,7 @@ class Response:
     def delete(self) -> None:
         """Delete internal :py:class:`QNetworkReply`.
 
-        If this :py:class:`Response` was connected to a signal (such as finished or progress),
+        If this :py:class:`Response` was connected to a signal which doesn't delete after call (such as progress),
         you will have to call this method before the :py:class:`Response` can be garbage collected.
         """
         self._reply.deleteLater()

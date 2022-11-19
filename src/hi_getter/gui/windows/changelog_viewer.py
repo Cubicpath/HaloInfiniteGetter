@@ -121,7 +121,6 @@ class ChangelogViewer(QWidget):
             text = '\n'.join(new_lines)
 
             self.text_browser.set_hot_reloadable_text(text, 'markdown')
-            reply.delete()
 
         app().session.get(self.changelog_url, finished=handle_reply)
 

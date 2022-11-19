@@ -135,7 +135,6 @@ class ExternalTextBrowser(QTextBrowser):
 
                     if self.cached_type:
                         self.hot_reload()
-                    reply.delete()
 
                 app().session.get(url, finished=handle_reply)
             elif cached_data := self.remote_image_cache[url_string]:

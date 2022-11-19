@@ -85,6 +85,4 @@ class VersionChecker(QObject):
                 self.newerVersion.emit(package_name, latest)
             self.checked.emit(package_name)
 
-            reply.delete()
-
         self.session.get(f'https://pypi.org/pypi/{package_name.replace("_", "-").strip()}/json', finished=handle_reply)
