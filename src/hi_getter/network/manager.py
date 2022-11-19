@@ -283,8 +283,7 @@ class NetworkSession:
                 timeout: float | tuple[float, float] | None = 30.0,
                 allow_redirects: bool = True,
                 proxies: _StringPair | None = None,
-                # hooks: dict[str, Callable | Iterable[Callable]] | None = None,
-                # stream: bool | None = None,
+                stream: bool = False,
                 verify: bool | str | None = None,
                 cert: str | tuple[str, str] | None = None,
                 json: dict[str, Any] | None = None,
@@ -320,6 +319,9 @@ class NetworkSession:
 
         :param proxies: String-pairs mapping protocol to the URL of the proxy.
             Supported protocols are 'ftp', 'http', 'socks5'.
+
+        :param stream: Whether to accept chunked encoding.
+            See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding#chunked_encoding
 
         :param verify: Whether to verify SSL certificates.
             If False, ignore all SSL errors.
@@ -381,8 +383,11 @@ class NetworkSession:
             body = json_dumps(json, allow_nan=False).encode('utf8')
             content_type = 'application/json'
 
-        if content_type and 'Content-Type' not in headers:
-            headers['Content-Type'] = content_type
+        if content_type and 'Content-Type' not in request_headers:
+            request_headers['Content-Type'] = content_type
+
+        if stream:
+            request_headers['Transfer-Encoding'] = 'chunked'
 
         # Cookies
 
@@ -516,6 +521,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
@@ -548,6 +554,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
@@ -580,6 +587,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
@@ -611,6 +619,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
@@ -642,6 +651,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
@@ -673,6 +683,7 @@ class NetworkSession:
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
         :keyword verify: Whether to verify SSL certificates.
         :keyword cert: Client certificate information.
         :keyword json: JSON data to send in the request body.
