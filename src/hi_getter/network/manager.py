@@ -29,7 +29,7 @@ from shiboken6 import Shiboken
 
 from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
-from ..utils.network import dict_to_query
+from ..utils.network import dict_to_query, is_error_status
 from ..utils.network import encode_url_params
 from ..utils.network import guess_json_utf
 from ..utils.network import query_to_dict
@@ -794,6 +794,14 @@ class Response:
             encoding = guess_json_utf(data) or 'utf8'
 
         return json_.loads(data.decode(encoding=encoding))
+
+    @property
+    def ok(self) -> bool:
+        """Return whether ``self.code`` is not an error code."""
+        if self.code is None:
+            return False
+
+        return is_error_status(self.code)
 
     @property
     def text(self) -> str:
