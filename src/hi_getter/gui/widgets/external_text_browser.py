@@ -16,9 +16,10 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from ..app import app
 from ...constants import *
 from ...models import DeferredCallable
-from ..app import app
+from ...network.manager import Response
 
 
 class ExternalTextBrowser(QTextBrowser):
@@ -128,10 +129,9 @@ class ExternalTextBrowser(QTextBrowser):
                 # Otherwise, unneeded replies are sent out and cause application stutter.
                 self.remote_image_cache[url_string] = bytes()
 
-                def handle_reply(reply):
-                    data: bytes = reply.data
-                    image.loadFromData(data)
-                    self.remote_image_cache[url_string] = data
+                def handle_reply(reply: Response):
+                    image.loadFromData(reply.data)
+                    self.remote_image_cache[url_string] = reply.data
 
                     if self.cached_type:
                         self.hot_reload()

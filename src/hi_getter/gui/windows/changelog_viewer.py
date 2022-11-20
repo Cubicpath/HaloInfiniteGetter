@@ -17,6 +17,7 @@ from PySide6.QtWidgets import *
 from ..._version import __version__
 from ...models import DeferredCallable
 from ...models import DistributedCallable
+from ...network.manager import Response
 from ...utils.gui import init_layouts
 from ...utils.gui import init_objects
 from ..app import app
@@ -106,8 +107,8 @@ class ChangelogViewer(QWidget):
     def update_changelog(self) -> None:
         """Update the displayed text to the data from the changelog url."""
 
-        def handle_reply(reply):
-            text: str = reply.data.decode('utf8')
+        def handle_reply(reply: Response):
+            text: str = reply.text
             # Add separators between versions and remove primary header
             text = '## ' + '\n-----\n## '.join(text.split('\n## ')[1:])
 

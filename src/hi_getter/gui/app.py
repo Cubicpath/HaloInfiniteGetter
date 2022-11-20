@@ -38,6 +38,7 @@ from ..models import Singleton
 from ..network.client import Client
 from ..network.client import WEB_DUMP_PATH
 from ..network.manager import NetworkSession
+from ..network.manager import Response
 from ..network.version_check import VersionChecker
 from ..tomlfile import *
 from ..utils.gui import icon_from_bytes
@@ -434,7 +435,7 @@ class GetterApp(Singleton, QApplication):
         # pylint: disable=cell-var-from-loop
         for key, url in external_icon_links.items():
             # Create a new handler for every key being requested.
-            def handle_reply(reply):
+            def handle_reply(reply: Response):
                 icon = icon_from_bytes(reply.data)
                 set_or_swap_icon(self.icon_store, key, icon)
 
