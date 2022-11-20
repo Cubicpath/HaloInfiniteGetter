@@ -9,10 +9,8 @@ __all__ = (
     'VersionChecker',
 )
 
-import json
 from datetime import datetime
 from importlib.metadata import version
-from typing import Any
 
 from PySide6.QtCore import *
 # noinspection PyProtectedMember, PyUnresolvedReferences
@@ -20,7 +18,6 @@ from setuptools._vendor.packaging.version import Version
 
 from .._version import __version__
 from ..constants import *
-from ..utils.network import guess_json_utf
 from ..utils.package import has_package
 from .manager import NetworkSession
 from .manager import Response
@@ -65,15 +62,10 @@ class VersionChecker(QObject):
         :param package_name: The package to look up on PyPI.
         """
         def handle_reply(reply: Response):
-            # Get PyPI data from reply
-            data_bytes: bytes = reply.data
-            data: dict[str, Any] = json.loads(data_bytes.decode(guess_json_utf(data_bytes)))
-            date_format: str = '%Y-%m-%dT%H:%M:%S.%fZ'
-
             # Sort versions on date released
             versions: list[str] = sorted(
-                releases := data['releases'],
-                key=lambda v: datetime.strptime(releases[v][0]['upload_time_iso_8601'], date_format)
+                releases := reply.json['releases'],
+                key=lambda v: datetime.strptime(releases[v][0]['upload_time_iso_8601'], '%Y-%m-%dT%H:%M:%S.%fZ')
             )
 
             # Get local version of given package. Use __version__ attribute for own package.

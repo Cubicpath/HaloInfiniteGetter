@@ -11,6 +11,7 @@ __all__ = (
 )
 
 import datetime
+import json as json_
 import re
 from collections.abc import Callable
 from collections.abc import Mapping
@@ -30,6 +31,7 @@ from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
 from ..utils.network import dict_to_query
 from ..utils.network import encode_url_params
+from ..utils.network import guess_json_utf
 from ..utils.network import query_to_dict
 from ..utils.network import wait_for_reply
 
@@ -57,7 +59,7 @@ def gc_response(func: _RT) -> _RT:
 
 
 class NetworkSession:
-    """Requests-like wrapper over a :py:class:`QNetworkAccessManager`.
+    """``requests``-like wrapper over a :py:class:`QNetworkAccessManager`.
 
     The following convenience methods are supported:
         - get
@@ -277,7 +279,7 @@ class NetworkSession:
                 data: bytes | _StringPair | None = None,
                 headers: _HeaderValue | None = None,
                 cookies: _StringPair | None = None,
-                # TODO: Finish requests-like implementation
+                # TODO: Finish ``requests``-like implementation
                 # files: dict[str, Any] | None = None,
                 # auth: tuple[str, str] | None = None,
                 timeout: float | tuple[float, float] | None = 30.0,
@@ -700,10 +702,13 @@ class NetworkSession:
 
 
 class Response:
-    """Requests-like wrapper over a :py:class:`QNetworkReply`."""
+    """``requests``-like wrapper over a :py:class:`QNetworkReply`."""
 
     def __init__(self, session: NetworkSession, reply: QNetworkReply):
         """Initialize the :py:class:`Response`."""
+        self._data: bytes | None = None
+        self._encoding: str | None = None
+        self._headers: CaseInsensitiveDict = CaseInsensitiveDict()
         self._reply: QNetworkReply = reply
         self.request: QNetworkRequest = reply.request()
         self.session: NetworkSession = session
@@ -727,9 +732,20 @@ class Response:
 
     @property
     def data(self) -> bytes:
-        """Return the :py:class:`Response` data as ``bytes``."""
-        self._reply.seek(0)
-        return self._reply.readAll().data()
+        """Return the :py:class:`Response` data as ``bytes``, and cache it for later use."""
+        if self._data is None:
+            self._data = self._reply.readAll().data()
+
+        return self._data
+
+    @property
+    def encoding(self) -> str | None:
+        """Return the detected encoding for data, and cache it for later use."""
+        if self._encoding is None:
+            decoder: QStringDecoder = QStringDecoder.decoderForHtml(self.data)
+            self._encoding = decoder.name()
+
+        return self._encoding
 
     @property
     def finished(self) -> bool:
@@ -739,18 +755,20 @@ class Response:
     @property
     def headers(self) -> CaseInsensitiveDict:
         """Return a :py:class:`CaseInsensitiveDict` containing the :py:class:`Response`'s HTTP headers."""
-        headers = CaseInsensitiveDict()
+        # Assume that headers don't change after being set.
+        if self._headers:
+            return self._headers
 
         # Update with known headers
         for name, (enum_value, _) in NetworkSession.KNOWN_HEADERS.lower_items():
             if (value := self._reply.header(enum_value)) is not None:
-                headers[name] = value
+                self._headers[name] = value
 
         # Update with raw headers
-        for rawName, rawValue in self._reply.rawHeaderPairs():
-            if (name := rawName.toStdString()) not in headers:
+        for raw_name, raw_value in self._reply.rawHeaderPairs():
+            if (name := raw_name.toStdString()) not in self._headers:
                 value: bool | int | str
-                string_val: str = rawValue.toStdString()
+                string_val: str = raw_value.toStdString()
 
                 if string_val.lower() == 'true':
                     value = True
@@ -764,9 +782,34 @@ class Response:
                 else:
                     value = string_val
 
-                headers[name] = value
+                self._headers[name] = value
 
-        return headers
+        return self._headers
+
+    @property
+    def json(self) -> dict[str, Any]:
+        """Return the :py:class:`Response` data as a ``JSON`` object."""
+        data: bytes = self.data
+        if (encoding := self.encoding) is None:
+            encoding = guess_json_utf(data) or 'utf8'
+
+        return json_.loads(data.decode(encoding=encoding))
+
+    @property
+    def text(self) -> str:
+        """Return the :py:class:`Response` data as a unicode-encoded string."""
+        data: bytes = self.data
+        encoding: str = self.encoding or 'utf8'
+
+        if not data:
+            return ''
+
+        return data.decode(encoding=encoding)
+
+    @property
+    def url(self) -> QUrl:
+        """Return the URL the :py:class:`Response` is from."""
+        return self._reply.url()
 
     def delete(self) -> None:
         """Delete internal :py:class:`QNetworkReply`.

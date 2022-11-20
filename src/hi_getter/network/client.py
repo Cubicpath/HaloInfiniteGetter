@@ -18,7 +18,6 @@ from typing import Any
 from typing import Final
 
 from PySide6.QtCore import *
-from PySide6.QtNetwork import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
@@ -135,7 +134,6 @@ class Client(QObject):
 
         if not os_path.is_file():
             response: Response = self.get(path)
-            encoded_data: bytes = response.data
             status_code: int | None = response.code
             content_type: str | None = response.headers.get('Content-Type')
 
@@ -145,18 +143,16 @@ class Client(QObject):
                 return status_code
 
             if 'json' in content_type:
-                data = json.loads(encoded_data.decode(guess_json_utf(encoded_data)))
+                data = response.json
                 self.receivedJson.emit(path, data)
             elif content_type in SUPPORTED_IMAGE_MIME_TYPES:
-                data = encoded_data
+                data = response.data
                 self.receivedData.emit(path, data)
             else:
                 raise ValueError(f'Unsupported content type received: {content_type}')
 
             print(f'DOWNLOADED {path} >>> {content_type}')
             dump_data(os_path, data)
-
-            del response
 
         else:
             print(path)
