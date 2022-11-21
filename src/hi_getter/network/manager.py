@@ -302,7 +302,13 @@ class NetworkSession:
 
         :return: Response object, which is not guaranteed to be finished.
         """
-        return Request(method, url, *args, **kwargs).send(self)
+        send_kwargs = {
+            'wait_until_finished': kwargs.pop('wait_until_finished', False),
+            'finished': kwargs.pop('finished', None),
+            'progress': kwargs.pop('progress', None),
+        }
+
+        return Request(method, url, *args, **kwargs).send(self, **send_kwargs)
 
     def get(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the GET HTTP method.
@@ -517,10 +523,7 @@ class Request:
                  stream: bool = False,
                  verify: bool | str | None = None,
                  cert: str | tuple[str, str] | None = None,
-                 json: dict[str, Any] | None = None,
-                 wait_until_finished: bool = False,
-                 finished: _ResponseConsumer | None = None,
-                 progress: _ProgressConsumer | None = None) -> None:
+                 json: dict[str, Any] | None = None) -> None:
         """Create a new :py:class:`Request` with the given fields.
 
         :param method: HTTP method/verb to use for the request. Case-sensitive.
@@ -565,25 +568,15 @@ class Request:
         :param json: JSON data to send in the request body.
             Automatically encodes to bytes and updates Content-Type header.
             Incompatible with the data and files parameters.
-
-        :param wait_until_finished: Process the application eventLoop until
-            the reply is finished, so when it is returned you can immediately access data.
-
-        :param finished: Callback when the request finishes,
-            with reply supplied as an argument.
-
-        :param progress: Callback to update download progress,
-            with the reply, received bytes, and total bytes supplied as arguments.
         """
         self._request: QNetworkRequest | None = None
-        self._sent: bool = False
 
         self.method = method
-        self.url = self._original_url = url
-        self.params = self._original_params = {} if params is None else params
+        self.url = url
+        self.params = {} if params is None else params
         self.data = data
-        self.headers = self._original_headers = {} if headers is None else headers
-        self.cookies = self._original_cookies = {} if cookies is None else cookies
+        self.headers = {} if headers is None else headers
+        self.cookies = {} if cookies is None else cookies
         # self.files = files
         # self.auth - auth
         self.timeout = timeout
@@ -593,38 +586,14 @@ class Request:
         self.verify = verify
         self.cert = cert
         self.json = json
-        self.wait_until_finished = wait_until_finished
-        self.finished = finished
-        self.progress = progress
 
     def __repr__(self) -> str:
         """Representation of the :py:class:`Request` with method and target URL."""
         return f'<Request [{self.method}] ({self.url})>'
 
-    # pylint: disable=compare-to-zero
-    def send(self, session: NetworkSession) -> Response:
-        """Send the :py:class:`Request` using the specified :py:class:`NetworkSession`.
-
-        :param session: Session to use.
-        :return: Response object, which is not guaranteed to be finished.
-        :raises ValueError: If proxy attribute is not a valid option.
-        """
-        # Translate dictionary-compatible tuple pair lists to dictionaries
-        # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
-        for var_name in ('params', 'data', 'headers', 'cookies', 'proxies'):
-            if isinstance(vars(self)[var_name], Sequence):
-                vars(self)[var_name] = dict(vars()[var_name])
-
-        self.url = QUrl(self._original_url)  # Ensure url is of type QUrl
-        self.params = query_to_dict(self.url.query()) | self._original_params  # Update QUrl params with params argument
-        self.headers = session.headers | self._original_headers                # Use session headers as default headers
-        self.cookies = session.cookies | self._original_cookies                # Use session cookies as default cookies
-
-        self.url.setQuery(dict_to_query(self.params))
-        self._request = QNetworkRequest(self.url)
-
+    def _prepare_body(self) -> bytes | None:
         content_type = None
-        body = None
+        body: bytes | None = None
 
         if self.data:
             if isinstance(self.data, dict):
@@ -641,11 +610,61 @@ class Request:
         if content_type and 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = content_type
 
+        return body
+
+    def _prepare_headers(self, headers: CaseInsensitiveDict) -> None:
         if self.stream:
-            self.headers['Transfer-Encoding'] = 'chunked'
+            headers['Transfer-Encoding'] = 'chunked'
 
-        # SSL Configuration
+        if self.cookies:
+            headers['Cookie'] = headers
 
+        for name, value in headers.items():
+            if name in KNOWN_HEADERS:
+                value = _translate_header_value(name, value)
+                self._request.setHeader(KNOWN_HEADERS[name][0], value)
+                continue
+
+            try:
+                encoded_value = bytes(value) if not isinstance(value, str) else value.encode('utf8')
+            except TypeError:
+                encoded_value = str(value).encode('utf8')
+
+            self._request.setRawHeader(name.encode('utf8'), encoded_value)
+
+    # pylint: disable=compare-to-zero
+    def _prepare_response(self, reply: QNetworkReply, finished: _ResponseConsumer, progress: _ProgressConsumer) -> Response:
+        _response = Response(self, reply)
+
+        if self.allow_redirects:
+            reply.redirected.connect(lambda _: reply.redirectAllowed)
+
+        if self.verify is False:
+            reply.ignoreSslErrors()
+
+        if finished is not None:
+            reply.finished.connect(DeferredCallable(gc_response(finished), _response))
+
+        if progress is not None:
+            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
+
+        if self.timeout:
+            # Create connection timeout timer
+            # This is for the RESPONSE side of the connection.
+            def handle_connection_timeout():
+                if not reply.isFinished():
+                    reply.abort()
+
+            connection_timeout = int((self.timeout[0] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
+            timer = QTimer(reply)
+            timer.setSingleShot(True)
+            timer.setInterval(connection_timeout)
+            timer.timeout.connect(handle_connection_timeout)
+            timer.start()
+
+        return _response
+
+    def _prepare_ssl(self) -> None:
         ssl_config = QSslConfiguration.defaultConfiguration()
 
         if isinstance(self.verify, str):
@@ -660,25 +679,47 @@ class Request:
 
         self._request.setSslConfiguration(ssl_config)
 
-        # Headers
+    def send(self,
+             session: NetworkSession,
+             wait_until_finished: bool = False,
+             finished: _ResponseConsumer | None = None,
+             progress: _ProgressConsumer | None = None) -> Response:
+        """Send the :py:class:`Request` using the specified :py:class:`NetworkSession`.
 
-        if self._original_cookies:
-            self.headers['Cookie'] = self.cookies
+        :param session: Session to use.
 
-        for name, value in self.headers.items():
-            if name in KNOWN_HEADERS:
-                value = _translate_header_value(name, value)
-                self._request.setHeader(KNOWN_HEADERS[name][0], value)
-                continue
+        :param wait_until_finished: Process the application eventLoop until
+            the reply is finished, so when it is returned you can immediately access data.
 
-            try:
-                encoded_value = bytes(value) if not isinstance(value, str) else value.encode('utf8')
-            except TypeError:
-                encoded_value = str(value).encode('utf8')
+        :param finished: Callback when the request finishes,
+            with reply supplied as an argument.
 
-            self._request.setRawHeader(name.encode('utf8'), encoded_value)
+        :param progress: Callback to update download progress,
+            with the reply, received bytes, and total bytes supplied as arguments.
 
-        # Other
+        :return: Response object, which is not guaranteed to be finished.
+        :raises ValueError: If proxy attribute is not a valid option.
+        """
+        # Translate dictionary-compatible tuple pair lists to dictionaries
+        # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
+        for var_name in ('params', 'data', 'headers', 'cookies', 'proxies'):
+            if isinstance(vars(self)[var_name], Sequence):
+                vars(self)[var_name] = dict(vars(self)[var_name])
+
+        request_url = QUrl(self.url)  # Ensure url is of type QUrl
+        request_params = query_to_dict(request_url.query()) | self.params  # Update QUrl params with params argument
+        request_headers = session.headers | self.headers                   # Use session headers as default headers
+        request_cookies = session.cookies | self.cookies                   # Use session cookies as default cookies
+        request_data = self._prepare_body()
+
+        if self.cookies:
+            request_headers['Cookie'] = request_cookies
+
+        request_url.setQuery(dict_to_query(request_params))
+        self._request = QNetworkRequest(request_url)
+
+        self._prepare_ssl()
+        self._prepare_headers(request_headers)
 
         if not self.allow_redirects:
             session.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
@@ -708,42 +749,16 @@ class Request:
             transfer_timeout = int((self.timeout[1] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
             self._request.setTransferTimeout(transfer_timeout)
 
-        reply: QNetworkReply = session.manager.sendCustomRequest(self._request, self.method.encode('utf8'), data=body)
-        _response = Response(self, reply)
-
-        if self.allow_redirects:
-            reply.redirected.connect(lambda _: reply.redirectAllowed)
-
-        if self.verify is False:
-            reply.ignoreSslErrors()
-
-        if self.finished is not None:
-            reply.finished.connect(DeferredCallable(gc_response(self.finished), _response))
-
-        if self.progress is not None:
-            reply.downloadProgress.connect(DeferredCallable(self.progress, _response, _extra_pos_args=2))
+        _reply: QNetworkReply = session.manager.sendCustomRequest(self._request, self.method.encode('utf8'), data=request_data)
+        response: Response = self._prepare_response(_reply, finished, progress)
 
         if session.manager.redirectPolicy() != session.default_redirect_policy:
             session.manager.setRedirectPolicy(session.default_redirect_policy)
 
-        if self.timeout:
-            # Create connection timeout timer
-            # This is for the RESPONSE side of the connection.
-            def handle_connection_timeout():
-                if not reply.isFinished():
-                    reply.abort()
+        if wait_until_finished:
+            wait_for_reply(_reply)
 
-            connection_timeout = int((self.timeout[0] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
-            timer = QTimer(reply)
-            timer.setSingleShot(True)
-            timer.setInterval(connection_timeout)
-            timer.timeout.connect(handle_connection_timeout)
-            timer.start()
-
-        if self.wait_until_finished:
-            wait_for_reply(reply)
-
-        return _response
+        return response
 
 
 class Response:
@@ -849,7 +864,7 @@ class Response:
         if self.code is None:
             return False
 
-        return is_error_status(self.code)
+        return not is_error_status(self.code)
 
     @property
     def text(self) -> str:
