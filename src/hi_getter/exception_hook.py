@@ -34,10 +34,10 @@ class ExceptionEvent(Event):
 class ExceptionHook:
     """Object that intercepts :py:class:`Exception`'s and handles them."""
 
-    def __init__(self):
+    def __init__(self, bus_id: str | None = 'exceptions'):
         """Initialize the :py:class:`ExceptionHook` for use in a context manager."""
-        self.__old_hook: ExceptHookCallable | None = None
-        self.event_bus: EventBus | None = None
+        self.__old_hook: ExceptHookCallable = sys.excepthook
+        self.event_bus: EventBus = EventBus(bus_id)
 
     def __call__(self, type_: type[BaseException], exception: BaseException, traceback: TracebackType) -> None:
         """When an exception is raised."""
@@ -45,7 +45,7 @@ class ExceptionHook:
         if not issubclass(type_, Exception):
             return self.__old_hook(type_, exception, traceback)
 
-        EventBus['exceptions'] << ExceptionEvent(exception, traceback)
+        self.event_bus << ExceptionEvent(exception, traceback)
 
     def __repr__(self) -> str:
         """Representation of the :py:class:`ExceptionHook` with the old hook."""
@@ -53,8 +53,6 @@ class ExceptionHook:
 
     def __enter__(self) -> None:
         """Temporary extend current exception hook."""
-        self.__old_hook = sys.excepthook
-        self.event_bus = EventBus('exceptions')
         sys.excepthook = self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

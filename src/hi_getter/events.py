@@ -63,15 +63,15 @@ class Event:
         return doc.splitlines()[0] if doc is not None else ''
 
 
-_ET_co = TypeVar('_ET_co', bound=Event, covariant=True)  # Bound to Event. Can use Event subclass instances in place of Event instances.
-_EventPredicate: TypeAlias = Callable[[_ET_co], bool]
-_EventRunnable: TypeAlias = Callable[[_ET_co], None]
+_ET = TypeVar('_ET', bound=Event)  # Bound to Event. Can use Event subclass instances in place of Event instances.
+_EventPredicate: TypeAlias = Callable[[_ET], bool]
+_EventRunnable: TypeAlias = Callable[[_ET], None]
 
 
 class _Subscribers(defaultdict[type[Event], list[tuple[
     _EventRunnable,          # Callable to run
     _EventPredicate | None   # Optional predicate to run callable
-]]], Generic[_ET_co]):
+]]], Generic[_ET]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
     def __init__(self) -> None:
@@ -84,7 +84,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             repr_ += f'{event.__name__}[{len(self[event])}], '
         return f'({repr_.rstrip(", ")})'
 
-    def add(self, event: type[_ET_co], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
+    def add(self, event: type[_ET], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
         """Add a callable pair to an Event subscriber list.
 
         :raises TypeError:
@@ -143,7 +143,7 @@ class _EventBusMeta(type):
         del mcs._id_bus_map[id.lower()]
 
 
-class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
+class EventBus(Generic[_ET], metaclass=_EventBusMeta):
     """Object that keeps track of all :py:class:`Callable` subscriptions to :py:class:`Event`'s.
 
     An Event Bus is an event-driven structure that stores both events and functions. When an
@@ -188,7 +188,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
         if __id is not None:
             type(self)[__id] = self
 
-    def __lshift__(self, __event: _ET_co | type[_ET_co], /) -> None:
+    def __lshift__(self, __event: _ET | type[_ET], /) -> None:
         """Syntax sugar for self.fire(event)."""
         return self.fire(__event)
 
@@ -196,7 +196,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
         """Representation of the :py:class:`EventBus` with its id and :py:class:`_Subscribers`."""
         return f'<{type(self).__name__} id={self.id!r}; Subscribers={self._subscribers!r}>'
 
-    def clear(self, event: type[_ET_co] | None = None) -> None:
+    def clear(self, event: type[_ET] | None = None) -> None:
         """Clear event _subscribers of a given type.
 
         None is treated as a wildcard and deletes ALL event _subscribers.
@@ -208,7 +208,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
         else:
             self._subscribers.pop(event)
 
-    def fire(self, event: _ET_co | type[_ET_co]) -> None:
+    def fire(self, event: _ET | type[_ET]) -> None:
         """Fire all :py:class:`Callables` subscribed to the :py:class:`Event`'s :py:class:`type`.
 
         :py:class:`Event` subclasses call their parent's callables as well.
@@ -233,7 +233,7 @@ class EventBus(Generic[_ET_co], metaclass=_EventBusMeta):
                         e_callable_pair[0](event)
 
     # pylint: disable=useless-param-doc
-    def subscribe(self, __callable: _EventRunnable, /, event: type[_ET_co], event_predicate: _EventPredicate | None = None) -> None:
+    def subscribe(self, __callable: _EventRunnable, /, event: type[_ET], event_predicate: _EventPredicate | None = None) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.

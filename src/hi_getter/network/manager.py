@@ -6,6 +6,7 @@ from __future__ import annotations
 
 __all__ = (
     'gc_response',
+    'KNOWN_HEADERS',
     'NetworkSession',
     'Response',
 )
@@ -29,7 +30,7 @@ from shiboken6 import Shiboken
 
 from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
-from ..utils.network import dict_to_query
+from ..utils.network import dict_to_query, is_error_status
 from ..utils.network import encode_url_params
 from ..utils.network import guess_json_utf
 from ..utils.network import query_to_dict
@@ -42,6 +43,95 @@ _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _Known
 _RT = TypeVar('_RT', bound=Callable)
 
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
+
+
+# autopep8: off
+KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
+    # Name:                Header Enum Value:                                      Object Wanted:
+    # -----------------------------------------------------------------------------------------------
+    'Content-Disposition': (QNetworkRequest.KnownHeaders.ContentDispositionHeader, str),
+    'Content-Type':        (QNetworkRequest.KnownHeaders.ContentTypeHeader,        str),
+    'Content-Length':      (QNetworkRequest.KnownHeaders.ContentLengthHeader,      bytes),
+    'Cookie':              (QNetworkRequest.KnownHeaders.CookieHeader,             QNetworkCookie),
+    'ETag':                (QNetworkRequest.KnownHeaders.ETagHeader,               str),
+    'If-Match':            (QNetworkRequest.KnownHeaders.IfMatchHeader,            QStringListModel),
+    'If-Modified-Since':   (QNetworkRequest.KnownHeaders.IfModifiedSinceHeader,    QDateTime),
+    'If-None-Match':       (QNetworkRequest.KnownHeaders.IfNoneMatchHeader,        QStringListModel),
+    'Last-Modified':       (QNetworkRequest.KnownHeaders.LastModifiedHeader,       QDateTime),
+    'Location':            (QNetworkRequest.KnownHeaders.LocationHeader,           QUrl),
+    'Server':              (QNetworkRequest.KnownHeaders.ServerHeader,             str),
+    'Set-Cookie':          (QNetworkRequest.KnownHeaders.SetCookieHeader,          QNetworkCookie),
+    'User-Agent':          (QNetworkRequest.KnownHeaders.UserAgentHeader,          str),
+})
+# autopep8: on
+
+
+def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
+    """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
+
+    Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
+
+    The following types are supported:
+        - str: Given value is translated into a str.
+        - bytes: Translates string value into a utf8 encoded version.
+        - QDateTime: Translates string and datetime values into a QDateTime.
+        - QNetworkCookie: Translates string pairs into a QNetworkCookie list. The first value is the cookie name, the second is the cookie value.
+        - QStringListModel: Iterates over value and translates all inner-values to strings. Returns a list of the translated strings.
+        - QUrl: Calls the QUrl constructor on value and returns result.
+
+    :param header: Header defined in KNOWN_HEADERS.
+    :param value: Value to translate into an accepted type.
+    :return: Transformed value.
+    """
+    # Match the known-header's value name and translate value to that type.
+    match KNOWN_HEADERS[header][1].__name__:
+        case 'str':
+            return str(value)
+
+        case 'bytes':
+            if isinstance(value, str):
+                return value.encode('utf8')
+
+        case 'QDateTime':
+            if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+                date_value: datetime.datetime | datetime.date | datetime.time = value
+
+                # Translate datetime objects to a string
+                if not isinstance(value, datetime.datetime):
+                    date: datetime.date = datetime.datetime.now().date() if isinstance(value, datetime.time) else value
+                    time: datetime.time = datetime.datetime.now().time() if isinstance(value, datetime.date) else value
+                    date_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
+
+                return QDateTime().fromString(date_value.isoformat(), Qt.DateFormat.ISODateWithMs)
+
+            # Translate string to QDateTime object
+            return QDateTime().fromString(str(value), Qt.DateFormat.ISODateWithMs)
+
+        case 'QNetworkCookie':
+            cookie_list: list[QNetworkCookie] = []
+            match value[0] if value else None:
+
+                # Translate dictionaries
+                case Mapping():
+                    for cookie in value:
+                        for name, _value in cookie.items():
+                            cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
+
+                # Translate tuples, lists, etc. that contain two strings (name and value)
+                case Sequence():
+                    for cookie in value:
+                        cookie_list.append(QNetworkCookie(cookie[0].encode('utf8'), cookie[1].encode('utf8')))
+
+            return cookie_list
+
+        case 'QStringListModel':
+            return [str(item) for item in value]
+
+        case 'QUrl':
+            if not isinstance(value, QUrl):
+                return QUrl(str(value))
+
+    return value
 
 
 def gc_response(func: _RT) -> _RT:
@@ -70,22 +160,6 @@ class NetworkSession:
         - patch
     """
 
-    KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
-        'Content-Disposition': (QNetworkRequest.ContentDispositionHeader, str),
-        'Content-Type': (QNetworkRequest.ContentTypeHeader, str),
-        'Content-Length': (QNetworkRequest.ContentLengthHeader, bytes),
-        'Cookie': (QNetworkRequest.CookieHeader, QNetworkCookie),
-        'ETag': (QNetworkRequest.ETagHeader, str),
-        'If-Match': (QNetworkRequest.IfMatchHeader, QStringListModel),
-        'If-Modified-Since': (QNetworkRequest.IfModifiedSinceHeader, QDateTime),
-        'If-None-Match': (QNetworkRequest.IfNoneMatchHeader, QStringListModel),
-        'Last-Modified': (QNetworkRequest.LastModifiedHeader, QDateTime),
-        'Location': (QNetworkRequest.LocationHeader, QUrl),
-        'Server': (QNetworkRequest.ServerHeader, str),
-        'Set-Cookie': (QNetworkRequest.SetCookieHeader, QNetworkCookie),
-        'User-Agent': (QNetworkRequest.UserAgentHeader, str),
-    })
-
     def __init__(self, manager_parent: QObject = None) -> None:
         """Initialize the NetworkSession.
 
@@ -93,7 +167,7 @@ class NetworkSession:
         """
         self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
         self.manager: QNetworkAccessManager = QNetworkAccessManager(manager_parent)
-        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.UserVerifiedRedirectPolicy
+        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.RedirectPolicy.UserVerifiedRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -139,75 +213,6 @@ class NetworkSession:
         if method in {'GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'}:
             if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
                 warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
-
-    def _translate_header_value(self, header: str, value: _KnownHeaderValues) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
-        """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
-
-        Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
-
-        The following types are supported:
-            - str: Given value is translated into a str.
-            - bytes: Translates string value into a utf8 encoded version.
-            - QDateTime: Translates string and datetime values into a QDateTime.
-            - QNetworkCookie: Translates string pairs into a QNetworkCookie list. The first value is the cookie name, the second is the cookie value.
-            - QStringListModel: Iterates over value and translates all inner-values to strings. Returns a list of the translated strings.
-            - QUrl: Calls the QUrl constructor on value and returns result.
-
-        :param header: Header defined in KNOWN_HEADERS.
-        :param value: Value to translate into an accepted type.
-        :return: Transformed value.
-        """
-        old_value = value
-
-        # Match the known-header's value name and translate value to that type.
-        match self.KNOWN_HEADERS[header][1].__name__:
-            case 'str':
-                value = str(old_value)
-
-            case 'bytes':
-                if isinstance(old_value, str):
-                    value = old_value.encode('utf8')
-
-            case 'QDateTime':
-                value = QDateTime()
-                if isinstance(old_value, (datetime.datetime, datetime.date, datetime.time)):
-
-                    # Translate datetime objects to a string
-                    if not isinstance(old_value, datetime.datetime):
-                        date: datetime.date = datetime.datetime.now().date() if isinstance(old_value, datetime.time) else old_value
-                        time: datetime.time = datetime.datetime.now().time() if isinstance(old_value, datetime.date) else old_value
-                        old_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
-
-                    old_value = old_value.isoformat()
-
-                # Translate string to QDateTime object
-                value.fromString(str(old_value), Qt.DateFormat.ISODateWithMs)
-
-            case 'QNetworkCookie':
-                cookie_list: list[QNetworkCookie] = []
-                match old_value[0] if old_value else None:
-
-                    # Translate dictionaries
-                    case Mapping():
-                        for cookie in old_value:
-                            for name, _value in cookie.items():
-                                cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
-
-                    # Translate tuples, lists, etc. that contain two strings (name and value)
-                    case Sequence():
-                        for cookie in old_value:
-                            cookie_list.append(QNetworkCookie(cookie[0].encode('utf8'), cookie[1].encode('utf8')))
-
-                value = cookie_list
-
-            case 'QStringListModel':
-                value = [str(item) for item in old_value]
-
-            case 'QUrl':
-                if not isinstance(old_value, QUrl):
-                    value = QUrl(str(old_value))
-
-        return value
 
     def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None) -> bool:
         """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
@@ -273,26 +278,255 @@ class NetworkSession:
         cookie.setPath(path or '/')
         return self.manager.cookieJar().insertCookie(cookie)
 
-    # pylint: disable=compare-to-zero
-    def request(self, method: str, url: QUrl | str,
-                params: _StringPair | None = None,
-                data: bytes | _StringPair | None = None,
-                headers: _HeaderValue | None = None,
-                cookies: _StringPair | None = None,
-                # TODO: Finish ``requests``-like implementation
-                # files: dict[str, Any] | None = None,
-                # auth: tuple[str, str] | None = None,
-                timeout: float | tuple[float, float] | None = 30.0,
-                allow_redirects: bool = True,
-                proxies: _StringPair | None = None,
-                stream: bool = False,
-                verify: bool | str | None = None,
-                cert: str | tuple[str, str] | None = None,
-                json: dict[str, Any] | None = None,
-                wait_until_finished: bool = False,
-                finished: _ResponseConsumer | None = None,
-                progress: _ProgressConsumer | None = None) -> Response:
+    def request(self, method: str, url: QUrl | str, *args, **kwargs) -> Response:
         """Send an HTTP request to the given URL with the given data.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param method: HTTP method/verb to use for the request. Case-sensitive.
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        send_kwargs = {
+            'wait_until_finished': kwargs.pop('wait_until_finished', False),
+            'finished': kwargs.pop('finished', None),
+            'progress': kwargs.pop('progress', None),
+        }
+
+        return Request(method, url, *args, **kwargs).send(self, **send_kwargs)
+
+    def get(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the GET HTTP method.
+
+        GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
+        by web browsers to download HTML pages, images, and other resources.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'GET'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+    def head(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the HEAD HTTP method.
+
+        HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
+        This is useful for checking if a resource exists, or for getting the size of a resource before downloading it.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'HEAD'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+    def post(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the POST HTTP method.
+
+        POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
+        This makes it very common for servers to accept POST requests for a multitude of things.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'POST'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+    def put(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the PUT HTTP method.
+
+        PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'PUT'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+    def delete(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the DELETE HTTP method.
+
+        DELETE is used to delete a specified resource.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'DELETE'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+    def patch(self, url: QUrl | str, **kwargs) -> Response:
+        """Create and send a request with the PATCH HTTP method.
+
+        PATCH is used to send a partial update of an existing resource.
+
+        -----
+
+        See :py:meth:`Request.__init__` for full kwarg documentation.
+
+        :param url: URL to send the request to. Case-sensitive.
+        :keyword params: URL parameters to attach to the URL. Case-sensitive.
+        :keyword data: Bytes to send in the request body.
+        :keyword headers: Headers to use for the request. Case-insensitive.
+        :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword timeout: Timeouts for the request.
+        :keyword allow_redirects: If False, do not follow any redirect requests.
+        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
+        :keyword stream: Whether to accept chunked encoding.
+        :keyword verify: Whether to verify SSL certificates.
+        :keyword cert: Client certificate information.
+        :keyword json: JSON data to send in the request body.
+        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
+        :keyword finished: Callback when the request finishes, with request supplied as an argument.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+
+        :return: Response object, which is not guaranteed to be finished.
+        """
+        method: str = 'PATCH'
+        self._check_method_kwargs(method, **kwargs)
+
+        return self.request(method=method, url=url, **kwargs)
+
+
+class Request:
+    """``requests``-like wrapper over a :py:class:`QNetworkRequest`."""
+
+    def __init__(self, method: str, url: QUrl | str,
+                 params: _StringPair | None = None,
+                 data: bytes | _StringPair | None = None,
+                 headers: _HeaderValue | None = None,
+                 cookies: _StringPair | None = None,
+                 # TODO: Finish ``requests``-like implementation
+                 # files: dict[str, Any] | None = None,
+                 # auth: tuple[str, str] | None = None,
+                 timeout: float | tuple[float, float] | None = 30.0,
+                 allow_redirects: bool = True,
+                 proxies: _StringPair | None = None,
+                 stream: bool = False,
+                 verify: bool | str | None = None,
+                 cert: str | tuple[str, str] | None = None,
+                 json: dict[str, Any] | None = None) -> None:
+        """Create a new :py:class:`Request` with the given fields.
 
         :param method: HTTP method/verb to use for the request. Case-sensitive.
 
@@ -336,6 +570,125 @@ class NetworkSession:
         :param json: JSON data to send in the request body.
             Automatically encodes to bytes and updates Content-Type header.
             Incompatible with the data and files parameters.
+        """
+        self._request: QNetworkRequest | None = None
+
+        self.method = method
+        self.url = url
+        self.params = {} if params is None else params
+        self.data = data
+        self.headers = {} if headers is None else headers
+        self.cookies = {} if cookies is None else cookies
+        # self.files = files
+        # self.auth - auth
+        self.timeout = timeout
+        self.allow_redirects = allow_redirects
+        self.proxies = proxies
+        self.stream = stream
+        self.verify = verify
+        self.cert = cert
+        self.json = json
+
+    def __repr__(self) -> str:
+        """Representation of the :py:class:`Request` with method and target URL."""
+        return f'<Request [{self.method}] ({self.url})>'
+
+    def _prepare_body(self) -> bytes | None:
+        content_type = None
+        body: bytes | None = None
+
+        if self.data:
+            if isinstance(self.data, dict):
+                body = encode_url_params(self.data).encode('utf8')
+                content_type = 'application/x-www-form-urlencoded'
+
+            elif isinstance(self.data, bytes):
+                body = self.data
+
+        elif self.json is not None:
+            body = json_dumps(self.json, allow_nan=False).encode('utf8')
+            content_type = 'application/json'
+
+        if content_type and 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = content_type
+
+        return body
+
+    def _prepare_headers(self, headers: CaseInsensitiveDict) -> None:
+        if self.stream:
+            headers['Transfer-Encoding'] = 'chunked'
+
+        if self.cookies:
+            headers['Cookie'] = headers
+
+        for name, value in headers.items():
+            if name in KNOWN_HEADERS:
+                value = _translate_header_value(name, value)
+                self._request.setHeader(KNOWN_HEADERS[name][0], value)
+                continue
+
+            try:
+                encoded_value = bytes(value) if not isinstance(value, str) else value.encode('utf8')
+            except TypeError:
+                encoded_value = str(value).encode('utf8')
+
+            self._request.setRawHeader(name.encode('utf8'), encoded_value)
+
+    # pylint: disable=compare-to-zero
+    def _prepare_response(self, reply: QNetworkReply, finished: _ResponseConsumer, progress: _ProgressConsumer) -> Response:
+        _response = Response(self, reply)
+
+        if self.allow_redirects:
+            reply.redirected.connect(lambda _: reply.redirectAllowed)
+
+        if self.verify is False:
+            reply.ignoreSslErrors()
+
+        if finished is not None:
+            reply.finished.connect(DeferredCallable(gc_response(finished), _response))
+
+        if progress is not None:
+            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
+
+        if self.timeout:
+            # Create connection timeout timer
+            # This is for the RESPONSE side of the connection.
+            def handle_connection_timeout():
+                if not reply.isFinished():
+                    reply.abort()
+
+            connection_timeout = int((self.timeout[0] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
+            timer = QTimer(reply)
+            timer.setSingleShot(True)
+            timer.setInterval(connection_timeout)
+            timer.timeout.connect(handle_connection_timeout)
+            timer.start()
+
+        return _response
+
+    def _prepare_ssl(self) -> None:
+        ssl_config = QSslConfiguration.defaultConfiguration()
+
+        if isinstance(self.verify, str):
+            ssl_config.setCaCertificates(QSslCertificate.fromPath(self.verify))
+
+        if isinstance(self.cert, str):
+            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(self.cert))
+        elif isinstance(self.cert, tuple):
+            # cert is a tuple of (cert_path, key_path)
+            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(self.cert[0]))
+            ssl_config.setPrivateKey(QSslKey(Path(self.cert[1]).read_bytes(), QSsl.KeyAlgorithm.Rsa))
+
+        self._request.setSslConfiguration(ssl_config)
+
+    def send(self,
+             session: NetworkSession,
+             wait_until_finished: bool = False,
+             finished: _ResponseConsumer | None = None,
+             progress: _ProgressConsumer | None = None) -> Response:
+        """Send the :py:class:`Request` using the specified :py:class:`NetworkSession`.
+
+        :param session: Session to use.
 
         :param wait_until_finished: Process the application eventLoop until
             the reply is finished, so when it is returned you can immediately access data.
@@ -346,374 +699,82 @@ class NetworkSession:
         :param progress: Callback to update download progress,
             with the reply, received bytes, and total bytes supplied as arguments.
 
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        :raises ValueError: If string pair tuples ( list[tuple[str, str]] ) don't contain exactly 2 items.
+        :return: Response object, which is not guaranteed to be finished.
+        :raises ValueError: If proxy attribute is not a valid option.
         """
-        # Setup values for the request
-
-        params = {} if params is None else params
-        headers = {} if headers is None else headers
-        cookies = {} if cookies is None else cookies
-
         # Translate dictionary-compatible tuple pair lists to dictionaries
         # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
         for var_name in ('params', 'data', 'headers', 'cookies', 'proxies'):
-            if isinstance(vars()[var_name], Sequence):
-                vars()[var_name] = dict(vars()[var_name])
+            if isinstance(vars(self)[var_name], Sequence):
+                vars(self)[var_name] = dict(vars(self)[var_name])
 
-        request_url: QUrl = QUrl(url)                                              # Ensure url is of type QUrl
-        request_params: dict[str, str] = query_to_dict(request_url.query()) | params  # Override QUrl params with params argument
-        request_headers: CaseInsensitiveDict = self.headers.copy() | headers           # Update session headers with headers argument
-        request_cookies: dict[str, str] = self.cookies | cookies                       # Update session cookies with cookies argument
+        request_url = QUrl(self.url)  # Ensure url is of type QUrl
+        request_params = query_to_dict(request_url.query()) | self.params  # Update QUrl params with params argument
+        request_headers = session.headers | self.headers                   # Use session headers as default headers
+        request_cookies = session.cookies | self.cookies                   # Use session cookies as default cookies
+        request_data = self._prepare_body()
+
+        if self.cookies:
+            request_headers['Cookie'] = request_cookies
 
         request_url.setQuery(dict_to_query(request_params))
+        self._request = QNetworkRequest(request_url)
 
-        # HTTP Body
+        self._prepare_ssl()
+        self._prepare_headers(request_headers)
 
-        content_type = None
-        body = None
+        if not self.allow_redirects:
+            session.manager.setRedirectPolicy(QNetworkRequest.RedirectPolicy.ManualRedirectPolicy)
 
-        if data:
-            if isinstance(data, dict):
-                body = encode_url_params(data).encode('utf8')
-                content_type = 'application/x-www-form-urlencoded'
-
-            elif isinstance(data, bytes):
-                body = data
-
-        elif json is not None:
-            body = json_dumps(json, allow_nan=False).encode('utf8')
-            content_type = 'application/json'
-
-        if content_type and 'Content-Type' not in request_headers:
-            request_headers['Content-Type'] = content_type
-
-        if stream:
-            request_headers['Transfer-Encoding'] = 'chunked'
-
-        # Cookies
-
-        original_cookie_jar: QNetworkCookieJar = self.manager.cookieJar()
-        if cookies:
-            self.manager.setCookieJar(QNetworkCookieJar(self.manager))
-
-            for name, value in request_cookies:
-                self.set_cookie(name, value, request_url.host())
-
-        request = QNetworkRequest(request_url)
-
-        # SSL Configuration
-
-        ssl_config = QSslConfiguration.defaultConfiguration()
-
-        if isinstance(verify, str):
-            ssl_config.setCaCertificates(QSslCertificate.fromPath(verify))
-
-        if isinstance(cert, str):
-            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(cert))
-        elif isinstance(cert, tuple):
-            # cert is a tuple of (cert_path, key_path)
-            ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(cert[0]))
-            ssl_config.setPrivateKey(QSslKey(Path(cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
-
-        request.setSslConfiguration(ssl_config)
-
-        # Headers
-
-        for name, value in request_headers.items():
-            if name in self.KNOWN_HEADERS:
-                value = self._translate_header_value(name, value)
-                request.setHeader(self.KNOWN_HEADERS[name][0], value)
-                continue
-
-            try:
-                encoded_value = bytes(value) if not isinstance(value, str) else value.encode('utf8')
-            except TypeError:
-                encoded_value = str(value).encode('utf8')
-
-            request.setRawHeader(name.encode('utf8'), encoded_value)
-
-        # Other
-
-        if not allow_redirects:
-            self.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
-
-        if proxies is not None:
-            for protocol, proxy_url in proxies.items():
+        if self.proxies is not None:
+            for protocol, proxy_url in self.proxies.items():
                 proxy_type: QNetworkProxy.ProxyType
                 match protocol:
                     case '':
-                        proxy_type = QNetworkProxy.NoProxy
+                        proxy_type = QNetworkProxy.ProxyType.NoProxy
                     case 'ftp':
-                        proxy_type = QNetworkProxy.FtpCachingProxy
+                        proxy_type = QNetworkProxy.ProxyType.FtpCachingProxy
                     case 'http':
-                        proxy_type = QNetworkProxy.HttpProxy
+                        proxy_type = QNetworkProxy.ProxyType.HttpProxy
                     case 'socks5':
-                        proxy_type = QNetworkProxy.Socks5Proxy
+                        proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
                     case other:
                         raise ValueError(f'proxy protocol "{other}" is not supported.')
 
                 proxy_url = QUrl(proxy_url)
                 proxy = QNetworkProxy(proxy_type, proxy_url.host(), proxy_url.port())
-                self.manager.setProxy(proxy)
+                session.manager.setProxy(proxy)
 
-        if timeout:
+        if self.timeout:
             # Set transfer timeout amount
             # This is for the REQUEST side of the connection.
-            transfer_timeout = int((timeout[1] if isinstance(timeout, Sequence) else timeout) * 1000)
-            request.setTransferTimeout(transfer_timeout)
+            transfer_timeout = int((self.timeout[1] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
+            self._request.setTransferTimeout(transfer_timeout)
 
-        # Handle Reply
-        # Since this is an asynchronous request, we don't immediately have the reply data.
+        _reply: QNetworkReply = session.manager.sendCustomRequest(self._request, self.method.encode('utf8'), data=request_data)
+        response: Response = self._prepare_response(_reply, finished, progress)
 
-        reply: QNetworkReply = self.manager.sendCustomRequest(request, method.encode('utf8'), data=body)
-        _response = Response(self, reply)
-
-        if allow_redirects:
-            reply.redirected.connect(lambda _: reply.redirectAllowed)
-
-        if verify is False:
-            reply.ignoreSslErrors()
-
-        if finished is not None:
-            reply.finished.connect(DeferredCallable(gc_response(finished), _response))
-
-        if progress is not None:
-            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
-
-        if self.manager.cookieJar() is not original_cookie_jar:
-            self.manager.setCookieJar(original_cookie_jar)
-        if self.manager.redirectPolicy() != self.default_redirect_policy:
-            self.manager.setRedirectPolicy(self.default_redirect_policy)
-
-        if timeout:
-            # Create connection timeout timer
-            # This is for the RESPONSE side of the connection.
-            def handle_connection_timeout():
-                if not reply.isFinished():
-                    reply.abort()
-
-            connection_timeout = int((timeout[0] if isinstance(timeout, Sequence) else timeout) * 1000)
-            timer = QTimer(reply)
-            timer.setSingleShot(True)
-            timer.setInterval(connection_timeout)
-            timer.timeout.connect(handle_connection_timeout)
-            timer.start()
+        if session.manager.redirectPolicy() != session.default_redirect_policy:
+            session.manager.setRedirectPolicy(session.default_redirect_policy)
 
         if wait_until_finished:
-            wait_for_reply(reply)
+            wait_for_reply(_reply)
 
-        return _response
-
-    def get(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the GET HTTP method.
-
-        GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
-        by web browsers to download HTML pages, images, and other resources.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'GET'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
-
-    def head(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the HEAD HTTP method.
-
-        HEAD requests are used to retrieve information about a resource without actually fetching the resource itself.
-        This is useful for checking if a resource exists, or for getting the size of a resource before downloading it.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'HEAD'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
-
-    def post(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the POST HTTP method.
-
-        POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
-        This makes it very common for servers to accept POST requests for a multitude of things.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'POST'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
-
-    def put(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the PUT HTTP method.
-
-        PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'PUT'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
-
-    def delete(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the DELETE HTTP method.
-
-        DELETE is used to delete a specified resource.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'DELETE'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
-
-    def patch(self, url: QUrl | str, **kwargs) -> Response:
-        """Create and send a request with the PATCH HTTP method.
-
-        PATCH is used to send a partial update of an existing resource.
-
-        -----
-
-        See :py:meth:`NetworkSession.request` for full kwarg documentation.
-
-        :param url: URL to send the request to. Case-sensitive.
-        :keyword params: URL parameters to attach to the URL. Case-sensitive.
-        :keyword data: Bytes to send in the request body.
-        :keyword headers: Headers to use for the request. Case-insensitive.
-        :keyword cookies: Cookies to use for the request. Case-sensitive.
-        :keyword timeout: Timeouts for the request.
-        :keyword allow_redirects: If False, do not follow any redirect requests.
-        :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
-        :keyword stream: Whether to accept chunked encoding.
-        :keyword verify: Whether to verify SSL certificates.
-        :keyword cert: Client certificate information.
-        :keyword json: JSON data to send in the request body.
-        :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
-        :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
-
-        :return: QNetworkReply object, which is not guaranteed to be finished.
-        """
-        method: str = 'PATCH'
-        self._check_method_kwargs(method, **kwargs)
-
-        return self.request(method=method, url=url, **kwargs)
+        return response
 
 
 class Response:
     """``requests``-like wrapper over a :py:class:`QNetworkReply`."""
 
-    def __init__(self, session: NetworkSession, reply: QNetworkReply):
+    def __init__(self, request: Request, reply: QNetworkReply) -> None:
         """Initialize the :py:class:`Response`."""
         self._data: bytes | None = None
         self._encoding: str | None = None
         self._headers: CaseInsensitiveDict = CaseInsensitiveDict()
         self._reply: QNetworkReply = reply
-        self.request: QNetworkRequest = reply.request()
-        self.session: NetworkSession = session
+        self.request: Request = request
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Usually the last reference to this :py:class:`Response` is connected to a :py:class:`QNetworkReply` signal.
 
         So, when the :py:class:`QNetworkReply` is deleted using py:class:`Response`.delete(), ``__del__`` is usually called.
@@ -721,6 +782,10 @@ class Response:
         """
         if Shiboken.isValid(self._reply):
             self._reply.deleteLater()
+
+    def __repr__(self) -> str:
+        """Representation of the :py:class:`Response` with its HTTP status code."""
+        return f'<Response [{self.code}]>'
 
     @property
     def code(self) -> int | None:
@@ -760,7 +825,7 @@ class Response:
             return self._headers
 
         # Update with known headers
-        for name, (enum_value, _) in NetworkSession.KNOWN_HEADERS.lower_items():
+        for name, (enum_value, _) in KNOWN_HEADERS.lower_items():
             if (value := self._reply.header(enum_value)) is not None:
                 self._headers[name] = value
 
@@ -794,6 +859,14 @@ class Response:
             encoding = guess_json_utf(data) or 'utf8'
 
         return json_.loads(data.decode(encoding=encoding))
+
+    @property
+    def ok(self) -> bool:
+        """Return whether ``self.code`` is not an error code."""
+        if self.code is None:
+            return False
+
+        return not is_error_status(self.code)
 
     @property
     def text(self) -> str:

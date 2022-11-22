@@ -71,8 +71,8 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
 
-    button: QAbstractButton = QMessageBox.NoButton
-    role: QMessageBox.ButtonRole = QMessageBox.NoRole
+    button: QAbstractButton = QMessageBox.StandardButton.NoButton
+    role: QMessageBox.ButtonRole = QMessageBox.ButtonRole.NoRole
 
 
 class Theme(NamedTuple):
@@ -294,15 +294,15 @@ class GetterApp(Singleton, QApplication):
         first_section: str = key.split('.')[0]
         match first_section:
             case 'questions':
-                icon = QMessageBox.Question
+                icon = QMessageBox.Icon.Question
             case 'information':
-                icon = QMessageBox.Information
+                icon = QMessageBox.Icon.Information
             case 'warnings':
-                icon = QMessageBox.Warning
+                icon = QMessageBox.Icon.Warning
             case 'errors':
-                icon = QMessageBox.Critical
+                icon = QMessageBox.Icon.Critical
             case _:
-                icon = QMessageBox.NoIcon
+                icon = QMessageBox.Icon.NoIcon
 
         title_text: str = self.translator(f'{key}.title', *title_args)
         description_text: str = self.translator(f'{key}.description', *description_args)
@@ -337,8 +337,8 @@ class GetterApp(Singleton, QApplication):
         msg_box.buttonClicked.connect((result := []).append)
         msg_box.exec()
 
-        result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.NoButton
-        result_role: QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.NoRole
+        result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.StandardButton.NoButton
+        result_role: QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.ButtonRole.NoRole
 
         if parent is None:
             # noinspection PyUnboundLocalVariable
@@ -361,12 +361,12 @@ class GetterApp(Singleton, QApplication):
 
         consent_to_install: bool = self.show_dialog(
             'errors.missing_package', parent, (
-                (install_button, QMessageBox.AcceptRole),
-                QMessageBox.Cancel
+                (install_button, QMessageBox.ButtonRole.AcceptRole),
+                QMessageBox.StandardButton.Cancel
             ),
-            default_button=QMessageBox.Cancel,
+            default_button=QMessageBox.StandardButton.Cancel,
             description_args=(package, reason, exec_path)
-        ).role == QMessageBox.AcceptRole
+        ).role == QMessageBox.ButtonRole.AcceptRole
 
         if consent_to_install:
             try:
@@ -389,18 +389,18 @@ class GetterApp(Singleton, QApplication):
 
         match self.show_dialog(
             'information.upgrade_version', None, (
-                (upgrade_button, QMessageBox.YesRole),
-                (ignore_button, QMessageBox.NoRole),
-                QMessageBox.Cancel
+                (upgrade_button, QMessageBox.ButtonRole.YesRole),
+                (ignore_button, QMessageBox.ButtonRole.NoRole),
+                QMessageBox.StandardButton.Cancel
             ),
-            default_button=QMessageBox.Cancel,
+            default_button=QMessageBox.StandardButton.Cancel,
             description_args=(version, __version__)
         ).role:
-            case QMessageBox.YesRole:
+            case QMessageBox.ButtonRole.YesRole:
                 QProcess.execute('pip', arguments=('install', '--upgrade', f'{HI_PACKAGE_NAME.replace("_", "-")}'))
                 QProcess.startDetached(sys.executable, arguments=('-m', HI_PACKAGE_NAME))
                 self.exit(0)
-            case QMessageBox.NoRole:
+            case QMessageBox.ButtonRole.NoRole:
                 self.version_checker.newerVersion.disconnect(self._upgrade_version_dialog)
                 self.settings['ignore_updates'] = True
                 self.settings.save()

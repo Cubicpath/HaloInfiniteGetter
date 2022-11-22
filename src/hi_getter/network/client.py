@@ -24,7 +24,6 @@ from ..models import CaseInsensitiveDict
 from ..utils.common import dump_data
 from ..utils.network import decode_url
 from ..utils.network import guess_json_utf
-from ..utils.network import is_error_status
 from ..utils.system import hide_windows_file
 from .manager import NetworkSession
 from .manager import Response
@@ -104,24 +103,22 @@ class Client(QObject):
             self.api_session.headers['x-343-authorization-spartan'] = self.token
             self.set_cookie('343-spartan-token', self.token)
 
-    def get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
+    def _get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
         """Get a :py:class:`Response` from HaloWaypoint.
 
         :param path: path to append to the API root
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         :param kwargs: Key word arguments to pass to the requests GET Request.
         """
-        reply: Response = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
+        response: Response = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
 
-        # None is returned if the request was aborted
-        status_code: int | None = reply.code
-        if status_code and is_error_status(status_code):
+        if response.code and not response.ok:
             # Handle errors
-            if status_code == 401 and update_auth_on_401 and self.wpauth is not None:
+            if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
                 self.refresh_auth()
-                reply = self.get(path, False, **kwargs)
+                response = self._get(path, False, **kwargs)
 
-        return reply
+        return response
 
     def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
         """Return data from a path. Return type depends on the resource.
@@ -133,14 +130,13 @@ class Client(QObject):
         data: dict[str, Any] | bytes
 
         if not os_path.is_file():
-            response: Response = self.get(path)
-            status_code: int | None = response.code
+            response: Response = self._get(path)
             content_type: str | None = response.headers.get('Content-Type')
 
-            if status_code and is_error_status(status_code):
-                print(f'ERROR [{status_code}] for {path} ')
-                self.receivedError.emit(path, status_code)
-                return status_code
+            if response.code and not response.ok:
+                print(f'ERROR [{response.code}] for {path} ')
+                self.receivedError.emit(path, response.code)
+                return response.code
 
             if 'json' in content_type:
                 data = response.json

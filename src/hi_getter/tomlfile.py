@@ -39,7 +39,7 @@ def make_comment_val(val: TomlValue, comment: str | None = None, new_line: bool 
     """Build and return :py:class:`CommentValue`."""
     return CommentValue(
         val=val,
-        comment=f'{_COMMENT_PREFIX}{comment}' if comment is not None else None,
+        comment=f'{_COMMENT_PREFIX}{comment}' if comment is not None else '',
         beginline=new_line,
         _dict=dict
     )
@@ -204,7 +204,7 @@ class TomlFile:
             raise ValueError('Path cannot be an empty string.')
 
         key: str = path
-        scope: dict = self._data
+        scope: dict[str, TomlValue | CommentValue] = self._data
         paths: list[str] = path.split('/')
 
         if len(paths) > 1:

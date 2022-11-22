@@ -64,7 +64,7 @@ class CacheIndexContextMenu(QMenu):
             (open_in_view := QAction(self)): {
                 'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cached_file.open_in_view'),
-                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'icon': self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon),
                 'triggered': DeferredCallable(
                     parent.openFileInView.emit, file_path.as_posix()
                 )
@@ -134,7 +134,7 @@ class CacheIndexContextMenu(QMenu):
 
             (delete := QAction(self)): {
                 'text': tr('gui.menus.cached_file.delete', 'Folder' if file_path.is_dir() else 'File'),
-                'icon': app().get_theme_icon('dialog_cancel') or self.style().standardIcon(QStyle.SP_DialogCancelButton),
+                'icon': app().get_theme_icon('dialog_cancel') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton),
                 'triggered': DeferredCallable(parent.delete_index, index)
             },
         })

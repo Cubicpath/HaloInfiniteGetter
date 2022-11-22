@@ -52,7 +52,7 @@ class _IconProvider(QAbstractFileIconProvider):
 
         if isinstance(info, QFileInfo):
             if info.isDir() and info.fileName() == 'cached_requests':
-                return self._cache_explorer.style().standardIcon(QStyle.SP_DialogSaveButton)
+                return self._cache_explorer.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
 
             # Preview images
             if self._icon_mode == 2:
@@ -94,7 +94,7 @@ class CacheExplorer(QTreeView):
                 'model': model,
                 'rootIndex': model.index(HI_CACHE_PATH.absolute().as_posix()),
                 'indentation': 12,
-                'contextMenuPolicy': Qt.CustomContextMenu,
+                'contextMenuPolicy': Qt.ContextMenuPolicy.CustomContextMenu,
                 'customContextMenuRequested': self.on_custom_context_menu,
                 'doubleClicked': self.on_double_click
             },
@@ -102,7 +102,7 @@ class CacheExplorer(QTreeView):
             self.header(): {
                 'size': {'fixed': (None, 26)},
                 'sectionsClickable': True,
-                'contextMenuPolicy': Qt.CustomContextMenu,
+                'contextMenuPolicy': Qt.ContextMenuPolicy.CustomContextMenu,
                 'customContextMenuRequested': self.on_header_custom_context_menu
             }
         })
@@ -123,11 +123,11 @@ class CacheExplorer(QTreeView):
 
         consent: bool = app().show_dialog(
             'warnings.delete_path', self, (
-                QMessageBox.Ok | QMessageBox.Cancel
-            ), default_button=QMessageBox.Cancel,
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+            ), default_button=QMessageBox.StandardButton.Cancel,
             title_args=(path_type,),
             description_args=(path_type, file_path)
-        ).role == QMessageBox.AcceptRole
+        ).role == QMessageBox.ButtonRole.AcceptRole
 
         if consent:
             if file_path.is_dir():
@@ -167,7 +167,7 @@ class CacheExplorer(QTreeView):
         super().keyPressEvent(event)
 
         match event.key():
-            case Qt.Key_Delete:
+            case Qt.Key.Key_Delete:
                 # Delete Path at Selected Index
                 for i in self.selectedIndexes():
                     self.delete_index(i)
@@ -188,7 +188,7 @@ class CacheExplorer(QTreeView):
 
         if index.isValid():
             menu = ColumnContextMenu(self, {0})
-            menu.setAttribute(Qt.WA_DeleteOnClose)
+            menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
             menu.exec(self.viewport().mapToGlobal(point))
 
@@ -203,7 +203,7 @@ class CacheExplorer(QTreeView):
 
         if index.isValid():
             menu = CacheIndexContextMenu(self, index)
-            menu.setAttribute(Qt.WA_DeleteOnClose)
+            menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
             menu.exec(self.viewport().mapToGlobal(point))
 

@@ -201,3 +201,13 @@ check-str-concat-over-line-jumps = false
 
 [tool.pylint.'VARIABLES']
 allowed-redefined-builtins = ["help", "id",]
+
+
+# Pyright configuration.
+# ---------------------
+[tool.pyright]
+pythonVersion = "3.10"
+
+reportSelfClsParameterName = false
+reportUnusedExpression = false
+reportWildcardImportFromLibrary = false

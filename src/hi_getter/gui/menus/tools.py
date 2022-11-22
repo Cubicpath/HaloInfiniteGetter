@@ -34,12 +34,12 @@ def create_app_shortcut() -> None:
     # Show dialog, return early if user presses cancel
     if (response := app().show_dialog(
         'questions.create_shortcut', None, (
-            (desktop_button, QMessageBox.AcceptRole),
-            (start_menu_button, QMessageBox.AcceptRole),
-            (both_button, QMessageBox.AcceptRole),
-            QMessageBox.Cancel
-        ), default_button=QMessageBox.Cancel
-    )).role == QMessageBox.RejectRole:
+            (desktop_button, QMessageBox.ButtonRole.AcceptRole),
+            (start_menu_button, QMessageBox.ButtonRole.AcceptRole),
+            (both_button, QMessageBox.ButtonRole.AcceptRole),
+            QMessageBox.StandardButton.Cancel
+        ), default_button=QMessageBox.StandardButton.Cancel
+    )).role == QMessageBox.ButtonRole.RejectRole:
         return
 
     # If response is affirmative, mark which shortcuts to create
@@ -68,7 +68,7 @@ class ToolsContextMenu(QMenu):
         init_objects({
             (shortcut_tool := QAction(self)): {
                 'text': tr('gui.menus.tools.create_shortcut'),
-                'icon': self.style().standardIcon(QStyle.SP_DesktopIcon),
+                'icon': self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon),
                 'triggered': create_app_shortcut
             },
 

@@ -24,9 +24,9 @@ class ExceptionLogger(QPushButton):
     """A :py:class:`QPushButton` that logs exceptions to the event bus."""
 
     level_icon_list: list = [
-        QStyle.SP_MessageBoxInformation,  # 0, Not a concern
-        QStyle.SP_MessageBoxWarning,      # 1, Warning
-        QStyle.SP_MessageBoxCritical      # 2, Error
+        QStyle.StandardPixmap.SP_MessageBoxInformation,  # 0, Not a concern
+        QStyle.StandardPixmap.SP_MessageBoxWarning,      # 1, Warning
+        QStyle.StandardPixmap.SP_MessageBoxCritical      # 2, Error
     ]
 
     def __init__(self, *args, **kwargs) -> None:

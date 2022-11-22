@@ -172,12 +172,12 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
             in self._store.items()
         )
 
-    def __eq__(self, other: Mapping) -> bool:
+    def __eq__(self, other: Mapping[str, Any]) -> bool:
         """Compare items of other :py:class:`Mapping` case-insensitively."""
         if not isinstance(other, Mapping):
             return NotImplemented
 
-        other = self.__class__(other)
+        other: CaseInsensitiveDict = self.__class__(other)
         # Compare insensitively
         return dict(self.lower_items()) == dict(other.lower_items())
 
@@ -367,7 +367,7 @@ class Singleton:
 
     __slots__: tuple[str, ...] = ()
 
-    _singleton_base_type: type(type) = object
+    _singleton_base_type: type = object
     _singleton_check_ref: bool = True
     __instance: Singleton | None = None
     """The singular reference for the class instance. Should ONLY be accessed using weak reference proxies.
