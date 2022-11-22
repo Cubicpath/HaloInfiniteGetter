@@ -45,21 +45,25 @@ _RT = TypeVar('_RT', bound=Callable)
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
 
 
+# autopep8: off
 KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = CaseInsensitiveDict({
-    'Content-Disposition': (QNetworkRequest.ContentDispositionHeader, str),
-    'Content-Type': (QNetworkRequest.ContentTypeHeader, str),
-    'Content-Length': (QNetworkRequest.ContentLengthHeader, bytes),
-    'Cookie': (QNetworkRequest.CookieHeader, QNetworkCookie),
-    'ETag': (QNetworkRequest.ETagHeader, str),
-    'If-Match': (QNetworkRequest.IfMatchHeader, QStringListModel),
-    'If-Modified-Since': (QNetworkRequest.IfModifiedSinceHeader, QDateTime),
-    'If-None-Match': (QNetworkRequest.IfNoneMatchHeader, QStringListModel),
-    'Last-Modified': (QNetworkRequest.LastModifiedHeader, QDateTime),
-    'Location': (QNetworkRequest.LocationHeader, QUrl),
-    'Server': (QNetworkRequest.ServerHeader, str),
-    'Set-Cookie': (QNetworkRequest.SetCookieHeader, QNetworkCookie),
-    'User-Agent': (QNetworkRequest.UserAgentHeader, str),
+    # Name:                Header Enum Value:                                      Object Wanted:
+    # -----------------------------------------------------------------------------------------------
+    'Content-Disposition': (QNetworkRequest.KnownHeaders.ContentDispositionHeader, str),
+    'Content-Type':        (QNetworkRequest.KnownHeaders.ContentTypeHeader,        str),
+    'Content-Length':      (QNetworkRequest.KnownHeaders.ContentLengthHeader,      bytes),
+    'Cookie':              (QNetworkRequest.KnownHeaders.CookieHeader,             QNetworkCookie),
+    'ETag':                (QNetworkRequest.KnownHeaders.ETagHeader,               str),
+    'If-Match':            (QNetworkRequest.KnownHeaders.IfMatchHeader,            QStringListModel),
+    'If-Modified-Since':   (QNetworkRequest.KnownHeaders.IfModifiedSinceHeader,    QDateTime),
+    'If-None-Match':       (QNetworkRequest.KnownHeaders.IfNoneMatchHeader,        QStringListModel),
+    'Last-Modified':       (QNetworkRequest.KnownHeaders.LastModifiedHeader,       QDateTime),
+    'Location':            (QNetworkRequest.KnownHeaders.LocationHeader,           QUrl),
+    'Server':              (QNetworkRequest.KnownHeaders.ServerHeader,             str),
+    'Set-Cookie':          (QNetworkRequest.KnownHeaders.SetCookieHeader,          QNetworkCookie),
+    'User-Agent':          (QNetworkRequest.KnownHeaders.UserAgentHeader,          str),
 })
+# autopep8: on
 
 
 def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
@@ -163,7 +167,7 @@ class NetworkSession:
         """
         self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
         self.manager: QNetworkAccessManager = QNetworkAccessManager(manager_parent)
-        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.UserVerifiedRedirectPolicy
+        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.RedirectPolicy.UserVerifiedRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -673,7 +677,7 @@ class Request:
         elif isinstance(self.cert, tuple):
             # cert is a tuple of (cert_path, key_path)
             ssl_config.setLocalCertificateChain(QSslCertificate.fromPath(self.cert[0]))
-            ssl_config.setPrivateKey(QSslKey(Path(self.cert[1]).read_bytes(), QSsl.Rsa, QSsl.Pem, QSsl.PrivateKey))
+            ssl_config.setPrivateKey(QSslKey(Path(self.cert[1]).read_bytes(), QSsl.KeyAlgorithm.Rsa))
 
         self._request.setSslConfiguration(ssl_config)
 
@@ -720,20 +724,20 @@ class Request:
         self._prepare_headers(request_headers)
 
         if not self.allow_redirects:
-            session.manager.setRedirectPolicy(QNetworkRequest.ManualRedirectPolicy)
+            session.manager.setRedirectPolicy(QNetworkRequest.RedirectPolicy.ManualRedirectPolicy)
 
         if self.proxies is not None:
             for protocol, proxy_url in self.proxies.items():
                 proxy_type: QNetworkProxy.ProxyType
                 match protocol:
                     case '':
-                        proxy_type = QNetworkProxy.NoProxy
+                        proxy_type = QNetworkProxy.ProxyType.NoProxy
                     case 'ftp':
-                        proxy_type = QNetworkProxy.FtpCachingProxy
+                        proxy_type = QNetworkProxy.ProxyType.FtpCachingProxy
                     case 'http':
-                        proxy_type = QNetworkProxy.HttpProxy
+                        proxy_type = QNetworkProxy.ProxyType.HttpProxy
                     case 'socks5':
-                        proxy_type = QNetworkProxy.Socks5Proxy
+                        proxy_type = QNetworkProxy.ProxyType.Socks5Proxy
                     case other:
                         raise ValueError(f'proxy protocol "{other}" is not supported.')
 

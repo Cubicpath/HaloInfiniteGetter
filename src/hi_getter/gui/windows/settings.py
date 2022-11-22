@@ -82,12 +82,12 @@ class SettingsWindow(Singleton, QWidget):
             self.key_set_button.setDisabled(True)
             self.key_field.setDisabled(True)
             self.key_field.setText(app().client.hidden_key())
-            self.key_field.setAlignment(Qt.AlignCenter)
+            self.key_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         def toggle_key_visibility() -> None:
             """Toggle hiding and showing the API key."""
             if not self.key_field.isEnabled():
-                self.key_field.setAlignment(Qt.AlignLeft)
+                self.key_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
                 self.key_field.setText(app().client.wpauth)
                 self.key_field.setDisabled(False)
                 self.key_field.setFocus()
@@ -174,7 +174,7 @@ class SettingsWindow(Singleton, QWidget):
             self.key_field: {
                 'font': QFont('segoe ui', 8), 'text': app().client.hidden_key(),
                 'pasted': set_key, 'returnPressed': self.key_set_button.click,
-                'size': {'minimum': (220, None)}, 'alignment': Qt.AlignCenter
+                'size': {'minimum': (220, None)}, 'alignment': Qt.AlignmentFlag.AlignCenter
             },
 
             # Dropdowns
@@ -305,9 +305,9 @@ class SettingsWindow(Singleton, QWidget):
             # Main layout
             QGridLayout(self): {
                 'items': [
-                    (top, 0, 0, Qt.AlignTop),
-                    (middle, 10, 0, Qt.AlignTop),
-                    (bottom, 20, 0, Qt.AlignBottom)
+                    (top, 0, 0, Qt.AlignmentFlag.AlignTop),
+                    (middle, 10, 0, Qt.AlignmentFlag.AlignTop),
+                    (bottom, 20, 0, Qt.AlignmentFlag.AlignBottom)
                 ]
             }
         })
@@ -338,7 +338,7 @@ class SettingsWindow(Singleton, QWidget):
         init_objects({
             self.key_field: {
                 'disabled': True,
-                'alignment': Qt.AlignCenter,
+                'alignment': Qt.AlignmentFlag.AlignCenter,
                 'text': app().client.hidden_key()
             },
             self.key_set_button: {'disabled': True},

@@ -20,7 +20,6 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from ..._version import __version__
 from ...constants import *
 from ...events import EventBus
 from ...exception_hook import ExceptionEvent
@@ -390,22 +389,22 @@ class AppWindow(Singleton, QMainWindow):
             scan_button.setText: 'gui.input_field.scan'
         })
 
-        self.text_output.connect_key_to(Qt.Key_Left, prev_in_history)
-        self.text_output.connect_key_to(Qt.Key_Right, next_in_history)
+        self.text_output.connect_key_to(Qt.Key.Key_Left, prev_in_history)
+        self.text_output.connect_key_to(Qt.Key.Key_Right, next_in_history)
         self.outputs = QHBoxLayout()
 
         init_layouts({
             # Text widget layouts
             (text_bottom := QHBoxLayout()): {
                 'items': [
-                    (self.clear_text, Qt.AlignLeft),
-                    (self.copy_text, Qt.AlignLeft)
+                    (self.clear_text, Qt.AlignmentFlag.AlignLeft),
+                    (self.copy_text, Qt.AlignmentFlag.AlignLeft)
                 ]
             },
             (text_top := QHBoxLayout()): {
                 'items': [
-                    (self.text_size_label, Qt.AlignLeft),
-                    (self.text_detach_button, Qt.AlignRight)
+                    (self.text_size_label, Qt.AlignmentFlag.AlignLeft),
+                    (self.text_detach_button, Qt.AlignmentFlag.AlignRight)
                 ]
             },
             QVBoxLayout(self.text_frame): {
@@ -417,14 +416,14 @@ class AppWindow(Singleton, QMainWindow):
             # Media widget layouts
             (media_bottom := QHBoxLayout()): {
                 'items': [
-                    (self.clear_picture, Qt.AlignLeft),
-                    (self.copy_picture, Qt.AlignLeft)
+                    (self.clear_picture, Qt.AlignmentFlag.AlignLeft),
+                    (self.copy_picture, Qt.AlignmentFlag.AlignLeft)
                 ]
             },
             (media_top := QHBoxLayout()): {
                 'items': [
-                    (self.image_size_label, Qt.AlignLeft),
-                    (self.image_detach_button, Qt.AlignRight)
+                    (self.image_size_label, Qt.AlignmentFlag.AlignLeft),
+                    (self.image_detach_button, Qt.AlignmentFlag.AlignRight)
                 ]
             },
             QVBoxLayout(self.media_frame): {
@@ -441,8 +440,8 @@ class AppWindow(Singleton, QMainWindow):
             },
             (middle := QHBoxLayout()): {
                 'items': [
-                    (self.cache_explorer, Qt.AlignLeft),
-                    (self.outputs, Qt.AlignHCenter)
+                    (self.cache_explorer, Qt.AlignmentFlag.AlignLeft),
+                    (self.outputs, Qt.AlignmentFlag.AlignHCenter)
                 ]
             },
 
@@ -457,9 +456,9 @@ class AppWindow(Singleton, QMainWindow):
             # Main layout
             (layout := QGridLayout()): {
                 'items': [
-                    (top, 10, 0, Qt.AlignTop),
-                    (middle, 20, 0, Qt.AlignHCenter),
-                    # (bottom, 30, 0, Qt.AlignBottom)
+                    (top, 10, 0, Qt.AlignmentFlag.AlignTop),
+                    (middle, 20, 0, Qt.AlignmentFlag.AlignHCenter),
+                    # (bottom, 30, 0, Qt.AlignmentFlag.AlignBottom)
                 ]
             }
         })

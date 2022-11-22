@@ -92,7 +92,7 @@ class FileContextMenu(QMenu):
                 # DISABLED IF EMPTY DIRECTORY
                 'disabled': not any(HI_CACHE_PATH.iterdir()),
                 'text': tr('gui.menus.file.flush'),
-                'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.SP_DialogDiscardButton),
+                'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogDiscardButton),
                 'triggered': self.flush_cache
             },
 
@@ -120,9 +120,9 @@ class FileContextMenu(QMenu):
         """Remove all data from cache."""
         do_flush: bool = app().show_dialog(
             'warnings.delete_cache', self,
-            QMessageBox.Ok | QMessageBox.Cancel,
-            default_button=QMessageBox.Cancel
-        ).role == QMessageBox.AcceptRole
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            default_button=QMessageBox.StandardButton.Cancel
+        ).role == QMessageBox.ButtonRole.AcceptRole
 
         if do_flush:
             QDir(HI_CACHE_PATH).removeRecursively()

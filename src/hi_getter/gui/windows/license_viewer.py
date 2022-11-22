@@ -105,11 +105,11 @@ class LicenseViewer(QWidget):
             }
         })
 
-        self.license_text_edit.connect_key_to(Qt.Key_Left, self.prev_license)
-        self.license_text_edit.connect_key_to(Qt.Key_Right, self.next_license)
+        self.license_text_edit.connect_key_to(Qt.Key.Key_Left, self.prev_license)
+        self.license_text_edit.connect_key_to(Qt.Key.Key_Right, self.next_license)
         self.view_current_index()
 
-        top_right.setAlignment(Qt.AlignRight)
+        top_right.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         cursor = self.license_text_edit.textCursor()
         cursor.clearSelection()

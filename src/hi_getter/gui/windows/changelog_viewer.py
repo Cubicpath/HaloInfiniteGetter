@@ -32,7 +32,7 @@ class ChangelogViewer(QWidget):
         """Create a new :py:class:`ChangelogViewer` and initialize UI."""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.changelog_viewer.title'))
-        self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton))
+        self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
         self.resize(QSize(600, 800))
 
         self.changelog_url: str = 'https://raw.githubusercontent.com/Cubicpath/HaloInfiniteGetter/master/CHANGELOG.md'
@@ -52,7 +52,7 @@ class ChangelogViewer(QWidget):
 
             (check_latest_button := QPushButton(self)): {
                 'size': {'fixed': (20, 20)},
-                'icon': self.style().standardIcon(QStyle.SP_BrowserReload),
+                'icon': self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload),
                 'clicked': DistributedCallable((
                     DeferredCallable(app().version_checker.check_version),
                     check_latest_button.setDisabled,
@@ -60,7 +60,7 @@ class ChangelogViewer(QWidget):
                 ), True)
             },
 
-            (spacer := QSpacerItem(0, 0, hData=QSizePolicy.MinimumExpanding)): {},
+            (spacer := QSpacerItem(0, 0, hData=QSizePolicy.Policy.MinimumExpanding)): {},
 
             (github_button := QPushButton(self)): {
                 'size': {'fixed': (180, None)},

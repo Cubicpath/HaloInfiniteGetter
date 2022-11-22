@@ -77,7 +77,7 @@ class HelpContextMenu(QMenu):
 
             (changelog := QAction(self)): {
                 'text': tr('gui.menus.help.changelog'),
-                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
+                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton),
                 'triggered': lambda: app().windows['changelog_viewer'].show()
             },
 
@@ -89,7 +89,7 @@ class HelpContextMenu(QMenu):
 
             (readme := QAction(self)): {
                 'text': tr('gui.menus.help.readme'),
-                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.SP_DialogApplyButton),
+                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton),
                 'triggered': lambda: app().windows['readme_viewer'].show()
             }
         })

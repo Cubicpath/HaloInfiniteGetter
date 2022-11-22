@@ -29,6 +29,6 @@ class PasteLineEdit(QLineEdit):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Call self.pasted on paste."""
         super().keyPressEvent(event)
-        if event.matches(QKeySequence.Paste):
+        if event.matches(QKeySequence.StandardKey.Paste):
             self.pasted.emit()
         event.accept()

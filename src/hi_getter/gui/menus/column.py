@@ -29,11 +29,11 @@ class ColumnContextMenu(QMenu):
         icons = (
             # Not Hidden
             app().get_theme_icon('checkbox_checked') or
-            self.style().standardIcon(QStyle.SP_DialogApplyButton),
+            self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton),
 
             # Hidden
             app().get_theme_icon('checkbox_unchecked') or
-            self.style().standardIcon(QStyle.SP_DialogCancelButton),
+            self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton),
         )
 
         items: list[str | QAction] = ['Columns']
