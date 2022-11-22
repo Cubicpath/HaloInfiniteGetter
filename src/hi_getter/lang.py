@@ -43,7 +43,7 @@ def default_language_file() -> Path | None:
             return lang_file
 
 
-def format_value(value: str, *args: Any, _language: Language = None, _key_eval: bool = True) -> str:
+def format_value(value: str, *args: Any, _language: Language | None = None, _key_eval: bool = True) -> str:
     r"""Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
@@ -103,7 +103,7 @@ def to_lang(language: str | Language) -> Language:
 class Language:
     """Object containing language data. Retrieves stored data with associated RFC 5646 language tags."""
 
-    def __init__(self, primary: Annotated[str, 2] | None = None, region: Annotated[str, 2] | None = None, _selected_file: Path | None = None, **kwargs) -> None:
+    def __init__(self, primary: Annotated[str, 2], region: Annotated[str, 2] | None = None, _selected_file: Path | None = None, **kwargs) -> None:
         """Build a new Language object using given sub-tags.
 
         For more information on RFC 5646, visit https://datatracker.ietf.org/doc/html/rfc5646
@@ -119,7 +119,7 @@ class Language:
         """
         self._data: dict[str, str] = {}
         self.tag: str = Language.build_tag({'primary': primary, 'region': region} | kwargs)
-        self.subtags: dict[str, str | None] = RFC_5646_PATTERN.match(self.tag).groupdict()
+        self.subtags: dict[str, str] = RFC_5646_PATTERN.match(self.tag).groupdict()
 
         if (_selected_file := self.closest_file() if _selected_file is None else _selected_file) is not None:
             # Read the language file corresponding to this Language's tags.
@@ -167,7 +167,7 @@ class Language:
         raise ValueError(f'"{tag}" is not a valid language tag.')
 
     @staticmethod
-    def build_tag(tag_dict: dict[str, str]) -> str:
+    def build_tag(tag_dict: dict[str, str | None]) -> str:
         """Build tag from a tag dictionary.
 
         :param tag_dict: Dictionary obtained from RFC_5646_PATTERN.match(tag).groupdict()
@@ -261,7 +261,7 @@ class Language:
                     most_relevant = (lang_file, 1000)
                     break
 
-                file_subtags: dict[str, str | None] = RFC_5646_PATTERN.match(file_tag).groupdict()
+                file_subtags: dict[str, str] = RFC_5646_PATTERN.match(file_tag).groupdict()
 
                 # Count how close our tag is to this file's tag
                 intersection = {a: b for ((a, b), (c, d))

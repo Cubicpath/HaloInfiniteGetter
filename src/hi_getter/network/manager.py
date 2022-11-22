@@ -79,55 +79,53 @@ def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | byt
     :param value: Value to translate into an accepted type.
     :return: Transformed value.
     """
-    old_value = value
-
     # Match the known-header's value name and translate value to that type.
     match KNOWN_HEADERS[header][1].__name__:
         case 'str':
-            value = str(old_value)
+            return str(value)
 
         case 'bytes':
-            if isinstance(old_value, str):
-                value = old_value.encode('utf8')
+            if isinstance(value, str):
+                return value.encode('utf8')
 
         case 'QDateTime':
-            value = QDateTime()
-            if isinstance(old_value, (datetime.datetime, datetime.date, datetime.time)):
+            if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+                date_value: datetime.datetime | datetime.date | datetime.time = value
 
                 # Translate datetime objects to a string
-                if not isinstance(old_value, datetime.datetime):
-                    date: datetime.date = datetime.datetime.now().date() if isinstance(old_value, datetime.time) else old_value
-                    time: datetime.time = datetime.datetime.now().time() if isinstance(old_value, datetime.date) else old_value
-                    old_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
+                if not isinstance(value, datetime.datetime):
+                    date: datetime.date = datetime.datetime.now().date() if isinstance(value, datetime.time) else value
+                    time: datetime.time = datetime.datetime.now().time() if isinstance(value, datetime.date) else value
+                    date_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
 
-                old_value = old_value.isoformat()
+                return QDateTime().fromString(date_value.isoformat(), Qt.DateFormat.ISODateWithMs)
 
             # Translate string to QDateTime object
-            value.fromString(str(old_value), Qt.DateFormat.ISODateWithMs)
+            return QDateTime().fromString(str(value), Qt.DateFormat.ISODateWithMs)
 
         case 'QNetworkCookie':
             cookie_list: list[QNetworkCookie] = []
-            match old_value[0] if old_value else None:
+            match value[0] if value else None:
 
                 # Translate dictionaries
                 case Mapping():
-                    for cookie in old_value:
+                    for cookie in value:
                         for name, _value in cookie.items():
                             cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
 
                 # Translate tuples, lists, etc. that contain two strings (name and value)
                 case Sequence():
-                    for cookie in old_value:
+                    for cookie in value:
                         cookie_list.append(QNetworkCookie(cookie[0].encode('utf8'), cookie[1].encode('utf8')))
 
-            value = cookie_list
+            return cookie_list
 
         case 'QStringListModel':
-            value = [str(item) for item in old_value]
+            return [str(item) for item in value]
 
         case 'QUrl':
-            if not isinstance(old_value, QUrl):
-                value = QUrl(str(old_value))
+            if not isinstance(value, QUrl):
+                return QUrl(str(value))
 
     return value
 

@@ -247,7 +247,7 @@ def get_desktop_path() -> Path | None:
 
     elif platform.startswith('linux') or platform == 'darwin':
         home: Path = Path.home() or Path(os.getenv('HOME', None))
-        desktop: Path = home / 'Desktop'
+        desktop = home / 'Desktop'
 
         # If desktop is defined in user's config, use that
         dir_file: Path = home / '.config/user-dirs.dirs'
