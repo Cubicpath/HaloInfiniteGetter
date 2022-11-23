@@ -13,7 +13,7 @@ import sys
 from .run import main
 
 # Allow running from import, as __name__ should be __main__
-exit_code = main(*sys.argv)
+exit_code: int = main(*sys.argv)
 
 # If imported, do not exit
 if __name__ != '__main__':

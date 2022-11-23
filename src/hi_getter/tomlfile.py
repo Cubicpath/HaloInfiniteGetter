@@ -149,7 +149,7 @@ class PathTomlEncoder(toml.TomlEncoder):
     def _dump_pathlib_path(v: PurePath) -> str:
         """Translate :py:class:`PurePath` to string and dump."""
         # noinspection PyProtectedMember
-        return toml.encoder._dump_str(str(v))
+        return toml.encoder._dump_str(str(v))  # type: ignore
 
     def dump_value(self, v: TomlValue) -> str:
         """Support :py:class:`Path` decoding by prefixing a :py:class:`PurePath` string with a special marker."""

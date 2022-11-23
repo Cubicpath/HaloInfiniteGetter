@@ -12,11 +12,12 @@ import sys
 
 from ._version import __version__
 from .exception_hook import ExceptionHook
-from .gui import GetterApp
+from .gui.app import app
+from .gui.app import GetterApp
 from .utils.system import patch_windows_taskbar_icon
 
 
-def main(*args, **kwargs) -> int:
+def main(*args: str) -> int:
     """Run the program. GUI script entrypoint.
 
     Args are passed to a QApplication instance.
@@ -25,11 +26,10 @@ def main(*args, **kwargs) -> int:
 
     # ExceptionHook is required for subscribing to ExceptionEvents
     with ExceptionHook():
-        GetterApp.create(*args, **kwargs)
+        GetterApp.create(*args)
 
-        app = GetterApp.instance()
-        app.windows['app'].show()
-        return app.exec()
+        app().windows['app'].show()
+        return app().exec()
 
 
 if __name__ == '__main__':

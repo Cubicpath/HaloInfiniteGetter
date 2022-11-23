@@ -53,7 +53,7 @@ _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
 
 def app() -> GetterApp:
-    """:return: GetterApp.instance()."""
+    """Return :py:class:`GetterApp`.instance()."""
     return GetterApp.instance()
 
 
@@ -71,8 +71,8 @@ def tr(key: str, *args: Any, **kwargs: Any) -> str:
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
 
-    button: QAbstractButton = QMessageBox.StandardButton.NoButton
-    role: QMessageBox.ButtonRole = QMessageBox.ButtonRole.NoRole
+    button: QAbstractButton | QMessageBox.StandardButton = QMessageBox.StandardButton.NoButton
+    role: QMessageBox.ButtonRole = QMessageBox.ButtonRole.InvalidRole
 
 
 class Theme(NamedTuple):
@@ -95,7 +95,7 @@ class GetterApp(Singleton, QApplication):
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: str) -> None:
         """Create a new app with the given arguments and settings."""
         super().__init__(list(args))  # Despite documentation saying it takes in a Sequence[str], it only accepts lists
         self.setApplicationName(HI_PACKAGE_NAME)
@@ -106,7 +106,7 @@ class GetterApp(Singleton, QApplication):
         self._thread_pool: QThreadPool = QThreadPool.globalInstance()
 
         self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
-        self._registered_translations: DistributedCallable[set[Callable[DeferredCallable[str]]]] = DistributedCallable(set())
+        self._registered_translations: DistributedCallable[set, None, None] = DistributedCallable(set())
         self._windows: dict[str, QWidget] = {}
 
         # Create all files/directories that are needed for the app to run
@@ -135,9 +135,9 @@ class GetterApp(Singleton, QApplication):
 
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
-        EventBus['settings'].subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
-        EventBus['settings'].subscribe(DeferredCallable(self.updateTranslations.emit), TomlEvents.Import)
-        EventBus['settings'].subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+        self.settings.event_bus.subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
+        self.settings.event_bus.subscribe(DeferredCallable(self.updateTranslations.emit), TomlEvents.Import)
+        self.settings.event_bus.subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
         self.updateTranslations.connect(lambda: self.translator.__setattr__('language', self.settings['language']))
         self.updateTranslations.connect(lambda: self.setApplicationDisplayName(self.translator('app.name')))
@@ -155,7 +155,7 @@ class GetterApp(Singleton, QApplication):
         self.client = Client(self)
 
         # Setup window instances
-        self._create_windows(**kwargs)
+        self._create_windows()
         self.updateTranslations.emit()
 
         # Check version after all widgets are created to listen for newerVersion signal
@@ -190,7 +190,7 @@ class GetterApp(Singleton, QApplication):
             with _SETTINGS_FILE.open(mode='w', encoding='utf8') as file:
                 toml.dump(self._setting_defaults, file, encoder=PathTomlEncoder())
 
-    def _create_windows(self, **kwargs) -> None:
+    def _create_windows(self) -> None:
         """Create window instances."""
         from .windows import AppWindow
         from .windows import ChangelogViewer
@@ -201,8 +201,8 @@ class GetterApp(Singleton, QApplication):
         SettingsWindow.create(QSize(420, 600))
         AppWindow.create(QSize(
             # Size to use, with a minimum of 100x100
-            max(kwargs.pop('x_size', self.settings['gui/window/x_size']), 100),
-            max(kwargs.pop('y_size', self.settings['gui/window/y_size']), 100)
+            max(self.settings['gui/window/x_size'], 100),
+            max(self.settings['gui/window/y_size'], 100)
         ))
 
         self._windows['changelog_viewer'] = ChangelogViewer()

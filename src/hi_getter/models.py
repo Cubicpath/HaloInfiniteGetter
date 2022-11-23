@@ -100,7 +100,7 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
         :param data: Data to turn into a CaseInsensitiveDict
         :param kwargs: key-values in form of kwargs
         """
-        self._store: OrderedDict[str, tuple[str, _VT]] = OrderedDict()
+        self._store = OrderedDict()
         if data is None:
             data = {}
         self.update(data, **kwargs)
@@ -172,17 +172,17 @@ class CaseInsensitiveDict(MutableMapping, Generic[_VT]):
             in self._store.items()
         )
 
-    def __eq__(self, other: Mapping[str, Any]) -> bool:
+    def __eq__(self, other: Mapping[str, _VT]) -> bool:
         """Compare items of other :py:class:`Mapping` case-insensitively."""
         if not isinstance(other, Mapping):
             return NotImplemented
 
-        other: CaseInsensitiveDict = self.__class__(other)
         # Compare insensitively
-        return dict(self.lower_items()) == dict(other.lower_items())
+        other_no_case: CaseInsensitiveDict[_VT] = self.__class__(other)
+        return dict(self.lower_items()) == dict(other_no_case.lower_items())
 
     # Copy is required
-    def copy(self) -> CaseInsensitiveDict:
+    def copy(self) -> CaseInsensitiveDict[_VT]:
         """Return new :py:class:`CaseInsensitiveDict` with a copy of this instance's keys and values."""
         return self.__class__(self._store.values())
 
@@ -426,7 +426,7 @@ class Singleton:
             cls._check_ref_count()
             raise RuntimeError(f'Please destroy the {cls.__name__} singleton before creating a new {cls.__name__} instance.')
 
-        cls.__instance = cls._singleton_base_type.__new__(cls)
+        cls.__instance = cls._singleton_base_type.__new__(cls)  # type: ignore
         cls.__init__(cls.__instance, *args, **kwargs)
 
     @classmethod
