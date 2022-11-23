@@ -6,6 +6,7 @@
 # TODO: Redo ExceptionLogger implementation, with more functionality given to ExceptionReporter.
 
 __all__ = (
+    'app',
     'AppWindow',
     'ExceptionLogger',
     'ExceptionReporter',
@@ -20,8 +21,11 @@ __all__ = (
     'SettingsWindow',
     'Theme',
     'ToolsContextMenu',
+    'tr'
 )
 
+from .aliases import app
+from .aliases import tr
 from .app import GetterApp
 from .app import Theme
 from .menus import CacheIndexContextMenu

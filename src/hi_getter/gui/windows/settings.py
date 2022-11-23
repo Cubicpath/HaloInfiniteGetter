@@ -19,10 +19,10 @@ from ...events import EventBus
 from ...models import DeferredCallable
 from ...models import Singleton
 from ...tomlfile import TomlEvents
-from ...utils.gui import init_layouts
-from ...utils.gui import init_objects
-from ..app import app
-from ..app import tr
+from ...utils import init_layouts
+from ...utils import init_objects
+from ..aliases import app
+from ..aliases import tr
 from ..widgets import PasteLineEdit
 from ..widgets import TranslatableComboBox
 

@@ -18,8 +18,8 @@ from ...constants import *
 from ...events import EventBus
 from ...models import DeferredCallable
 from ...tomlfile import TomlEvents
-from ...utils.gui import init_objects
-from ..app import app
+from ...utils import init_objects
+from ..aliases import app
 
 
 class _IconProvider(QAbstractFileIconProvider):
@@ -182,7 +182,7 @@ class CacheExplorer(QTreeView):
 
         :param point: The point to place the context menu.
         """
-        from ..menus.column import ColumnContextMenu
+        from ..menus import ColumnContextMenu
 
         index = self.indexAt(point)
 
@@ -197,7 +197,7 @@ class CacheExplorer(QTreeView):
 
         :param point: The point to place the context menu.
         """
-        from ..menus.cache_index import CacheIndexContextMenu
+        from ..menus import CacheIndexContextMenu
 
         index = self.indexAt(point)
 

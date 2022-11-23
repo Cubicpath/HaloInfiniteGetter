@@ -6,9 +6,6 @@ from __future__ import annotations
 
 __all__ = (
     'Client',
-    'TOKEN_PATH',
-    'WEB_DUMP_PATH',
-    'WPAUTH_PATH',
 )
 
 import json
@@ -21,17 +18,14 @@ from PySide6.QtCore import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
-from ..utils.common import dump_data
-from ..utils.network import decode_url
-from ..utils.network import guess_json_utf
-from ..utils.system import hide_windows_file
+from ..utils import dump_data
+from ..utils import decode_url
+from ..utils import guess_json_utf
+from ..utils import hide_windows_file
 from .manager import NetworkSession
 from .manager import Response
 
 _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
-TOKEN_PATH: Final[Path] = HI_CONFIG_PATH / '.token'
-WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
-WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
 
 
 class Client(QObject):
@@ -58,12 +52,12 @@ class Client(QObject):
         self.searched_paths: set[str] = set()
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
-        if self._token is None and TOKEN_PATH.is_file():
-            self._token = TOKEN_PATH.read_text(encoding='utf8').strip()
+        if self._token is None and HI_TOKEN_PATH.is_file():
+            self._token = HI_TOKEN_PATH.read_text(encoding='utf8').strip()
 
         self._wpauth: str | None = kwargs.pop('wpauth', os.getenv('HI_WAYPOINT_AUTH', None))
-        if self._wpauth is None and WPAUTH_PATH.is_file():
-            self._wpauth = WPAUTH_PATH.read_text(encoding='utf8').strip()
+        if self._wpauth is None and HI_WPAUTH_PATH.is_file():
+            self._wpauth = HI_WPAUTH_PATH.read_text(encoding='utf8').strip()
 
         self.api_session: NetworkSession = NetworkSession(self)
         self.api_session.headers = CaseInsensitiveDict({
@@ -120,7 +114,7 @@ class Client(QObject):
 
         return response
 
-    def get_hi_data(self, path: str, dump_path: Path = WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self, path: str, dump_path: Path = HI_WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
         """Return data from a path. Return type depends on the resource.
 
         :return: dict for JSON objects, bytes for media, int for error codes.
@@ -168,7 +162,7 @@ class Client(QObject):
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
 
-    def to_os_path(self, path: str, parent: Path = WEB_DUMP_PATH) -> Path:
+    def to_os_path(self, path: str, parent: Path = HI_WEB_DUMP_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
 
@@ -219,9 +213,9 @@ class Client(QObject):
         self.set_cookie('343-spartan-token', self._token)
         self.api_session.headers['x-343-authorization-spartan'] = self._token
 
-        hide_windows_file(TOKEN_PATH, unhide=True)
-        TOKEN_PATH.write_text(self._token, encoding='utf8')
-        hide_windows_file(TOKEN_PATH)
+        hide_windows_file(HI_TOKEN_PATH, unhide=True)
+        HI_TOKEN_PATH.write_text(self._token, encoding='utf8')
+        hide_windows_file(HI_TOKEN_PATH)
 
     @token.deleter
     def token(self) -> None:
@@ -229,8 +223,8 @@ class Client(QObject):
         self.delete_cookie('343-spartan-token')
         if 'x-343-authorization-spartan' in self.api_session.headers:
             self.api_session.headers.pop('x-343-authorization-spartan')
-        if TOKEN_PATH.is_file():
-            TOKEN_PATH.unlink()
+        if HI_TOKEN_PATH.is_file():
+            HI_TOKEN_PATH.unlink()
 
     @property
     def wpauth(self) -> str | None:
@@ -243,16 +237,16 @@ class Client(QObject):
         self._wpauth = value.split(':')[-1].strip()
         self.set_cookie('wpauth', self._wpauth)
 
-        hide_windows_file(WPAUTH_PATH, unhide=True)
-        WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
-        hide_windows_file(WPAUTH_PATH)
+        hide_windows_file(HI_WPAUTH_PATH, unhide=True)
+        HI_WPAUTH_PATH.write_text(self._wpauth, encoding='utf8')
+        hide_windows_file(HI_WPAUTH_PATH)
 
     @wpauth.deleter
     def wpauth(self) -> None:
         self._wpauth = None
         self.delete_cookie('wpauth')
-        if WPAUTH_PATH.is_file():
-            WPAUTH_PATH.unlink()
+        if HI_WPAUTH_PATH.is_file():
+            HI_WPAUTH_PATH.unlink()
 
     @property
     def api_root(self) -> str:

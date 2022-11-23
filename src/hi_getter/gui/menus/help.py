@@ -19,11 +19,11 @@ from PySide6.QtWidgets import *
 from ..._version import __version_info__
 from ...constants import *
 from ...models import DeferredCallable
-from ...utils.gui import add_menu_items
-from ...utils.gui import init_objects
-from ...utils.package import current_requirement_versions
-from ..app import app
-from ..app import tr
+from ...utils import add_menu_items
+from ...utils import init_objects
+from ...utils import current_requirement_versions
+from ..aliases import app
+from ..aliases import tr
 
 
 def package_versions() -> str:

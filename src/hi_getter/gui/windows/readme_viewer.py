@@ -16,10 +16,10 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
-from ...utils.gui import init_layouts
-from ...utils.gui import init_objects
-from ..app import app
-from ..app import tr
+from ...utils import init_layouts
+from ...utils import init_objects
+from ..aliases import app
+from ..aliases import tr
 from ..widgets import ExternalTextBrowser
 
 

@@ -12,7 +12,10 @@ __all__ = (
     'HI_PATH_PATTERN',
     'HI_RESOURCE_PATH',
     'HI_SAMPLE_RESOURCE',
+    'HI_TOKEN_PATH',
     'HI_URL_PATTERN',
+    'HI_WEB_DUMP_PATH',
+    'HI_WPAUTH_PATH',
     'MARKDOWN_IMG_LINK_PATTERN',
     'MARKDOWN_REF_LINK_PATTERN',
     'RFC_5646_PATTERN',
@@ -62,6 +65,15 @@ HI_CONFIG_PATH: Final[Path] = Path.home() / '.config/hi_getter'
 
 HI_RESOURCE_PATH: Final[Path] = Path(__file__).parent / 'resources'
 """Directory containing application resources."""
+
+HI_TOKEN_PATH: Final[Path] = HI_CONFIG_PATH / '.token'
+"""File containing api token."""
+
+HI_WEB_DUMP_PATH: Final[Path] = HI_CACHE_PATH / 'cached_requests'
+"""Directory to dump web requests to."""
+
+HI_WPAUTH_PATH: Final[Path] = HI_CONFIG_PATH / '.wpauth'
+"""File containing auth key (Used for API token generation)."""
 
 # Patterns
 

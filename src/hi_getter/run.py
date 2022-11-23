@@ -12,9 +12,8 @@ import sys
 
 from ._version import __version__
 from .exception_hook import ExceptionHook
-from .gui.app import app
-from .gui.app import GetterApp
-from .utils.system import patch_windows_taskbar_icon
+from .gui import GetterApp
+from .utils import patch_windows_taskbar_icon
 
 
 def main(*args: str) -> int:
@@ -28,8 +27,9 @@ def main(*args: str) -> int:
     with ExceptionHook():
         GetterApp.create(*args)
 
-        app().windows['app'].show()
-        return app().exec()
+        app: GetterApp = GetterApp.instance()
+        app.windows['app'].show()
+        return app.exec()
 
 
 if __name__ == '__main__':

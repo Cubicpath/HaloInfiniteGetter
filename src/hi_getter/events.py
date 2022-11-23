@@ -16,7 +16,7 @@ from typing import overload
 from typing import TypeAlias
 from typing import TypeVar
 
-from .utils.common import get_parent_doc
+from .utils import get_parent_doc
 
 
 class Event:

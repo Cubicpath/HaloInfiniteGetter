@@ -16,8 +16,8 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from ...utils.gui import init_objects
-from ..app import tr
+from ...utils import init_objects
+from ..aliases import tr
 from .paste_line_edit import PasteLineEdit
 
 

@@ -16,11 +16,11 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from ...constants import *
-from ...utils.gui import add_menu_items
-from ...utils.gui import init_objects
-from ...utils.system import create_shortcut
-from ..app import app
-from ..app import tr
+from ...utils import add_menu_items
+from ...utils import init_objects
+from ...utils import create_shortcut
+from ..aliases import app
+from ..aliases import tr
 
 
 def create_app_shortcut() -> None:

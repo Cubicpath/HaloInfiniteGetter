@@ -18,10 +18,10 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
-from ...utils.gui import add_menu_items
-from ...utils.gui import init_objects
-from ..app import app
-from ..app import tr
+from ...utils import add_menu_items
+from ...utils import init_objects
+from ..aliases import app
+from ..aliases import tr
 from ..workers import ExportData
 from ..workers import ImportData
 

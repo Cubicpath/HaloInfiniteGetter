@@ -17,11 +17,11 @@ from PySide6.QtWidgets import *
 
 from ...constants import *
 from ...models import DeferredCallable
-from ...utils.gui import add_menu_items
-from ...utils.gui import init_objects
-from ..app import app
-from ..app import tr
-from ..widgets.cache_explorer import CacheExplorer
+from ...utils import add_menu_items
+from ...utils import init_objects
+from ..aliases import app
+from ..aliases import tr
+from ..widgets import CacheExplorer
 
 
 def file_to_clipboard(file_path: Path):

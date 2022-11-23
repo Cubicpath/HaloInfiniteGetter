@@ -19,8 +19,8 @@ from PySide6.QtCore import *
 from shiboken6 import Shiboken
 
 from ..constants import *
-from ..network.client import Client
-from ..utils.common import unique_values
+from ..network import Client
+from ..utils import unique_values
 
 
 class _SignalHolder(QObject):

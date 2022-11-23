@@ -22,12 +22,12 @@ from ...events import EventBus
 from ...exception_hook import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
-from ...utils.gui import delete_layout_widgets
-from ...utils.gui import init_layouts
-from ...utils.gui import init_objects
-from ...utils.network import encode_url_params
-from ..app import app
-from ..app import tr
+from ...utils import delete_layout_widgets
+from ...utils import init_layouts
+from ...utils import init_objects
+from ...utils import encode_url_params
+from ..aliases import app
+from ..aliases import tr
 from ..widgets import ExceptionLogger
 from ..widgets import ExternalTextBrowser
 

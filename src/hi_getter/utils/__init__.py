@@ -17,7 +17,10 @@ __all__ = (
     'dict_to_query',
     'dump_data',
     'encode_url_params',
+    'get_desktop_path',
     'get_parent_doc',
+    'get_start_menu_path',
+    'get_winreg_value',
     'guess_json_utf',
     'has_package',
     'hide_windows_file',
@@ -33,6 +36,7 @@ __all__ = (
     'scroll_to_top',
     'set_or_swap_icon',
     'unique_values',
+    'wait_for_reply',
 )
 
 from .common import bit_rep
@@ -56,6 +60,7 @@ from .network import guess_json_utf
 from .network import http_code_map
 from .network import is_error_status
 from .network import query_to_dict
+from .network import wait_for_reply
 from .package import current_requirement_licenses
 from .package import current_requirement_names
 from .package import current_requirement_versions

@@ -5,10 +5,8 @@
 from __future__ import annotations
 
 __all__ = (
-    'app',
     'GetterApp',
     'Theme',
-    'tr',
 )
 
 import json
@@ -35,37 +33,25 @@ from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
 from ..models import Singleton
-from ..network.client import Client
-from ..network.client import WEB_DUMP_PATH
-from ..network.manager import NetworkSession
-from ..network.manager import Response
-from ..network.version_check import VersionChecker
-from ..tomlfile import *
-from ..utils.gui import icon_from_bytes
-from ..utils.gui import set_or_swap_icon
-from ..utils.network import http_code_map
-from ..utils.package import has_package
-from ..utils.system import hide_windows_file
+from ..network import Client
+from ..network import NetworkSession
+from ..network import Response
+from ..network import VersionChecker
+from ..tomlfile import CommentValue
+from ..tomlfile import PathTomlDecoder
+from ..tomlfile import PathTomlEncoder
+from ..tomlfile import TomlEvents
+from ..tomlfile import TomlFile
+from ..tomlfile import TomlTable
+from ..utils import has_package
+from ..utils import hide_windows_file
+from ..utils import http_code_map
+from ..utils import icon_from_bytes
+from ..utils import set_or_swap_icon
 
 _DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
 _LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
 _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
-
-
-def app() -> GetterApp:
-    """Return :py:class:`GetterApp`.instance()."""
-    return GetterApp.instance()
-
-
-def tr(key: str, *args: Any, **kwargs: Any) -> str:
-    """Alias for app().translator().
-
-    :param key: Translation keys to translate.
-    :param args: Arguments to format key with.
-    :keyword default: Default value to return if key is not found.
-    :return: Translated text.
-    """
-    return app().translator(key, *args, **kwargs)
 
 
 class _DialogResponse(NamedTuple):
@@ -176,7 +162,7 @@ class GetterApp(Singleton, QApplication):
 
     def _create_paths(self) -> None:
         """Create files and directories if they do not exist."""
-        for dir_path in (HI_CACHE_PATH, WEB_DUMP_PATH, HI_CONFIG_PATH):
+        for dir_path in (HI_CACHE_PATH, HI_WEB_DUMP_PATH, HI_CONFIG_PATH):
             if not dir_path.is_dir():
                 dir_path.mkdir(parents=True)
 

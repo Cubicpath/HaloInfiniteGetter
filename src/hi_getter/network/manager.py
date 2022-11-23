@@ -8,6 +8,7 @@ __all__ = (
     'gc_response',
     'KNOWN_HEADERS',
     'NetworkSession',
+    'Request',
     'Response',
 )
 
@@ -30,11 +31,12 @@ from shiboken6 import Shiboken
 
 from ..models import CaseInsensitiveDict
 from ..models import DeferredCallable
-from ..utils.network import dict_to_query, is_error_status
-from ..utils.network import encode_url_params
-from ..utils.network import guess_json_utf
-from ..utils.network import query_to_dict
-from ..utils.network import wait_for_reply
+from ..utils import dict_to_query
+from ..utils import encode_url_params
+from ..utils import guess_json_utf
+from ..utils import is_error_status
+from ..utils import query_to_dict
+from ..utils import wait_for_reply
 
 _StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
 _KnownHeaderValues: TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]

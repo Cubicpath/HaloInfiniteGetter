@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'get_version',
     'is_greater_version',
     'VersionChecker',
 )

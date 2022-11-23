@@ -17,7 +17,7 @@ from PySide6.QtWidgets import *
 
 from ...events import EventBus
 from ...exception_hook import ExceptionEvent
-from ..app import tr
+from ..aliases import tr
 
 
 class ExceptionLogger(QPushButton):

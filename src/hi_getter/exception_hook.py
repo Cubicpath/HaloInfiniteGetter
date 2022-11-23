@@ -15,7 +15,8 @@ from collections.abc import Callable
 from types import TracebackType
 from typing import TypeAlias
 
-from .events import *
+from .events import Event
+from .events import EventBus
 
 ExceptHookCallable: TypeAlias = Callable[[type[BaseException], BaseException, TracebackType], None]
 
