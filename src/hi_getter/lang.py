@@ -17,7 +17,6 @@ import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated
 from typing import Any
 from typing import Final
 
@@ -33,14 +32,23 @@ _LANG_PATH: Final[Path] = HI_RESOURCE_PATH / 'lang'
 """Directory containing language JSON data."""
 
 
-def default_language_file() -> Path | None:
+def default_language_file() -> Path:
     """Return the first path found that has ".default" in its extension.
 
     ex: en.default.json
+
+    :raises FileNotFoundError: If .default file is not found.
     """
+    default_lang_file: Path | None = None
     for lang_file in _LANG_PATH.iterdir():
         if '.default' in lang_file.suffixes:
-            return lang_file
+            default_lang_file = lang_file
+            break
+
+    if default_lang_file is None:
+        raise FileNotFoundError('No file with the suffix of .default.json found.')
+
+    return default_lang_file
 
 
 def format_value(value: str, *args: Any, _language: Language | None = None, _key_eval: bool = True) -> str:
@@ -90,6 +98,18 @@ def format_value(value: str, *args: Any, _language: Language | None = None, _key
     return value
 
 
+def matched_subtags(tag: str) -> dict[str, str]:
+    """Match all subtags in a valid language tag and returns a dictionary representation.
+
+    :param tag: Language tag which follows RFC 5646.
+    :return: Dictionary containing subtags and their values.
+    :raises ValueError: If ``tag`` is not a valid language tag.
+    """
+    if (match := RFC_5646_PATTERN.match(tag)) is not None:
+        return match.groupdict()
+    raise ValueError(f'"{tag}" is not a valid language tag (RFC 5646).')
+
+
 def to_lang(language: str | Language) -> Language:
     """Assert that a given value is a :py:class:`Language`."""
     if not isinstance(language, Language):
@@ -103,7 +123,7 @@ def to_lang(language: str | Language) -> Language:
 class Language:
     """Object containing language data. Retrieves stored data with associated RFC 5646 language tags."""
 
-    def __init__(self, primary: Annotated[str, 2], region: Annotated[str, 2] | None = None, _selected_file: Path | None = None, **kwargs) -> None:
+    def __init__(self, primary: str, region: str | None = None, _selected_file: Path | None = None, **kwargs: str | None) -> None:
         """Build a new Language object using given sub-tags.
 
         For more information on RFC 5646, visit https://datatracker.ietf.org/doc/html/rfc5646
@@ -117,11 +137,17 @@ class Language:
         :keyword extensions: Extension to the given language, prefixed with a singleton | Section 2.2.6
         :keyword private: Any subtag that is not publicly defined | Section 2.2.7
         """
-        self._data: dict[str, str] = {}
-        self.tag: str = Language.build_tag({'primary': primary, 'region': region} | kwargs)
-        self.subtags: dict[str, str] = RFC_5646_PATTERN.match(self.tag).groupdict()
+        subtags: dict[str, str | None] = {'primary': primary, 'region': region}
+        subtags.update(kwargs)
 
-        if (_selected_file := self.closest_file() if _selected_file is None else _selected_file) is not None:
+        self._data: dict[str, str] = {}
+        self.tag: str = Language.build_tag(subtags)
+        self.subtags: dict[str, str] = matched_subtags(self.tag)
+
+        if _selected_file is None:
+            _selected_file = self.closest_file()
+
+        if _selected_file is not None:
             # Read the language file corresponding to this Language's tags.
             file_data: dict[str, Any] = json.loads(_selected_file.read_text(encoding='utf8'))
 
@@ -148,9 +174,7 @@ class Language:
 
         :raises ValueError: If tag is not a valid language tag.
         """
-        if match := RFC_5646_PATTERN.match(tag):
-            return cls(**match.groupdict())
-        raise ValueError(f'"{tag}" is not a valid language tag.')
+        return cls(**matched_subtags(tag))
 
     @classmethod
     def from_path(cls, path: Path | str) -> Language:
@@ -162,9 +186,7 @@ class Language:
         """
         path = Path(path)
         tag: str = Path(path).stem.split('.')[0].replace('_', '-')
-        if match := RFC_5646_PATTERN.match(tag):
-            return cls(**match.groupdict(), _selected_file=path)
-        raise ValueError(f'"{tag}" is not a valid language tag.')
+        return cls(**matched_subtags(tag), _selected_file=path)
 
     @staticmethod
     def build_tag(tag_dict: dict[str, str | None]) -> str:
@@ -261,7 +283,7 @@ class Language:
                     most_relevant = (lang_file, 1000)
                     break
 
-                file_subtags: dict[str, str] = RFC_5646_PATTERN.match(file_tag).groupdict()
+                file_subtags: dict[str, str] = matched_subtags(file_tag)
 
                 # Count how close our tag is to this file's tag
                 intersection = {a: b for ((a, b), (c, d))
