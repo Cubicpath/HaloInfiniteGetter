@@ -269,9 +269,10 @@ class GetterApp(Singleton, QApplication):
         :param title_args: The translation arguments used to format the title.
         :return: The button that was clicked, as well as its role. None if the key's first section is "about".
         """
+        using_dummy_widget: bool = False
         if parent is None:
-            dummy_widget = QWidget()
-            parent = dummy_widget
+            parent = QWidget()
+            using_dummy_widget = True
 
         title_args: Sequence = () if title_args is None else title_args
         description_args: Sequence = () if description_args is None else description_args
@@ -305,7 +306,7 @@ class GetterApp(Singleton, QApplication):
                 # Build a StandardButtons from all StandardButton objects in buttons.
                 for button in buttons:
                     if isinstance(button, tuple):
-                        msg_box.addButton(*button)
+                        msg_box.addButton(button[0], button[1])
                     elif standard_buttons is None:
                         standard_buttons = button
                     else:
@@ -323,14 +324,16 @@ class GetterApp(Singleton, QApplication):
         msg_box.buttonClicked.connect((result := []).append)
         msg_box.exec()
 
-        result_button: QAbstractButton = next(iter(result)) if result else QMessageBox.StandardButton.NoButton
-        result_role: QMessageBox.ButtonRole = msg_box.buttonRole(result_button) if result else QMessageBox.ButtonRole.NoRole
+        response_kwargs = {}
+        if result:
+            response_kwargs['button'] = result[0]
+            response_kwargs['role'] = msg_box.buttonRole(result[0])
 
-        if parent is None:
+        if using_dummy_widget:
             # noinspection PyUnboundLocalVariable
-            dummy_widget.deleteLater()
+            parent.deleteLater()
 
-        return _DialogResponse(button=result_button, role=result_role)
+        return _DialogResponse(**response_kwargs)
 
     def missing_package_dialog(self, package: str, reason: str | None = None, parent: QObject | None = None) -> None:
         """Show a dialog informing the user that a package is missing and asks to install said package.
