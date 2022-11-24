@@ -1,5 +1,5 @@
 # Hard-requirements:
-PySide6_Essentials==6.4.0.1  # GUI, Networking stack, etc.
+PySide6_Essentials==6.4.1  # GUI, Networking stack, etc.
     shiboken6==6.4.0.1       # C++ Binding generator and object API
 
 toml==0.10.2                 # Configuration file parser and editor
