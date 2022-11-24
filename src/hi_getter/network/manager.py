@@ -111,7 +111,7 @@ def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | byt
 
         case 'QNetworkCookie':
             cookie_list: list[QNetworkCookie] = []
-            match value[0] if value else None:
+            match value[0] if value and isinstance(Sequence) else None:
 
                 # Translate dictionaries
                 case Mapping():
@@ -573,19 +573,19 @@ class Request:
             Automatically encodes to bytes and updates Content-Type header.
             Incompatible with the data and files parameters.
         """
-        self._request: QNetworkRequest | None = None
+        self._request: QNetworkRequest = QNetworkRequest()
 
         self.method = method
         self.url = url
-        self.params = {} if params is None else params
-        self.data = data
-        self.headers = {} if headers is None else headers
-        self.cookies = {} if cookies is None else cookies
+        self.params = {} if params is None else dict(params)
+        self.data = data if not isinstance(data, Sequence) else dict(data)
+        self.headers = {} if headers is None else dict(headers)
+        self.cookies = {} if cookies is None else dict(cookies)
         # self.files = files
-        # self.auth - auth
+        # self.auth = auth
         self.timeout = timeout
         self.allow_redirects = allow_redirects
-        self.proxies = proxies
+        self.proxies = None if proxies is None else dict(proxies)
         self.stream = stream
         self.verify = verify
         self.cert = cert
@@ -637,7 +637,7 @@ class Request:
             self._request.setRawHeader(name.encode('utf8'), encoded_value)
 
     # pylint: disable=compare-to-zero
-    def _prepare_response(self, reply: QNetworkReply, finished: _ResponseConsumer, progress: _ProgressConsumer) -> Response:
+    def _prepare_response(self, reply: QNetworkReply, finished: _ResponseConsumer | None, progress: _ProgressConsumer | None) -> Response:
         _response = Response(self, reply)
 
         if self.allow_redirects:
@@ -704,12 +704,6 @@ class Request:
         :return: Response object, which is not guaranteed to be finished.
         :raises ValueError: If proxy attribute is not a valid option.
         """
-        # Translate dictionary-compatible tuple pair lists to dictionaries
-        # Ex: [('name', 'value'), ('key', 'value')] -> {'name': 'value', 'key': 'value'}
-        for var_name in ('params', 'data', 'headers', 'cookies', 'proxies'):
-            if isinstance(vars(self)[var_name], Sequence):
-                vars(self)[var_name] = dict(vars(self)[var_name])
-
         request_url = QUrl(self.url)  # Ensure url is of type QUrl
         request_params = query_to_dict(request_url.query()) | self.params  # Update QUrl params with params argument
         request_headers = session.headers | self.headers                   # Use session headers as default headers
@@ -720,7 +714,7 @@ class Request:
             request_headers['Cookie'] = request_cookies
 
         request_url.setQuery(dict_to_query(request_params))
-        self._request = QNetworkRequest(request_url)
+        self._request.setUrl(request_url)
 
         self._prepare_ssl()
         self._prepare_headers(request_headers)
@@ -810,7 +804,7 @@ class Response:
         """Return the detected encoding for data, and cache it for later use."""
         if self._encoding is None:
             decoder: QStringDecoder = QStringDecoder.decoderForHtml(self.data)
-            self._encoding = decoder.name()
+            self._encoding = str(decoder.name())
 
         return self._encoding
 
