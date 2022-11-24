@@ -42,7 +42,7 @@ from ..tomlfile import PathTomlDecoder
 from ..tomlfile import PathTomlEncoder
 from ..tomlfile import TomlEvents
 from ..tomlfile import TomlFile
-from ..tomlfile import TomlTable
+from ..tomlfile import TomlValue
 from ..utils import has_package
 from ..utils import hide_windows_file
 from ..utils import http_code_map
@@ -91,7 +91,7 @@ class GetterApp(Singleton, QApplication):
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._thread_pool: QThreadPool = QThreadPool.globalInstance()
 
-        self._setting_defaults: TomlTable = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
+        self._setting_defaults: dict[str, TomlValue] = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
         self._registered_translations: DistributedCallable[set, None, None] = DistributedCallable(set())
         self._windows: dict[str, QWidget] = {}
 

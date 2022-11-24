@@ -6,43 +6,81 @@ from __future__ import annotations
 
 __all__ = (
     'CommentValue',
-    'make_comment_val',
     'PathTomlDecoder',
     'PathTomlEncoder',
     'TomlFile',
     'TomlEvents',
-    'TomlTable',
     'TomlValue',
 )
 
 import warnings
+from collections.abc import Callable
+from collections.abc import MutableMapping
 from pathlib import Path
 from pathlib import PurePath
 from typing import Any
 from typing import Final
 from typing import TypeAlias
+from typing import TypeVar
 
 import toml
-from toml.decoder import CommentValue
+from toml.decoder import CommentValue as _CommentValue
 
-from .events import *
+from .events import Event
+from .events import EventBus
 
 _COMMENT_PREFIX: Final[str] = '# '
 _SPECIAL_PATH_PREFIX: Final[str] = '$PATH$|'
 
-TomlTable: TypeAlias = dict[str, 'TomlValue']
-TomlValue: TypeAlias = TomlTable | list | float | int | str | bool | PurePath
+TomlValue: TypeAlias = dict[str, 'TomlValue'] | list['TomlValue'] | float | int | str | bool | PurePath
 """Represents a possible TOML value, with :py:class:`dict` being a Table, and :py:class:`list` being an Array."""
 
 
-def make_comment_val(val: TomlValue, comment: str | None = None, new_line: bool = False) -> CommentValue:
-    """Build and return :py:class:`CommentValue`."""
-    return CommentValue(
-        val=val,
-        comment=f'{_COMMENT_PREFIX}{comment}' if comment is not None else '',
-        beginline=new_line,
-        _dict=dict
-    )
+_TT = TypeVar('_TT', bound=TomlValue)  # Bound to TomlValue.
+
+
+class CommentValue(_CommentValue):
+    """Properly typed version of :py:class:`_CommentValue`."""
+
+    def __init__(self, val: TomlValue, comment: str | None = None, new_line: bool = False, _dict_type: type[MutableMapping] = dict) -> None:
+        """Properly annotates types for :py:class:`_CommentValue`."""
+        comment = f'{_COMMENT_PREFIX}{comment}' if comment is not None else ''
+        separator: str = '\n' if new_line else ' '
+        super().__init__(val, comment, new_line, _dict_type)
+
+        self.val: TomlValue = val
+        self.comment: str = separator + comment
+        self._dict: type[MutableMapping] = _dict_type
+
+    def __getitem__(self, key: str) -> TomlValue:
+        """Proxy for :py:class:`MutableMapping`.__getitem__ if ``self.val`` is a :py:class:`MutableMapping`.
+
+        :raises TypeError: If self.val is not a MutableMapping.
+        """
+        if not isinstance(self.val, MutableMapping):
+            raise TypeError(f'Cannot access item for non-{self._dict} value.')
+        return self.val[key]
+
+    def __setitem__(self, key: str, value: TomlValue):
+        """Proxy for :py:class:`MutableMapping`.__setitem__ if ``self.val`` is a :py:class:`MutableMapping`.
+
+        :raises TypeError: If self.val is not a MutableMapping.
+        """
+        if not isinstance(self.val, MutableMapping):
+            raise TypeError(f'Cannot assign item for non-{self._dict} value.')
+        self.val[key] = value
+
+    @classmethod
+    def from_comment_val(cls, _comment_val: _CommentValue) -> CommentValue:
+        """Make a :py:class:`CommentValue` from a :py:class:`_CommentValue`."""
+        return cls(_comment_val.val, _comment_val.comment)
+
+    def dump(self, dump_value_func: Callable[[TomlValue], str]) -> str:
+        """Dump :py:class:`CommentValue` into a str."""
+        ret_str: str = dump_value_func(self.val)
+        if isinstance(self.val, self._dict):
+            return self.comment + '\n' + str(ret_str)
+        return str(ret_str) + self.comment
 
 
 class TomlEvents:
@@ -142,6 +180,7 @@ class PathTomlEncoder(toml.TomlEncoder):
     def __init__(self, _dict=dict, preserve=False) -> None:
         """Map extra ``dump_funcs`` for :py:class:`CommentValue` and :py:class:`PurePath`."""
         super().__init__(_dict, preserve)
+        self.dump_funcs[_CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[CommentValue] = lambda comment_val: comment_val.dump(self.dump_value)
         self.dump_funcs[PurePath] = self._dump_pathlib_path
 
@@ -166,7 +205,7 @@ class TomlFile:
     Houses an :py:class:`EventBus` that allows you to subscribe Callables to changes in configuration.
     """
 
-    def __init__(self, path: Path | str, default: dict[str, TomlValue | CommentValue] | None = None) -> None:
+    def __init__(self, path: Path | str, default: dict[str, TomlValue | _CommentValue] | None = None) -> None:
         """Initialize a :py:class:`TomlFile` object.
 
         :param path: Path to the TOML file.
@@ -174,24 +213,24 @@ class TomlFile:
         """
         self._path: Path = Path(path)
         # FIXME: Default not working as expected during import
-        self._data: dict[str, TomlValue | CommentValue] = {} if default is None else default
+        self._data: dict[str, TomlValue | _CommentValue] = {} if default is None else default
         self.event_bus: EventBus[TomlEvents.TomlEvent] = EventBus()
         if not self.reload():
             warnings.warn(f'Could not load TOML file {self.path} on initialization.')
 
-    def __getitem__(self, key: str) -> TomlValue | None:
+    def __getitem__(self, key: str) -> TomlValue:
         """Get the associated TOML value from the key."""
-        return self.get_key(key)
+        return self.get(key)
 
     def __setitem__(self, key: str, value: TomlValue) -> None:
         """Set the key's associated TOML value."""
-        self.set_key(key, value)
+        self.set(key, value)
 
     def __delitem__(self, key: str) -> None:
         """Delete the key and it's associated TOML value."""
         del self._data[key]
 
-    def _search_scope(self, path: str, mode: str) -> tuple[dict[str, TomlValue | CommentValue], str]:
+    def _search_scope(self, path: str, mode: str) -> tuple[dict[str, TomlValue | _CommentValue], str]:
         """Search data for the given path to the value, and if found, return the scope and the key that path belongs to.
 
         :param path: Path to search data for.
@@ -204,20 +243,21 @@ class TomlFile:
             raise ValueError('Path cannot be an empty string.')
 
         key: str = path
-        scope: dict[str, TomlValue | CommentValue] = self._data
+        scope: dict[str, TomlValue | _CommentValue] = self._data
         paths: list[str] = path.split('/')
 
         if len(paths) > 1:
             for i, key in enumerate(paths):
                 if key:
+                    val: TomlValue | _CommentValue | None = scope.get(key)
                     if i == len(paths) - 1:
                         if mode == 'set' and isinstance(scope.get(key), dict):
                             raise KeyError(f'Cannot reassign Table "{".".join(paths[:i])}" to variable.')
                         if mode == 'get' and key not in scope:
                             raise KeyError(f'Key "{key}" not in Table "{".".join(paths[:i]) or "/"}".')
 
-                    elif isinstance(scope.get(key), dict):
-                        scope = scope[key]
+                    elif isinstance(val, dict):
+                        scope = val  # type: ignore
                         continue
 
         return scope, key
@@ -235,7 +275,7 @@ class TomlFile:
         """
         self._path = Path(value)
 
-    def get_key(self, key: str) -> TomlValue:
+    def get(self, key: str) -> TomlValue:
         """Get a value from the key path. Searches with each '/' defining a new table to check.
 
         :param key: Key to get value from.
@@ -244,16 +284,17 @@ class TomlFile:
         :raises ValueError: If key is an empty string.
         """
         scope, path = self._search_scope(key, mode='get')
+        val: TomlValue | _CommentValue = scope[path]
 
-        # Get value from CommentValue
-        if isinstance((val := scope.get(path)), CommentValue):
-            val = val.val
+        # Get value from _CommentValue
+        if isinstance(val, _CommentValue):
+            val = CommentValue.from_comment_val(val).val
 
         self.event_bus << TomlEvents.Get(self, key, val)
 
         return val
 
-    def set_key(self, key: str, value: TomlValue, comment: str | None = None) -> None:
+    def set(self, key: str, value: TomlValue, comment: str | None = None) -> None:
         """Set a key at path. Searches with each '/' defining a new table to check.
 
         :param key: Key to set.
@@ -263,21 +304,25 @@ class TomlFile:
         :raises ValueError: If key is an empty string.
         """
         scope, path = self._search_scope(key, 'set')
+        prev_val: TomlValue | _CommentValue | None = scope.get(path)
+        new_val: TomlValue | _CommentValue = value
+
+        if comment is not None:
+            new_val = CommentValue(value, comment)
 
         # Preserve comments, or edit them if comment argument was filled
-        if isinstance((prev_val := scope.get(path)), CommentValue):
-            value = make_comment_val(value, prev_val.comment.lstrip().removeprefix(_COMMENT_PREFIX), new_line=prev_val.comment.startswith('\n'))
-            if comment is not None:
-                value.comment = comment
-        if not isinstance(value, CommentValue) and comment is not None:
-            value = make_comment_val(value, comment)
+        elif isinstance(prev_val, _CommentValue):
+            if comment is None:
+                comment = prev_val.comment.lstrip().removeprefix(_COMMENT_PREFIX)
 
-        scope[path] = value
+            new_val = CommentValue(value, comment, new_line=prev_val.comment.startswith('\n'))
+
+        scope[path] = new_val
 
         self.event_bus << TomlEvents.Set(
             self, key,
-            old=prev_val.val if isinstance(prev_val, CommentValue) else prev_val,
-            new=value.val if isinstance(value, CommentValue) else value
+            old=prev_val.val if isinstance(prev_val, _CommentValue) else prev_val,
+            new=value.val if isinstance(value, _CommentValue) else value
         )
 
     def save(self) -> bool:
