@@ -8,3 +8,6 @@ updates:
       interval: "daily"
     labels:
       - "pip requirements"
+    ignore:
+      # shiboken6 is updated at the same time and with the same version as PySide6
+      - dependency-name: "shiboken6"
