@@ -47,7 +47,9 @@ def export_data() -> None:
         app().show_dialog('errors.unsupported_archive_type', description_args=(export_dest, export_dest.suffix,))
         return
 
-    app().start_worker(ExportData(base=HI_CACHE_PATH / 'cached_requests', dest=export_dest))
+    app().start_worker(ExportData(base=HI_CACHE_PATH / 'cached_requests', dest=export_dest, exceptionRaised=lambda e: app().show_dialog(
+        'errors.cache_export_failure', description_args=(export_dest, e,)
+    )))
 
 
 def import_data() -> None:

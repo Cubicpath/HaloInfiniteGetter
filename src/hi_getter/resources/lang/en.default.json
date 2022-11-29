@@ -30,6 +30,8 @@
     "warnings.empty_token.title": "Empty API Token",
     "warnings.photosensitivity.scan.description": "<h2>Warning: This may display various flashing images in quick succession.</h2><p>This warning will not be repeated for this action.</p>",
     "warnings.photosensitivity.scan.title": "Photosensitivity Warning",
+    "errors.cache_export_failure.description": "A problem occurred when attempting to export to \"%s\".\n\n%s",
+    "errors.cache_export_failure.title": "Cache Export Failure",
     "errors.cache_import_failure.description": "A problem occurred when attempting to import \"%s\".\n\n%s",
     "errors.cache_import_failure.title": "Cache Import Failure",
     "errors.missing_package.cancel": "Cancel",
