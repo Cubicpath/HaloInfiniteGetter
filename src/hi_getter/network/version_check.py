@@ -30,7 +30,7 @@ def get_version(package_name: str) -> Version | None:
         return Version(version(package_name))
 
 
-def is_greater_version(version1: str, version2: str) -> bool:
+def is_greater_version(version1: Version | str, version2: Version | str) -> bool:
     """Return whether ``version1`` is greater than ``version2``."""
     if not isinstance(version1, Version):
         version1 = Version(version1)
@@ -70,7 +70,12 @@ class VersionChecker(QObject):
             )
 
             # Get local version of given package. Use __version__ attribute for own package.
-            local_version: str | None = get_version(package_name) if package_name != HI_PACKAGE_NAME else __version__
+            local_version: Version | str
+            if package_name != HI_PACKAGE_NAME:
+                if (local_version := get_version(package_name)) is None:
+                    return
+            else:
+                local_version = __version__
 
             # Get the latest version and compare to current version. Emit newerVersion if greater.
             latest: str = versions[-1]

@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 from json import dumps as json_dumps
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any
 from typing import Final
 from typing import TypeAlias
 from warnings import warn
@@ -41,8 +41,6 @@ from ..utils import wait_for_reply
 _StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
 _KnownHeaderValues: TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
 _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
-
-_RT = TypeVar('_RT', bound=Callable)
 
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
 
@@ -68,7 +66,7 @@ KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = 
 # autopep8: on
 
 
-def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | bytes | QDateTime | list[QNetworkCookie] | list[str] | QUrl:
+def _translate_header_value(header: str, value: _KnownHeaderValues) -> _KnownHeaderValues | QDateTime | list[QNetworkCookie] | QUrl:
     """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
 
     Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
@@ -111,23 +109,21 @@ def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | byt
 
         case 'QNetworkCookie':
             cookie_list: list[QNetworkCookie] = []
-            match value[0] if value and isinstance(Sequence) else None:
+            # Translate mappings
+            if isinstance(value, Mapping):
+                for name, _value in value.items():
+                    cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
 
-                # Translate dictionaries
-                case Mapping():
-                    for cookie in value:
-                        for name, _value in cookie.items():
-                            cookie_list.append(QNetworkCookie(name.encode('utf8'), _value.encode('utf8')))
-
-                # Translate tuples, lists, etc. that contain two strings (name and value)
-                case Sequence():
-                    for cookie in value:
-                        cookie_list.append(QNetworkCookie(cookie[0].encode('utf8'), cookie[1].encode('utf8')))
+            # Translate tuples, lists, etc. that contain two strings (name and value)
+            elif isinstance(value, Sequence) and not isinstance(value, (bytes, str)):
+                for pair in value:
+                    cookie_list.append(QNetworkCookie(pair[0].encode('utf8'), pair[1].encode('utf8')))
 
             return cookie_list
 
         case 'QStringListModel':
-            return [str(item) for item in value]
+            if isinstance(value, Sequence):
+                return [str(item) for item in value]
 
         case 'QUrl':
             if not isinstance(value, QUrl):
@@ -136,7 +132,7 @@ def _translate_header_value(header: str, value: _KnownHeaderValues) -> str | byt
     return value
 
 
-def gc_response(func: _RT) -> _RT:
+def gc_response(func: Callable[[Response], Any]) -> Callable[[Response], Any]:
     """Wrap the given function to delete a :py:class:`Response` after being called.
 
     This should only be used for one-time calls, such as a "handling reply" function.
@@ -162,7 +158,7 @@ class NetworkSession:
         - patch
     """
 
-    def __init__(self, manager_parent: QObject = None) -> None:
+    def __init__(self, manager_parent: QObject | None = None) -> None:
         """Initialize the NetworkSession.
 
         :param manager_parent: Parent of the QNetworkAccessManager.
@@ -578,7 +574,7 @@ class Request:
         self.method = method
         self.url = url
         self.params = {} if params is None else dict(params)
-        self.data = data if not isinstance(data, Sequence) else dict(data)
+        self.data = dict(data) if (isinstance(data, Sequence) and not isinstance(data, (bytes, str))) else data
         self.headers = {} if headers is None else dict(headers)
         self.cookies = {} if cookies is None else dict(cookies)
         # self.files = files
@@ -641,16 +637,16 @@ class Request:
         _response = Response(self, reply)
 
         if self.allow_redirects:
-            reply.redirected.connect(lambda _: reply.redirectAllowed)
+            reply.redirected.connect(lambda _: reply.redirectAllowed)                                 # pyright: ignore[reportGeneralTypeIssues]
 
         if self.verify is False:
             reply.ignoreSslErrors()
 
         if finished is not None:
-            reply.finished.connect(DeferredCallable(gc_response(finished), _response))
+            reply.finished.connect(DeferredCallable(gc_response(finished), _response))                # pyright: ignore[reportGeneralTypeIssues]
 
         if progress is not None:
-            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
+            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))  # pyright: ignore[reportGeneralTypeIssues]
 
         if self.timeout:
             # Create connection timeout timer
@@ -663,7 +659,7 @@ class Request:
             timer = QTimer(reply)
             timer.setSingleShot(True)
             timer.setInterval(connection_timeout)
-            timer.timeout.connect(handle_connection_timeout)
+            timer.timeout.connect(handle_connection_timeout)                                          # pyright: ignore[reportGeneralTypeIssues]
             timer.start()
 
         return _response
@@ -858,7 +854,7 @@ class Response:
 
     @property
     def ok(self) -> bool:
-        """Return whether ``self.code`` is not an error code."""
+        """Return whether ``self.code`` is a non-error code."""
         if self.code is None:
             return False
 

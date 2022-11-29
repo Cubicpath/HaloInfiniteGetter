@@ -132,6 +132,9 @@ class Client(QObject):
                 self.receivedError.emit(path, response.code)
                 return response.code
 
+            if not content_type:
+                raise ValueError('Successful status code but no Content-Type header.')
+
             if 'json' in content_type:
                 data = response.json
                 self.receivedJson.emit(path, data)
@@ -148,7 +151,7 @@ class Client(QObject):
             print(path)
             data = os_path.read_bytes()
             if os_path.suffix == '.json':
-                data = json.loads(data.decode(guess_json_utf(data)))
+                data = json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8'))
                 self.receivedJson.emit(path, data)
             else:
                 self.receivedData.emit(path, data)
