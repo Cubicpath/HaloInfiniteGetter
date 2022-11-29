@@ -50,7 +50,7 @@ def current_requirement_licenses(package: str, recursive: bool = False, include_
         ]
 
         # If the distribution has no 'License' field, get the distribution's Trove classifier
-        if not (dist_license := metadata(name).get('License')):
+        if not (dist_license := metadata(name).get('License')):  # type: ignore
             for classifier in metadata(name).get_all('Classifier'):
                 if classifier.startswith('License'):
                     # Ex: 'License :: OSI Approved :: MIT License'

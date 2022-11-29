@@ -97,11 +97,11 @@ def init_layouts(layout_data: dict[QLayout, dict[Literal['childLayouts', 'childW
             match key:
                 case 'childLayouts':
                     for _child in val:
-                        layout.addChildLayout(_child)
+                        layout.addChildLayout(_child)  # type: ignore
 
                 case 'childWidgets':
                     for _child in val:
-                        layout.addChildWidget(_child)
+                        layout.addChildWidget(_child)  # type: ignore
 
                 case 'items':
                     for _args in val:
@@ -165,7 +165,7 @@ def init_objects(object_data: dict[object, dict[str, Any]]) -> None:
         if items is not None:
             if not isinstance(obj, QComboBox):
                 # Set directly for non-dropdowns
-                obj.setItems(items)
+                obj.setItems(items)  # type: ignore
             elif hasattr(obj, 'addItems'):
                 obj.addItems(items)
             else:

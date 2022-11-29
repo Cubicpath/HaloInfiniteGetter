@@ -86,65 +86,66 @@ def create_shortcut(target: Path, arguments: str | None = None,
             return
 
         # Create the desktop directory if it doesn't exist
-        if (desktop_path := get_desktop_path()) is not None and not desktop_path.is_dir():
-            desktop_path.mkdir(parents=True)
+        if (desktop_path := get_desktop_path()) is not None:
+            if not desktop_path.is_dir():
+                desktop_path.mkdir(parents=True)
 
-        # Create the shortcut folders, replacing if it already exists
-        dest = (desktop_path / name).with_suffix(data['shortcut_ext'])
-        if dest.exists():
-            shutil.rmtree(dest)
+            # Create the shortcut folders, replacing if it already exists
+            dest = (desktop_path / name).with_suffix(data['shortcut_ext'])
+            if dest.exists():
+                shutil.rmtree(dest)
 
-        dest.mkdir(parents=True)
-        (dest / 'Contents').mkdir()
-        (dest / 'Contents/MacOS').mkdir()
-        (dest / 'Contents/Resources').mkdir()
+            dest.mkdir(parents=True)
+            (dest / 'Contents').mkdir()
+            (dest / 'Contents/MacOS').mkdir()
+            (dest / 'Contents/Resources').mkdir()
 
-        # Add macOS shortcut data
-        with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
-            # noinspection HttpUrlsUsage
-            plist.writelines([
-                '<?xml version="1.0" encoding="UTF-8"?>\n',
-                '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
-                '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
-                '<plist version="1.0">\n',
-                '  <dict>\n',
-                f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
-                f'  <key>CFBundleName</key> <string>{name}</string>\n',
-                f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
-                f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
-                '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
-                '  </dict>\n',
-                '</plist>\n',
-            ])
-
-        with (dest / f'Contents/MacOS/{name}').open('w', encoding='utf8') as shortcut_script:
-            shortcut_script.writelines([
-                '#!/bin/bash\n',
-                # These exports are not used if the script is ran from the terminal
-                f'export SCRIPT={target}\n',
-            ])
-            if arguments is not None:
-                shortcut_script.write(f'export ARGS=\'{arguments}\'\n')
-
-            if not terminal:
-                shortcut_script.write(f'$SCRIPT{" $ARGS" if arguments else ""}')
-            else:
-                osa_script = f'{target} {arguments}'.replace(' ', '\\ ')
-                shortcut_script.writelines([
-                    'osascript - e \'tell application "Terminal"\n',
-                    f'do script "\'{osa_script}\'"\n',
-                    'end tell\n',
-                    '\'\n',
+            # Add macOS shortcut data
+            with (dest / 'Contents/Info.plist').open('w', encoding='utf8') as plist:
+                # noinspection HttpUrlsUsage
+                plist.writelines([
+                    '<?xml version="1.0" encoding="UTF-8"?>\n',
+                    '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"\n',
+                    '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n',
+                    '<plist version="1.0">\n',
+                    '  <dict>\n',
+                    f'  <key>CFBundleGetInfoString</key> <string>{description or ""}</string>\n',
+                    f'  <key>CFBundleName</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleExecutable</key> <string>{name}</string>\n',
+                    f'  <key>CFBundleIconFile</key> <string>{name}</string>\n',
+                    '  <key>CFBundlePackageType</key> <string>APPL</string>\n',
+                    '  </dict>\n',
+                    '</plist>\n',
                 ])
 
-            shortcut_script.write('\n')
+            with (dest / f'Contents/MacOS/{name}').open('w', encoding='utf8') as shortcut_script:
+                shortcut_script.writelines([
+                    '#!/bin/bash\n',
+                    # These exports are not used if the script is ran from the terminal
+                    f'export SCRIPT={target}\n',
+                ])
+                if arguments is not None:
+                    shortcut_script.write(f'export ARGS=\'{arguments}\'\n')
 
-        # Change permissions to allow execution
-        (dest / f'Contents/MacOS/{name}').chmod(0o755)  # rwxr-xr-x
+                if not terminal:
+                    shortcut_script.write(f'$SCRIPT{" $ARGS" if arguments else ""}')
+                else:
+                    osa_script = f'{target} {arguments}'.replace(' ', '\\ ')
+                    shortcut_script.writelines([
+                        'osascript - e \'tell application "Terminal"\n',
+                        f'do script "\'{osa_script}\'"\n',
+                        'end tell\n',
+                        '\'\n',
+                    ])
 
-        # Add the icon
-        if icon:
-            shutil.copy(icon, (dest / f'Contents/Resources/{name}').with_suffix(icon.suffix))
+                shortcut_script.write('\n')
+
+            # Change permissions to allow execution
+            (dest / f'Contents/MacOS/{name}').chmod(0o755)  # rwxr-xr-x
+
+            # Add the icon
+            if icon:
+                shutil.copy(icon, (dest / f'Contents/Resources/{name}').with_suffix(icon.suffix))
 
     elif platform.startswith('linux'):
         entry_values: dict[str, object] = {
@@ -179,7 +180,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
                 dest.chmod(0o755)  # rwxr-xr-x
 
     elif platform == 'win32':
-        arg_factories: dict[str, tuple[object, Callable]] = {
+        arg_factories: dict[str, tuple[Any, Callable[[Any], str]]] = {
             'Target': (target, quote_str),
             'Arguments': (arguments, quote_str),
             'Name': (name, quote_str),
@@ -211,7 +212,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
         )
 
 
-def get_desktop_path() -> Path | None:
+def get_desktop_path() -> Path:
     """Cross-platform utility to obtain the path to the desktop.
 
     This function is cached after the first call.
@@ -220,7 +221,8 @@ def get_desktop_path() -> Path | None:
 
     * On Linux and macOS, this returns the DESKTOP value in ~/.config/user-dirs.dirs file, or the default ~/Desktop.
 
-    :return: Path to the user's desktop or None if not found.
+    :return: Path to the user's desktop directory.
+    :raises TypeError: If winreg value for Desktop shell folder is not a string/path.
     """
     import os
     import sys
@@ -230,7 +232,7 @@ def get_desktop_path() -> Path | None:
         return get_desktop_path.__cached__
 
     platform: str = sys.platform.lower()
-    desktop: Path | None = None
+    desktop: Path
 
     if platform == 'win32':
         shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
@@ -238,6 +240,8 @@ def get_desktop_path() -> Path | None:
 
         try:
             val = get_winreg_value(shell_folder_key, 'Desktop')
+            if not isinstance(val, str):
+                raise TypeError(f'Winreg value of {shell_folder_key}\\Desktop is not a string.')
 
             # Make sure the path is resolved
             desktop = Path(val).resolve(strict=True).absolute()
@@ -245,8 +249,8 @@ def get_desktop_path() -> Path | None:
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
 
-    elif platform.startswith('linux') or platform == 'darwin':
-        home: Path = Path.home() or Path(os.getenv('HOME', None))
+    else:  # Linux, Darwin
+        home: Path = Path.home() or Path(os.environ['HOME'])
         desktop = home / 'Desktop'
 
         # If desktop is defined in user's config, use that
@@ -258,15 +262,15 @@ def get_desktop_path() -> Path | None:
             for line in text:
                 # Read the DESKTOP variable's value and evaluate it
                 if 'DESKTOP' in line:
-                    line = line.replace('$HOME', str(home))[:-1]
-                    config_val = line.split('=')[1].strip('\'\"')
+                    line: str = line.replace('$HOME', str(home))[:-1]
+                    config_val: str = line.split('=')[1].strip('\'\"')
                     desktop = Path(config_val).resolve(strict=True).absolute()
 
     get_desktop_path.__cached__ = desktop
     return desktop
 
 
-def get_start_menu_path() -> Path | None:
+def get_start_menu_path() -> Path:
     """Cross-platform utility to obtain the path to the Start Menu or equivalent.
 
     This function is cached after the first call.
@@ -275,9 +279,11 @@ def get_start_menu_path() -> Path | None:
 
     * On Linux, this returns the ~/.local/share/applications directory.
 
-    * On macOS, this returns None.
+    * On macOS, this raises a FileNotFoundError.
 
     :return: Path to the Start Menu or None if not found.
+    :raises FileNotFoundError: If attempted on macOS.
+    :raises TypeError: If winreg value for Start Menu shell folder is not a string/path.
     """
     import os
     import sys
@@ -287,7 +293,10 @@ def get_start_menu_path() -> Path | None:
         return get_start_menu_path.__cached__
 
     platform: str = sys.platform.lower()
-    start_menu: Path | None = None
+    start_menu: Path
+
+    if platform == 'darwin':
+        raise FileNotFoundError('macOS has no Start Menu folder.')
 
     if platform == 'win32':
         shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
@@ -295,6 +304,8 @@ def get_start_menu_path() -> Path | None:
 
         try:
             val = get_winreg_value(shell_folder_key, 'Start Menu')
+            if not isinstance(val, str):
+                raise TypeError(f'Winreg value of {shell_folder_key}\\Start Menu is not a string.')
 
             # Make sure the path is resolved
             start_menu = Path(val).resolve(strict=True).absolute()
@@ -302,8 +313,8 @@ def get_start_menu_path() -> Path | None:
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
 
-    elif platform.startswith('linux'):
-        home: Path = Path(os.getenv('HOME', None)) or Path.home()
+    else:  # Linux
+        home: Path = Path.home() or Path(os.environ['HOME'])
 
         start_menu = home / '.local/share/applications'
 
