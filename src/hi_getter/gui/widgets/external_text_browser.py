@@ -33,7 +33,7 @@ class ExternalTextBrowser(QTextBrowser):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize :py:class:`ExternalTextBrowser` values."""
         super().__init__(*args, **kwargs)
-        self.anchorClicked.connect(lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#')))
+        self.anchorClicked.connect(lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#')))  # pyright: ignore[reportGeneralTypeIssues]
 
         # default factory producing empty DeferredCallables
         self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
@@ -77,14 +77,26 @@ class ExternalTextBrowser(QTextBrowser):
                 # Replace image links with clickable anchor images
                 if match := MARKDOWN_IMG_LINK_PATTERN.match(line):
                     # Get ref_link or normal link for anchor href
-                    alt, src, link = (group.strip('()[]') for group in match.groups())
+                    stripped_groups = tuple(group.strip('()[]') for group in match.groups())
+                    alt: str = stripped_groups[0]
+                    src: str = stripped_groups[1]
+                    link: str = stripped_groups[2]
 
                     # Get reference link data if applicable
                     link_is_ref: bool = match[0][2].startswith('[')
-                    ref_url, ref_desc = ref_links.get(link, (None, None))
+                    ref_url: str | None = ref_links.get(link, (None, None))[0]
+                    ref_desc: str | None = ref_links.get(link, (None, None))[1]
 
-                    href: str = link if not link_is_ref else ref_url
-                    title: str = alt if not link_is_ref and ref_desc is not None else ref_desc
+                    # Set href and title
+                    href: str
+                    title: str
+
+                    if link_is_ref:
+                        href = ref_url if ref_url is not None else link
+                        title = ref_desc if ref_desc is not None else alt
+                    else:
+                        href = link
+                        title = alt
 
                     lines_new.append(f'<a href="{href}"><img src="{src}" alt="{alt}" title="{title}"/></a>')
                     continue
@@ -92,7 +104,7 @@ class ExternalTextBrowser(QTextBrowser):
                 # Find headers and add relative anchors
                 if self.inject_markdown_anchors:
                     has_hashtag: bool = line.strip().startswith('#')
-                    has_underline: bool = line and (i < len(lines) - 1) and any(
+                    has_underline: bool = bool(line) and (i < len(lines) - 1) and any(
                         # Line must end and begin with the respective underline
                         lines[i + 1].strip().startswith(line_char) and
                         lines[i + 1].strip().endswith(line_char) for line_char in ('-', '=')
