@@ -44,21 +44,21 @@ class ExceptionHook:
         """When an exception is raised."""
         # Don't handle BaseExceptions
         if not issubclass(type_, Exception):
-            return self.__old_hook(type_, exception, traceback)
+            return self.old_hook(type_, exception, traceback)
 
         self.event_bus << ExceptionEvent(exception, traceback)
 
     def __repr__(self) -> str:
         """Representation of the :py:class:`ExceptionHook` with the old hook."""
-        return f'<{type(self).__name__} (old_hook={self.__old_hook})>'
+        return f'<{type(self).__name__} ({self.old_hook=})>'
 
     def __enter__(self) -> None:
         """Temporary extend current exception hook."""
         sys.excepthook = self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, *_) -> None:
         """Reset current exception hook to the original one."""
-        sys.excepthook = self.__old_hook
+        sys.excepthook = self.old_hook
         del EventBus['exceptions']
 
     @property
