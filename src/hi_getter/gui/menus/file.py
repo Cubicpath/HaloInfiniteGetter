@@ -36,8 +36,7 @@ def export_data() -> None:
 
         7z, tar, zip, gztar, bztar, xztar
     """
-    # noinspection PyTypeChecker
-    export_dest = Path(QFileDialog.getSaveFileName(None, caption=tr('gui.menus.file.export'),
+    export_dest = Path(QFileDialog.getSaveFileName(None, caption=tr('gui.menus.file.export'),  # type: ignore
                                                    dir=str(Path.home()), filter=_ARCHIVE_FILTER)[0])
     # Return early if no file selected
     if export_dest.is_dir():
@@ -59,8 +58,7 @@ def import_data() -> None:
 
         .7z .zip .piz .tar .tar.gz .tgz .tar.bz2 .tbz2 .tar.xz .txz
     """
-    # noinspection PyTypeChecker
-    archive_file = Path(QFileDialog.getOpenFileName(None, caption=tr('gui.menus.file.import'),
+    archive_file = Path(QFileDialog.getOpenFileName(None, caption=tr('gui.menus.file.import'),  # type: ignore
                                                     dir=str(Path.home() / 'Downloads'), filter=_ARCHIVE_FILTER)[0])
     # Return early if no file selected
     if archive_file.is_dir():

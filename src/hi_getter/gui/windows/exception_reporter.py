@@ -178,13 +178,13 @@ class ExceptionReporter(QWidget):
         delete_layout_widgets(self.scroll_widget.layout())
         for i, error in enumerate(self.logger.exception_log):
             button = QPushButton(f'{type(error.exception).__name__}: {error.exception}', self.scroll_widget)
-            button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))
-            button.clicked.connect(DistributedCallable((
+            button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))                     # pyright: ignore[reportGeneralTypeIssues]
+            button.clicked.connect(DistributedCallable((                                               # pyright: ignore[reportGeneralTypeIssues]
                 self.clear_button.setDisabled,
                 self.report_button.setDisabled,
                 self.trace_back_viewer.setDisabled
             ), False))
-            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
+            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(  # pyright: ignore[reportGeneralTypeIssues]
                 tr, 'gui.exception_reporter.traceback_view',
                 type(error.exception).__name__, error.exception, format_tb(error.traceback),
                 key_eval=False

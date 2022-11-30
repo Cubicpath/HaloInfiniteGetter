@@ -74,8 +74,8 @@ class ToolsContextMenu(QMenu):
 
             (exception_reporter := QAction(self)): {
                 'text': tr('gui.menus.tools.exception_reporter'),
-                'icon': app().windows['app'].exception_reporter.logger.icon(),
-                'triggered': app().windows['app'].exception_reporter.show
+                'icon': app().windows['app'].exception_reporter.logger.icon(),  # type: ignore
+                'triggered': app().windows['app'].exception_reporter.show       # type: ignore
             }
         })
 

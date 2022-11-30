@@ -73,7 +73,7 @@ class CacheIndexContextMenu(QMenu):
             (open_in_default_app := QAction(self)): {
                 'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cached_file.open_in_default_app'),
-                'icon': parent.model().iconProvider()._fallback_provider.icon(parent.model().fileInfo(index)),
+                'icon': parent.model().iconProvider()._fallback_provider.icon(parent.model().fileInfo(index)),  # type: ignore
                 'triggered': DeferredCallable(
                     QDesktopServices.openUrl, QUrl(file_path.as_uri())
                 )

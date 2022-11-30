@@ -132,9 +132,9 @@ class AppWindow(Singleton, QMainWindow):
             (settings := QAction(self)): {
                 'menuRole': QAction.MenuRole.PreferencesRole,
                 'triggered': DistributedCallable((
-                    SettingsWindow.instance().show,
-                    SettingsWindow.instance().activateWindow,
-                    SettingsWindow.instance().raise_
+                    SettingsWindow.instance().show,            # pyright: ignore[reportGeneralTypeIssues]
+                    SettingsWindow.instance().activateWindow,  # pyright: ignore[reportGeneralTypeIssues]
+                    SettingsWindow.instance().raise_           # pyright: ignore[reportGeneralTypeIssues]
                 ))
             },
 
@@ -202,7 +202,7 @@ class AppWindow(Singleton, QMainWindow):
                 }
             })
 
-            window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None
+            window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None  # pyright: ignore[reportGeneralTypeIssues]
             return window
 
         def toggle_media_detach() -> None:

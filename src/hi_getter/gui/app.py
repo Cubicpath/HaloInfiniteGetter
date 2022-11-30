@@ -101,7 +101,7 @@ class GetterApp(Singleton, QApplication):
         # Must have themes up before load_env
         self.icon_store: defaultdict[str, QIcon] = defaultdict(QIcon)  # Null icon generator
         self.session: NetworkSession = NetworkSession(self)
-        self.settings: TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)
+        self.settings: TomlFile = TomlFile(_SETTINGS_FILE, default=self._setting_defaults)  # type: ignore
         self.themes: dict[str, Theme] = {}
         self.theme_index_map: dict[str, int] = {}
         self.translator: Translator
@@ -109,7 +109,7 @@ class GetterApp(Singleton, QApplication):
 
         # Correct malformed language tag with default language selected by Translator
         try:
-            self.translator = Translator(self.settings['language'])
+            self.translator = Translator(self.settings['language'])  # type: ignore
         except ValueError:
             self.translator = Translator()
             self.settings['language'] = self.translator.language.tag
@@ -187,15 +187,15 @@ class GetterApp(Singleton, QApplication):
         SettingsWindow.create(QSize(420, 600))
         AppWindow.create(QSize(
             # Size to use, with a minimum of 100x100
-            max(self.settings['gui/window/x_size'], 100),
-            max(self.settings['gui/window/y_size'], 100)
+            max(self.settings['gui/window/x_size'], 100),  # type: ignore
+            max(self.settings['gui/window/y_size'], 100)   # type: ignore
         ))
 
         self._windows['changelog_viewer'] = ChangelogViewer()
         self._windows['license_viewer'] = LicenseViewer()
         self._windows['readme_viewer'] = ReadmeViewer()
-        self._windows['settings'] = SettingsWindow.instance()
-        self._windows['app'] = AppWindow.instance()
+        self._windows['settings'] = SettingsWindow.instance()  # type: ignore
+        self._windows['app'] = AppWindow.instance()            # type: ignore
 
     def _translate_http_code_map(self) -> None:
         """Translate the HTTP code map to the current language."""
@@ -234,7 +234,7 @@ class GetterApp(Singleton, QApplication):
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
         try:
-            self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)
+            self.setStyleSheet(self.themes[self.settings['gui/themes/selected']].style)  # type: ignore
         except KeyError:
             self.settings['gui/themes/selected'] = 'legacy'
             self.setStyleSheet(self._legacy_style)
@@ -321,7 +321,7 @@ class GetterApp(Singleton, QApplication):
         if default_button is not None:
             msg_box.setDefaultButton(default_button)
 
-        msg_box.buttonClicked.connect((result := []).append)
+        msg_box.buttonClicked.connect((result := []).append)  # pyright: ignore[reportGeneralTypeIssues]
         msg_box.exec()
 
         response_kwargs = {}
@@ -457,7 +457,7 @@ class GetterApp(Singleton, QApplication):
         self.add_theme(Theme('legacy', self._legacy_style, 'Legacy (Default Qt)'))
 
         try:
-            themes = self.settings['gui/themes']
+            themes: dict[str, TomlValue] = self.settings['gui/themes']  # type: ignore
         except KeyError:
             self.settings['gui/themes'] = themes = {}
 

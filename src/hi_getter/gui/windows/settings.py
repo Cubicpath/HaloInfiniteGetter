@@ -323,11 +323,11 @@ class SettingsWindow(Singleton, QWidget):
 
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
-        self.icon_mode_dropdown.setCurrentIndex(app().settings['gui/cache_explorer/icon_mode'])
-        self.aspect_ratio_dropdown.setCurrentIndex(app().settings['gui/media_output/aspect_ratio_mode'])
-        self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])
-        self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])
-        self.theme_dropdown.setCurrentIndex(app().theme_index_map[app().settings['gui/themes/selected']])
+        self.icon_mode_dropdown.setCurrentIndex(app().settings['gui/cache_explorer/icon_mode'])               # type: ignore
+        self.aspect_ratio_dropdown.setCurrentIndex(app().settings['gui/media_output/aspect_ratio_mode'])      # type: ignore
+        self.transformation_dropdown.setCurrentIndex(app().settings['gui/media_output/transformation_mode'])  # type: ignore
+        self.line_wrap_dropdown.setCurrentIndex(app().settings['gui/text_output/line_wrap_mode'])             # type: ignore
+        self.theme_dropdown.setCurrentIndex(app().theme_index_map[app().settings['gui/themes/selected']])     # type: ignore
 
     # # # # # Events
 
