@@ -39,7 +39,7 @@ class ExceptionLogger(QPushButton):
         self.label: QLabel = QLabel(self)
         self.exception_log: list[LoggedException] = []
         self.reporter: ExceptionReporter = ExceptionReporter(self)
-        self.severity: int = 0
+        self.severity = 0
 
         self.reporter.setMinimumWidth(300)
 
@@ -98,7 +98,7 @@ class ExceptionLogger(QPushButton):
 class LoggedException(NamedTuple):
     """Container for a logged exception. Includes the severity of the exception, the exception itself, an optional traceback, and a timestamp."""
 
-    severity: int | None = None
-    exception: Exception | None = None
+    severity: int = 0
+    exception: BaseException | None = None
     traceback: TracebackType | None = None
     timestamp: datetime | None = None

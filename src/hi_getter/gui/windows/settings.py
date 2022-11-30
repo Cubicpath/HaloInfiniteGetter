@@ -88,7 +88,7 @@ class SettingsWindow(Singleton, QWidget):
             """Toggle hiding and showing the API key."""
             if not self.key_field.isEnabled():
                 self.key_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
-                self.key_field.setText(app().client.wpauth)
+                self.key_field.setText(str(app().client.wpauth))
                 self.key_field.setDisabled(False)
                 self.key_field.setFocus()
                 self.key_set_button.setDisabled(False)
@@ -312,12 +312,10 @@ class SettingsWindow(Singleton, QWidget):
             }
         })
 
-        for subscribe_params in (
-            (DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new),
-            (DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path),
-            (DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path),
-            (DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
-        ): EventBus['settings'].subscribe(*subscribe_params)
+        EventBus['settings'].subscribe(DeferredCallable(save_button.setDisabled, False), TomlEvents.Set, lambda event: event.old != event.new)
+        EventBus['settings'].subscribe(DeferredCallable(save_button.setDisabled, True), TomlEvents.Export, lambda event: event.toml_file.path == event.path)
+        EventBus['settings'].subscribe(DeferredCallable(save_button.setDisabled, True), TomlEvents.Import, lambda event: event.toml_file.path == event.path)
+        EventBus['settings'].subscribe(DeferredCallable(self.refresh_dropdowns), TomlEvents.Import)
 
         self.refresh_dropdowns()
 

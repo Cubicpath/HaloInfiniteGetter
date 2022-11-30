@@ -11,6 +11,7 @@ __all__ = (
 )
 
 from collections.abc import Iterable
+from collections.abc import Iterator
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -29,7 +30,7 @@ class ComboBox(QComboBox):
         super().__init__(*args, **kwargs)
         self._iter_index = -1
 
-    def __iter__(self) -> Iterable[tuple[str, str]]:
+    def __iter__(self) -> Iterator[tuple[str, str]]:
         """Iterate over items and their associated data."""
         self._iter_index = -1
         return self

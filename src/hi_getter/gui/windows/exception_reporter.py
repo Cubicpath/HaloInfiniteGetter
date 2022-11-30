@@ -137,9 +137,11 @@ class ExceptionReporter(QWidget):
 
     def report_current_exception(self) -> None:
         """Report the current exception to the exception logger."""
-        exc_name: str = type(self.logger.exception_log[self.selected].exception).__name__
-        exc_msg: str = str(self.logger.exception_log[self.selected].exception).rstrip('.')
-        exc_tb: str = format_tb(self.logger.exception_log[self.selected].traceback).strip().replace(getuser(), '%USERNAME%')
+        selected = self.logger.exception_log[self.selected]
+
+        exc_name: str = type(selected.exception).__name__
+        exc_msg: str = str(selected.exception).rstrip('.')
+        exc_tb: str = format_tb(selected.traceback).strip().replace(getuser(), '%USERNAME%') if selected.traceback is not None else ''
         base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params: dict[str, str] = {
             'template': 'bug-report.yaml',
@@ -186,7 +188,7 @@ class ExceptionReporter(QWidget):
             ), False))
             button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(  # pyright: ignore[reportGeneralTypeIssues]
                 tr, 'gui.exception_reporter.traceback_view',
-                type(error.exception).__name__, error.exception, format_tb(error.traceback),
+                type(error.exception).__name__, error.exception, format_tb(error.traceback) if error.traceback is not None else '',
                 key_eval=False
             )))
 

@@ -58,9 +58,14 @@ class _Worker(QRunnable):
             - If you need to return ``None``, I suggest creating a separate object to represent it.
 
         Sends any uncaught :py:class:`Exception`'s through the ``exceptionRaised`` signal.
+
+        :raises RuntimeError: If worker started before application instance is defined.
         """
+        if (app := QCoreApplication.instance()) is None:
+            raise RuntimeError('Worker started before application instance is defined.')
+
         # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
-        QCoreApplication.instance().aboutToQuit.connect(self._dummy_method, Qt.ConnectionType.BlockingQueuedConnection)
+        app.aboutToQuit.connect(self._dummy_method, Qt.ConnectionType.BlockingQueuedConnection)  # pyright: ignore[reportGeneralTypeIssues]
 
         try:
             # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
@@ -76,7 +81,7 @@ class _Worker(QRunnable):
             self.signals.exceptionRaised.emit(e)
 
         # Disconnect deadlock safeguard if successful to avoid possible leak
-        QCoreApplication.instance().aboutToQuit.disconnect(self._dummy_method)
+        app.aboutToQuit.disconnect(self._dummy_method)                                           # pyright: ignore[reportGeneralTypeIssues]
 
         # Delete if not deleted
         if Shiboken.isValid(self.signals):
@@ -102,8 +107,9 @@ class ExportData(_Worker):
         self.dest = dest
 
     def _run(self) -> None:
+        # This implicitly raises ValueError if the destination suffix is not a valid extension format.
         temp_archive_path: str = shutil.make_archive(
-            QDir.tempPath() + f'/{self.dest.stem}', self.EXTENSION_FORMATS.get(self.dest.suffix),
+            QDir.tempPath() + f'/{self.dest.stem}', self.EXTENSION_FORMATS.get(self.dest.suffix, f'.{self.dest.suffix}'),
             root_dir=self.base.parent, base_dir=f'./{self.base.name}'
         )
 

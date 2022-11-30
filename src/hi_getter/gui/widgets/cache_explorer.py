@@ -64,8 +64,15 @@ class _IconProvider(QAbstractFileIconProvider):
         return self._fallback_provider.icon(info)
 
     def on_mode_change(self, event: TomlEvents.Set):
-        """Set the icon mode to the one selected in settings."""
-        self._icon_mode = event.new
+        """Set the icon mode to the one selected in settings.
+
+        :raises TypeError: If new value from event is not an int.
+        """
+        value = event.new
+        if not isinstance(value, int):
+            raise TypeError(f'Event value "{value}" is not of type {int}.')
+
+        self._icon_mode = value
         self._cache_explorer.model().setIconProvider(self)
 
 

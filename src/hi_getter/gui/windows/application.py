@@ -186,7 +186,7 @@ class AppWindow(Singleton, QMainWindow):
     def _init_ui(self) -> None:
         """Initialize the UI, including Layouts and widgets."""
 
-        def setup_detached_window(id_: str, frame: QFrame, handler: Callable, title: str = None) -> QMainWindow:
+        def setup_detached_window(id_: str, frame: QFrame, handler: Callable, title: str | None = None) -> QMainWindow:
             """Set up a detached window, with the layout represented as a :py:class:`QFrame`.
 
             :param id_: unique name for the window
@@ -519,7 +519,7 @@ class AppWindow(Singleton, QMainWindow):
     def update_image(self, _: str, data: bytes) -> None:
         """Update the image output with the given data."""
         display_unit: str = size_label_for(len(data))
-        display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
+        display_size: float = round(len(data) / BYTE_UNITS[display_unit], 4)
 
         self.clear_picture.setDisabled(False)
         self.copy_picture.setDisabled(False)
@@ -544,7 +544,7 @@ class AppWindow(Singleton, QMainWindow):
         self.text_output.clear()
 
         display_unit: str = size_label_for(len(data.encode('utf8', errors='ignore')))
-        display_size: int = round(len(data) / BYTE_UNITS[display_unit], 4)
+        display_size: float = round(len(data) / BYTE_UNITS[display_unit], 4)
 
         # Load up to 8 MiB of text data
         output = data if len(data) <= BYTE_UNITS['MiB'] * 8 else tr(

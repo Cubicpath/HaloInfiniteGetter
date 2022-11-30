@@ -91,7 +91,7 @@ class GetterApp(Singleton, QApplication):
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._thread_pool: QThreadPool = QThreadPool.globalInstance()
 
-        self._setting_defaults: dict[str, TomlValue] = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
+        self._setting_defaults: dict[str, TomlValue | CommentValue] = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
         self._registered_translations: DistributedCallable[set, None, None] = DistributedCallable(set())
         self._windows: dict[str, QWidget] = {}
 
@@ -240,10 +240,10 @@ class GetterApp(Singleton, QApplication):
             self.setStyleSheet(self._legacy_style)
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
-                    buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButtons | None = None,
+                    buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButton | None = None,
                     default_button: QAbstractButton | QMessageBox.StandardButton | None = None,
                     title_args: Sequence | None = None,
-                    description_args: Sequence | None = None) -> _DialogResponse | None:
+                    description_args: Sequence | None = None) -> _DialogResponse:
         """Show a dialog. This is a wrapper around QMessageBox creation.
 
         The type of dialog icon depends on the key's first section.
@@ -268,14 +268,15 @@ class GetterApp(Singleton, QApplication):
         :param description_args: The translation arguments used to format the description.
         :param title_args: The translation arguments used to format the title.
         :return: The button that was clicked, as well as its role. None if the key's first section is "about".
+        :raises TypeError: If default_button is not a QPushButton or a QStandardButton.
         """
         using_dummy_widget: bool = False
         if parent is None:
-            parent = QWidget()
+            parent = QWidget(None)
             using_dummy_widget = True
 
-        title_args: Sequence = () if title_args is None else title_args
-        description_args: Sequence = () if description_args is None else description_args
+        title_args = () if title_args is None else title_args
+        description_args = () if description_args is None else description_args
 
         icon: QMessageBox.Icon
         first_section: str = key.split('.')[0]
@@ -297,7 +298,8 @@ class GetterApp(Singleton, QApplication):
         msg_box = QMessageBox(icon, title_text, description_text, parent=parent)
 
         if first_section == 'about':
-            return msg_box.about(parent, title_text, description_text)
+            msg_box.about(parent, title_text, description_text)
+            return _DialogResponse()
 
         standard_buttons = None
         if buttons is not None:
@@ -319,6 +321,9 @@ class GetterApp(Singleton, QApplication):
             msg_box.setStandardButtons(standard_buttons)
 
         if default_button is not None:
+            if not isinstance(default_button, (QPushButton, QMessageBox.StandardButton)):
+                raise TypeError(f'Default button cannot be of type: {type(default_button)}')
+
             msg_box.setDefaultButton(default_button)
 
         msg_box.buttonClicked.connect((result := []).append)  # pyright: ignore[reportGeneralTypeIssues]
@@ -335,7 +340,7 @@ class GetterApp(Singleton, QApplication):
 
         return _DialogResponse(**response_kwargs)
 
-    def missing_package_dialog(self, package: str, reason: str | None = None, parent: QObject | None = None) -> None:
+    def missing_package_dialog(self, package: str, reason: str | None = None, parent: QWidget | None = None) -> None:
         """Show a dialog informing the user that a package is missing and asks to install said package.
 
         If a user presses the "Install" button, the package is installed.
@@ -453,6 +458,8 @@ class GetterApp(Singleton, QApplication):
         """Load all theme locations from settings and store them in self.themes.
 
         Also set current theme from settings.
+
+        :raises ValueError: If gui/themes/{theme}/path setting is not a string.
         """
         self.add_theme(Theme('legacy', self._legacy_style, 'Legacy (Default Qt)'))
 
@@ -465,30 +472,35 @@ class GetterApp(Singleton, QApplication):
             if not isinstance(theme, dict):
                 continue
 
-            theme: dict = theme.copy()
-            if isinstance((path := theme.pop('path')), CommentValue):
-                path = path.val
+            if isinstance((path_ := theme['path']), CommentValue):
+                path_ = path_.val
+
+            if not isinstance(path_, str):
+                raise ValueError(f'gui/themes/{theme}/path is not a string value.')
 
             # Translate builtin theme locations
-            if isinstance(path, str) and path.startswith('builtin::'):
-                path = HI_RESOURCE_PATH / f'themes/{path.removeprefix("builtin::")}'
+            if path_.startswith('builtin::'):
+                path_ = HI_RESOURCE_PATH / f'themes/{path_.removeprefix("builtin::")}'
 
             # Ensure path is a Path value that exists
-            if (path := Path(path)).is_dir():
+            if (path := Path(path_)).is_dir():
                 QDir.addSearchPath(f'hi_theme+{id}', path)
+                theme_attrs = {
+                    'id': id,
+                    'style': '',
+                    'display_name': theme.get('display_name') or id
+                }
 
                 for theme_resource in path.iterdir():
                     if theme_resource.is_file():
                         if theme_resource.name == 'stylesheet.qss':
                             # Load stylesheet file
-                            theme['id'] = id
-                            theme['style'] = theme_resource.read_text(encoding='utf8')
-                            theme['display_name'] = theme.get('display_name') or id
+                            theme_attrs['style'] = theme_resource.read_text(encoding='utf8')
                         elif theme_resource.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
                             # Load all images in the theme directory into the icon store.
                             self.icon_store[f'hi_theme+{id}+{theme_resource.stem}'] = QIcon(str(theme_resource.resolve()))
 
-                self.add_theme(Theme(**theme))
+                self.add_theme(Theme(**theme_attrs))
 
         # noinspection PyUnresolvedReferences
         self.theme_index_map = {theme_id: i for i, theme_id in enumerate(theme.id for theme in self.sorted_themes())}
