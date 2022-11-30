@@ -26,5 +26,5 @@ pylint==2.15.6
     tomlkit>=0.10.1
     tomli>=1.1.0
 
-pyright==1.1.281
+pyright==1.1.282
     nodeenv>=1.6.0
