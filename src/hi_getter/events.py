@@ -111,20 +111,25 @@ class _EventBusMeta(type):
 
     _id_bus_map: dict[str, EventBus] = {}
 
-    @classmethod
     @overload
-    def __getitem__(mcs, id: type[Event]) -> None: ...
+    def __getitem__(cls, id: type[Event]) -> type[EventBus]:
+        # FOR TYPE HINTING, IGNORE
+        ...
 
-    @classmethod
     @overload
-    def __getitem__(mcs, id: str) -> EventBus | None: ...
+    def __getitem__(cls, id: str) -> EventBus | None:
+        ...
 
-    @classmethod
-    def __getitem__(mcs, id) -> EventBus | None:
-        return mcs._id_bus_map.get(id.lower())
+    # pylint: disable=compare-to-zero
+    def __getitem__(cls, id) -> EventBus | type[EventBus] | None:
+        # FOR TYPE HINTING, IGNORE
+        if True is False:
+            if issubclass(id, Event):
+                return cls  # type: ignore
 
-    @classmethod
-    def __setitem__(mcs, id: str, bus: EventBus) -> None:
+        return cls._id_bus_map.get(id.lower())
+
+    def __setitem__(cls, id: str, bus: EventBus) -> None:
         """Set an :py:class:`EventBus` from the bus map.
 
         :raises TypeError:
@@ -135,12 +140,11 @@ class _EventBusMeta(type):
             raise TypeError(f'parameter {id=} is not of type {str}.')
         if not isinstance(bus, EventBus):
             raise TypeError(f'parameter {bus=} is not of type {EventBus}.')
-        mcs._id_bus_map[id.lower()] = bus
+        cls._id_bus_map[id.lower()] = bus
 
-    @classmethod
-    def __delitem__(mcs, id: str) -> None:
+    def __delitem__(cls, id: str) -> None:
         """Delete an :py:class:`EventBus` from the bus map."""
-        del mcs._id_bus_map[id.lower()]
+        del cls._id_bus_map[id.lower()]
 
 
 class EventBus(Generic[_ET], metaclass=_EventBusMeta):
