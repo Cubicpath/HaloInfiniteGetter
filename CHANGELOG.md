@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Photosensitivity warning for SCAN
+- Prints HTTP errors to console
+- Support for GitHub Environments
+- Support for all language tags and a default language
 
 ### Changed
 - Update Checker `Upgrade and Restart` now uses the `--upgrade` flag with `pip install`
+- Cleanup of code using `bandit`, `pydocstyle`, and `pyright`
+- Endpoint domains stored in `wp_endpoint_hosts.json`
+- `PySide6` version to 6.4.1
 
 
 ## [0.12.1] - 2022-11-8 [PyPI](https://pypi.org/project/hi-getter/0.12.1/)
