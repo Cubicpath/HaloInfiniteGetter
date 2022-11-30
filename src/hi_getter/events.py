@@ -120,7 +120,7 @@ class _EventBusMeta(type):
     def __getitem__(cls, id: str) -> EventBus:
         ...
 
-    # pylint: disable=compare-to-zero, no-value-for-parameter
+    # pylint: disable=comparison-of-constants, compare-to-zero, no-value-for-parameter
     def __getitem__(cls, id) -> EventBus | type[EventBus]:
         # FOR TYPE HINTING, IGNORE
         if True is False:

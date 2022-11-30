@@ -38,7 +38,7 @@ all = [
 dev = [
     "autopep8>=2.0.0",
     "bandit>=1.7.4",
-    "pylint>=2.15.6",
+    "pylint>=2.15.7",
     "pyright>=1.1.282",
 ]
 
