@@ -39,7 +39,14 @@ TomlValue: TypeAlias = dict[str, 'TomlValue'] | list['TomlValue'] | float | int 
 _TT = TypeVar('_TT', bound=TomlValue)  # Bound to TomlValue.
 
 
-class CommentValue(_CommentValue):
+class _MetaCommentValue(type):
+    """Overrides instance checks so that :py:class:`_CommentValue` is accepted as a :py:class:`CommentValue`."""
+
+    def __instancecheck__(cls, instance: Any) -> bool:
+        return isinstance(instance, _CommentValue)
+
+
+class CommentValue(_CommentValue, metaclass=_MetaCommentValue):
     """Properly typed version of :py:class:`_CommentValue`."""
 
     def __init__(self, val: TomlValue, comment: str | None = None, new_line: bool = False, _dict_type: type[MutableMapping] = dict) -> None:
@@ -322,7 +329,7 @@ class TomlFile:
         self.event_bus << TomlEvents.Set(
             self, key,
             old=prev_val.val if isinstance(prev_val, _CommentValue) else prev_val,
-            new=value.val if isinstance(value, _CommentValue) else value
+            new=value
         )
 
     def save(self) -> bool:
