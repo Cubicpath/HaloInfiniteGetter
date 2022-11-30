@@ -63,6 +63,6 @@ repos:
           ]
 
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.281
+    rev: v1.1.282
     hooks:
       - id: pyright
