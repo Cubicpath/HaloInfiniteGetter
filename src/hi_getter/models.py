@@ -430,7 +430,7 @@ class Singleton:
         cls.__init__(cls.__instance, *args, **kwargs)
 
     @classmethod
-    def instance(cls) -> Singleton:  # Real return type is weakref.ProxyType[Singleton]
+    def instance(cls: type[_SingletonT]) -> _SingletonT:  # Real return type is weakref.ProxyType[Singleton]
         """Return a weak reference to the :py:class:`Singleton` instance.
 
         :raises RuntimeError: If singleton is not currently instantiated.
@@ -465,3 +465,6 @@ class Singleton:
     def is_instantiated(cls) -> bool:
         """Return whether the :py:class:`Singleton` instance exists."""
         return isinstance(cls.__instance, cls)
+
+
+_SingletonT = TypeVar('_SingletonT', bound=Singleton)
