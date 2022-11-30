@@ -117,17 +117,20 @@ class _EventBusMeta(type):
         ...
 
     @overload
-    def __getitem__(cls, id: str) -> EventBus | None:
+    def __getitem__(cls, id: str) -> EventBus:
         ...
 
-    # pylint: disable=compare-to-zero
-    def __getitem__(cls, id) -> EventBus | type[EventBus] | None:
+    # pylint: disable=compare-to-zero, no-value-for-parameter
+    def __getitem__(cls, id) -> EventBus | type[EventBus]:
         # FOR TYPE HINTING, IGNORE
         if True is False:
             if issubclass(id, Event):
                 return cls  # type: ignore
 
-        return cls._id_bus_map.get(id.lower())
+        if (bus := cls.get_bus(id)) is None:
+            raise KeyError(f'{cls.__name__} "{id}" does not exist.')
+
+        return bus
 
     def __setitem__(cls, id: str, bus: EventBus) -> None:
         """Set an :py:class:`EventBus` from the bus map.
@@ -140,11 +143,24 @@ class _EventBusMeta(type):
             raise TypeError(f'parameter {id=} is not of type {str}.')
         if not isinstance(bus, EventBus):
             raise TypeError(f'parameter {bus=} is not of type {EventBus}.')
+
+        if bus.id is None:
+            bus.id = id
+
         cls._id_bus_map[id.lower()] = bus
 
     def __delitem__(cls, id: str) -> None:
         """Delete an :py:class:`EventBus` from the bus map."""
         del cls._id_bus_map[id.lower()]
+
+    def get_bus(cls, id: str, default: EventBus | None = None) -> EventBus | None:
+        """Get bus from class map using the given id, with an optional default value.
+
+        :param id: Case-insensitive id to search with.
+        :param default: Default value if id resolves to None.
+        :return: EventBus mapped to given id.
+        """
+        return cls._id_bus_map.get(id.lower(), default)
 
 
 class EventBus(Generic[_ET], metaclass=_EventBusMeta):
@@ -183,7 +199,7 @@ class EventBus(Generic[_ET], metaclass=_EventBusMeta):
         :param __id: id to register this instance as.
         :raises KeyError: When a bus with the given id already exists.
         """
-        if __id is not None and type(self)[__id] is not None:
+        if __id is not None and type(self).get_bus(__id) is not None:
             raise KeyError(f'EventBus id "{__id}" is already registered in {type(type(self)).__name__}')
 
         self.id: str | None = __id
