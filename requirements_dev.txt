@@ -25,3 +25,6 @@ pylint==2.15.6
     platformdirs>=2.2.0
     tomlkit>=0.10.1
     tomli>=1.1.0
+
+pyright==1.1.281
+    nodeenv>=1.6.0
