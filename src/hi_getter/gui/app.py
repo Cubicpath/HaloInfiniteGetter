@@ -77,7 +77,7 @@ class GetterApp(Singleton, QApplication):
 
     _singleton_base_type = QApplication
     _singleton_check_ref = False
-    updateTranslations = Signal(name='languageChanged')
+    updateTranslations = Signal()
 
     # PyCharm detects dict literals in __init__ as a dict[str, EventBus[TomlEvent]], for no explicable reason.
     # noinspection PyTypeChecker

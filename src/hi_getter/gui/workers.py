@@ -24,8 +24,8 @@ from ..utils import unique_values
 
 
 class _SignalHolder(QObject):
-    exceptionRaised = Signal(Exception, name='exceptionRaised')
-    valueReturned = Signal(object, name='valueReturned')
+    exceptionRaised = Signal(Exception)
+    valueReturned = Signal(object)
 
 
 class _Worker(QRunnable):

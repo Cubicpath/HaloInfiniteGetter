@@ -82,7 +82,7 @@ class CacheExplorer(QTreeView):
     Has a native :py:class:`QFileSystemModel` and item context menu.
     """
 
-    openFileInView = Signal(str, name='openFileInView')
+    openFileInView = Signal(str)
 
     def __init__(self, parent, *args, **kwargs) -> None:
         """Create a new :py:class:`CacheExplorer` widget for viewing cached requests and files."""

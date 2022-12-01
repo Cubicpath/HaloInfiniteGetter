@@ -31,9 +31,9 @@ _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
 class Client(QObject):
     """Asynchronous HTTP REST Client that interfaces with Halo Waypoint to get data."""
 
-    receivedData = Signal(str, bytes, name='receivedData')
-    receivedError = Signal(str, int, name='receivedError')
-    receivedJson = Signal(str, dict, name='receivedJson')
+    receivedData = Signal(str, bytes)
+    receivedError = Signal(str, int)
+    receivedJson = Signal(str, dict)
 
     def __init__(self, parent: QObject, **kwargs) -> None:
         """Initialize Halo Waypoint Client.

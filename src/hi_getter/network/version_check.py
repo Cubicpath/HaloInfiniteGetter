@@ -43,8 +43,8 @@ def is_greater_version(version1: Version | str, version2: Version | str) -> bool
 class VersionChecker(QObject):
     """Checks for the latest versions of packages."""
 
-    checked = Signal(str, name='finished')
-    newerVersion = Signal(str, str, name='versionChecked')
+    checked = Signal(str)
+    newerVersion = Signal(str, str)
 
     def __init__(self, parent: QObject | None = None) -> None:
         """Create a new :py:class:`VersionChecker` and initialize its :py:class:`NetworkSession`."""
