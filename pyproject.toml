@@ -208,9 +208,9 @@ allowed-redefined-builtins = ["help", "id",]
 # ---------------------
 [tool.pyright]
 pythonVersion = "3.10"
+venvPath = "."
+venv = "venv"
 
-reportMissingImports = false
 reportSelfClsParameterName = false
-reportUndefinedVariable = false
 reportUnusedExpression = false
 reportWildcardImportFromLibrary = false
