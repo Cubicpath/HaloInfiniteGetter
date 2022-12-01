@@ -81,12 +81,13 @@ ignore = [
     "D407", "D413",
 ]
 match = ".*.py"
-match_dir = "(?!venv|tests|__pycache__)[^\\.].*"
+match_dir = "(?!venv|tests|_vendor|__pycache__)[^\\.].*"
 
 
 # Pylint configuration.
 # ---------------------
 [tool.pylint.'MASTER']
+ignore-paths = ['.*/_vendor/.*']
 jobs = 0
 load-plugins = [
     "pylint.extensions.bad_builtin",
@@ -207,6 +208,7 @@ allowed-redefined-builtins = ["help", "id",]
 # Pyright configuration.
 # ---------------------
 [tool.pyright]
+ignore = ["src/hi_getter/_vendor",]
 pythonVersion = "3.10"
 venvPath = "."
 venv = "venv"

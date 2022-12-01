@@ -43,6 +43,8 @@ repos:
       hooks:
       -   id: pydocstyle
           additional_dependencies: ["pydocstyle[toml]",]
+          always_run: true
+          files: "$."
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.29.1
