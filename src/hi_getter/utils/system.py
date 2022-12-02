@@ -206,9 +206,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
 
         # All user input is passed in as a controlled powershell.exe argument.
         subprocess.run(  # nosec B603:subprocess_without_shell_equals_true
-            powershell_arguments,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, check=True
+            powershell_arguments, capture_output=True, text=True, check=True
         )
 
 

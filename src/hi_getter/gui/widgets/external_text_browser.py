@@ -139,7 +139,7 @@ class ExternalTextBrowser(QTextBrowser):
             if (url_string := url.toDisplayString()) not in self.remote_image_cache:
                 # Add placeholder bytes to show the url is being downloaded.
                 # Otherwise, unneeded replies are sent out and cause application stutter.
-                self.remote_image_cache[url_string] = bytes()
+                self.remote_image_cache[url_string] = b''
 
                 def handle_reply(reply: Response):
                     image.loadFromData(reply.data)
