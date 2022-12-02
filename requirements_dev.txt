@@ -1,2 +1,2 @@
 # Install all dev requirements
--r requirements_dev_pre_commit.txt
+-r requirements/requirements_dev_pre_commit.txt

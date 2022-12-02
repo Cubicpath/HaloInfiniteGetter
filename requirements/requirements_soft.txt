@@ -1,0 +1,18 @@
+# All dependencies in this file are not required for the program to run, but enable extra functionality.
+
+
+# To pack/unpack 7Zip archives
+py7zr == 0.20.2
+    brotli >= 1.0.9; platform_python_implementation == 'CPython'
+    brotlicffi >= 1.0.9.2; platform_python_implementation == 'PyPy'
+    inflate64 >= 0.3.1
+    multivolumefile >= 0.2.3
+    psutil
+    pybcj >= 0.6.0
+    pycryptodomex >= 3.6.6
+    pyppmd >= 0.18.1, < 1.1.0
+    pyzstd >= 0.14.4
+    texttable
+
+# To load .env files
+python-dotenv == 0.21.0
