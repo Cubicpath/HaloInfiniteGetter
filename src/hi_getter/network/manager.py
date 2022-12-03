@@ -24,6 +24,7 @@ from typing import Any
 from typing import Final
 from typing import TypeAlias
 from warnings import warn
+from weakref import WeakKeyDictionary
 
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
@@ -171,6 +172,9 @@ class NetworkSession:
         self._headers = CaseInsensitiveDict()
         self.manager = QNetworkAccessManager(manager_parent)
         self.default_redirect_policy = QNetworkRequest.RedirectPolicy.UserVerifiedRedirectPolicy
+        self.reply_auth_map: WeakKeyDictionary[QNetworkReply, tuple[str, str]] = WeakKeyDictionary()
+
+        self.manager.authenticationRequired.connect(self._handle_auth)  # pyright: ignore[reportGeneralTypeIssues]
 
     @property
     def cookies(self) -> dict[str, str]:
@@ -220,6 +224,12 @@ class NetworkSession:
                     f'{method} requests do not support data attached to the request body. '
                     f'This data is likely to be ignored.'
                 ))
+
+    def _handle_auth(self, reply: QNetworkReply, authenticator: QAuthenticator) -> None:
+        if reply in self.reply_auth_map:
+            user, password = self.reply_auth_map[reply]
+            authenticator.setUser(user)
+            authenticator.setPassword(password)
 
     def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None) -> bool:
         """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
@@ -300,6 +310,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -337,6 +348,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -370,6 +382,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -404,6 +417,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -437,6 +451,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -469,6 +484,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -501,6 +517,7 @@ class NetworkSession:
         :keyword data: Bytes to send in the request body.
         :keyword headers: Headers to use for the request. Case-insensitive.
         :keyword cookies: Cookies to use for the request. Case-sensitive.
+        :keyword auth: Optional tuple containing username and password.
         :keyword timeout: Timeouts for the request.
         :keyword allow_redirects: If False, do not follow any redirect requests.
         :keyword proxies: String-pairs mapping protocol to the URL of the proxy.
@@ -530,7 +547,7 @@ class Request:
                  cookies: _StringPair | None = None,
                  # TODO: Finish ``requests``-like implementation
                  # files: dict[str, Any] | None = None,
-                 # auth: tuple[str, str] | None = None,
+                 auth: tuple[str, str] | None = None,
                  timeout: float | tuple[float, float] | None = 30.0,
                  allow_redirects: bool = True,
                  proxies: _StringPair | None = None,
@@ -556,6 +573,9 @@ class Request:
             Non-string values should ONLY be used for KNOWN_HEADERS. Case-insensitive.
 
         :param cookies: Cookies to use for the request. Case-sensitive.
+
+        :param auth: Optional tuple containing username and password.
+            These will be sent to the server if it requests authentication.
 
         :param timeout: Timeouts for the request.
             If a single float, both the connect and read timeout will be set to this value.
@@ -592,7 +612,7 @@ class Request:
         self.headers = {} if headers is None else dict(headers)
         self.cookies = {} if cookies is None else dict(cookies)
         # self.files = files
-        # self.auth = auth
+        self.auth = auth
         self.timeout = timeout
         self.allow_redirects = allow_redirects
         self.proxies = None if proxies is None else dict(proxies)
@@ -772,6 +792,9 @@ class Request:
         verb: bytes = self.method.encode('utf8')
         _reply: QNetworkReply = session.manager.sendCustomRequest(self._request, verb, data=request_data)
         response: Response = self._prepare_response(_reply, finished, progress)
+
+        if self.auth:
+            session.reply_auth_map[_reply] = self.auth
 
         if session.manager.redirectPolicy() != session.default_redirect_policy:
             session.manager.setRedirectPolicy(session.default_redirect_policy)

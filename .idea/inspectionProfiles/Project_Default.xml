@@ -57,8 +57,10 @@
           <option value="PySide6.QtCore.QTimer.timeout" />
           <option value="PySide6.QtCore.timeout.*" />
           <option value="PySide6.QtGui.triggered.connect" />
+          <option value="PySide6.QtNetwork.authenticationRequired.*" />
           <option value="PySide6.QtNetwork.downloadProgress.*" />
           <option value="PySide6.QtNetwork.finished.*" />
+          <option value="PySide6.QtNetwork.QNetworkAccessManager.authenticationRequired" />
           <option value="PySide6.QtNetwork.QNetworkReply.downloadProgress" />
           <option value="PySide6.QtNetwork.QNetworkReply.finished" />
           <option value="PySide6.QtNetwork.QNetworkReply.redirected" />
