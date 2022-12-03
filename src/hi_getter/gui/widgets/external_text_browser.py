@@ -118,7 +118,7 @@ class ExternalTextBrowser(QTextBrowser):
                         simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
                         lines_new.append(
-                            f'{line} <a name="{simple_str}" href="#{simple_str}"'
+                            f'{line} <a name="{simple_str}" href="#{simple_str}" '
                             f'style="font-size: 1px; color: transparent">§</a>'
                         )
                         continue
