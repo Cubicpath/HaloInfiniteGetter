@@ -2,7 +2,6 @@
 #                              MIT Licence (C) 2022 Cubicpath@Github                              #
 ###################################################################################################
 """Relative package containing all things handling GUI elements."""
-# TODO: Create custom QMessageBox implementation for selectable text
 # TODO: Redo ExceptionLogger implementation, with more functionality given to ExceptionReporter.
 
 __all__ = (

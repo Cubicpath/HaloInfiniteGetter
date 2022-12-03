@@ -260,7 +260,8 @@ class GetterApp(Singleton, QApplication):
                     buttons: _ButtonsWithRoles | None = None,
                     default_button: QAbstractButton | QMessageBox.StandardButton | None = None,
                     title_args: Sequence | None = None,
-                    description_args: Sequence | None = None) -> _DialogResponse:
+                    description_args: Sequence | None = None,
+                    details_text: str = '') -> _DialogResponse:
         r"""Show a dialog. This is a wrapper around QMessageBox creation.
 
         The type of dialog icon depends on the key's first section.
@@ -285,8 +286,9 @@ class GetterApp(Singleton, QApplication):
         :param buttons: The buttons to use for the dialog. If button is not a StandardButton,
           it should be a tuple containing the button and its role.
         :param default_button: The default button to use for the dialog.
-        :param description_args: The translation arguments used to format the description.
         :param title_args: The translation arguments used to format the title.
+        :param description_args: The translation arguments used to format the description.
+        :param details_text: If provided, a new 'Show Details...' button will show this text in the dialog when pressed.
         :return: The button that was clicked, as well as its role. None if the key's first section is "about".
         :raises TypeError: If default_button is not a QPushButton or a QStandardButton.
         """
@@ -315,12 +317,27 @@ class GetterApp(Singleton, QApplication):
         title_text: str = self.translator(f'{key}.title', *title_args)
         description_text: str = self.translator(f'{key}.description', *description_args)
 
+        # Create custom QMessageBox
         msg_box = QMessageBox(icon, title_text, description_text, parent=parent)
+        msg_box.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
 
-        if first_section == 'about':
-            msg_box.about(parent, title_text, description_text)
-            return _DialogResponse()
+        if details_text:
+            msg_box.setDetailedText(details_text)
 
+        # If no icon is selected, it follows the precedence of QMessagebox.about(). That being:
+        # 1. It prefers parent.icon() if that exists.
+        # 2. If not, it tries the top-level widget containing parent.
+        # 3. If that fails, it tries the PySide6.QtWidgets.QApplication.activeWindow()
+        # 4. As a last resort it uses the Information icon.
+        if icon is QMessageBox.Icon.NoIcon:
+            for widget in (parent, parent.topLevelWidget(), QApplication.activeWindow()):
+                if not (about_icon := widget.windowIcon()).isNull():
+                    msg_box.setIconPixmap(about_icon.pixmap(999))
+                    break
+            else:
+                msg_box.setIcon(QMessageBox.Icon.Information)
+
+        # Assemble the buttons in the correct order.
         standard_buttons = None
         if buttons is not None:
             if isinstance(buttons, Sequence):
@@ -346,14 +363,19 @@ class GetterApp(Singleton, QApplication):
 
             msg_box.setDefaultButton(default_button)
 
+        # Add buttonClicked result to list to extract as variable.
+        # This works as msg_box.exec() blocks the event loop until finished.
         msg_box.buttonClicked.connect((result := []).append)  # pyright: ignore[reportGeneralTypeIssues]
         msg_box.exec()
 
+        # Get data from result to create a _DialogResponse from
         response_kwargs = {}
         if result:
             response_kwargs['button'] = result[0]
             response_kwargs['role'] = msg_box.buttonRole(result[0])
 
+        # If parent wasn't specified, delete the dummy widget.
+        # This will also delete any button objects attached to the QMessageBox.
         if using_dummy_widget:
             # noinspection PyUnboundLocalVariable
             parent.deleteLater()

@@ -19,6 +19,7 @@ from PySide6.QtWidgets import *
 from ...constants import *
 from ...models import DeferredCallable
 from ...utils import add_menu_items
+from ...utils import format_tb
 from ...utils import init_objects
 from ..aliases import app
 from ..aliases import tr
@@ -53,7 +54,8 @@ def export_data() -> None:
         base=HI_CACHE_PATH / 'cached_requests',
         dest=export_dest,
         exceptionRaised=lambda e: app().show_dialog(
-            'errors.cache_export_failure', description_args=(export_dest, e,)
+            'errors.cache_export_failure', description_args=(export_dest, e,),
+            details_text=format_tb(e.__traceback__)
         )))
 
 
@@ -75,7 +77,8 @@ def import_data() -> None:
         archive=archive_file,
         dest=HI_CACHE_PATH,
         exceptionRaised=lambda e: app().show_dialog(
-            'errors.cache_import_failure', description_args=(archive_file, e,)
+            'errors.cache_import_failure', description_args=(archive_file, e,),
+            details_text=format_tb(e.__traceback__)
         )))
 
 
