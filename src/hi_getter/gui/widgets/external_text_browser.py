@@ -33,7 +33,9 @@ class ExternalTextBrowser(QTextBrowser):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize :py:class:`ExternalTextBrowser` values."""
         super().__init__(*args, **kwargs)
-        self.anchorClicked.connect(lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#')))  # pyright: ignore[reportGeneralTypeIssues]
+        self.anchorClicked.connect(  # pyright: ignore[reportGeneralTypeIssues]
+            lambda url: self.scrollToAnchor(url.toDisplayString().lstrip('#'))
+        )
 
         # default factory producing empty DeferredCallables
         self.key_callable_map: defaultdict[int, Callable] = defaultdict(DeferredCallable)
@@ -115,8 +117,10 @@ class ExternalTextBrowser(QTextBrowser):
                     if has_hashtag or has_underline:
                         simple_str: str = line.strip().replace(' ', '-').replace(':', '').lstrip('#').strip('-').lower()
 
-                        anchor_css = 'font-size: 1px; color: transparent'
-                        lines_new.append(f'{line} <a name="{simple_str}" href="#{simple_str}" style="{anchor_css}">§</a>')
+                        lines_new.append(
+                            f'{line} <a name="{simple_str}" href="#{simple_str}"'
+                            f'style="font-size: 1px; color: transparent">§</a>'
+                        )
                         continue
 
                 lines_new.append(line)

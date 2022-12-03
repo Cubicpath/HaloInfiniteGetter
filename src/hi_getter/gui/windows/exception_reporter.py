@@ -141,7 +141,9 @@ class ExceptionReporter(QWidget):
 
         exc_name: str = type(selected.exception).__name__
         exc_msg: str = str(selected.exception).rstrip('.')
-        exc_tb: str = format_tb(selected.traceback).strip().replace(getuser(), '%USERNAME%') if selected.traceback is not None else ''
+        exc_tb: str = ('' if selected.traceback is None else
+                       format_tb(selected.traceback).strip().replace(getuser(), '%USERNAME%'))
+
         base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params: dict[str, str] = {
             'template': 'bug-report.yaml',
@@ -180,15 +182,18 @@ class ExceptionReporter(QWidget):
         delete_layout_widgets(self.scroll_widget.layout())
         for i, error in enumerate(self.logger.exception_log):
             button = QPushButton(f'{type(error.exception).__name__}: {error.exception}', self.scroll_widget)
-            button.clicked.connect(DeferredCallable(setattr, self, 'selected', i))                     # pyright: ignore[reportGeneralTypeIssues]
-            button.clicked.connect(DistributedCallable((                                               # pyright: ignore[reportGeneralTypeIssues]
+            clicked = button.clicked  # pyright: ignore[reportGeneralTypeIssues]
+            clicked.connect(DeferredCallable(setattr, self, 'selected', i))
+            clicked.connect(DistributedCallable((
                 self.clear_button.setDisabled,
                 self.report_button.setDisabled,
                 self.trace_back_viewer.setDisabled
             ), False))
-            button.clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(  # pyright: ignore[reportGeneralTypeIssues]
+            clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
                 tr, 'gui.exception_reporter.traceback_view',
-                type(error.exception).__name__, error.exception, format_tb(error.traceback) if error.traceback is not None else '',
+                type(error.exception).__name__,
+                error.exception,
+                format_tb(error.traceback) if error.traceback is not None else '',
                 key_eval=False
             )))
 

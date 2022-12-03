@@ -49,7 +49,8 @@ class HelpContextMenu(QMenu):
                 'text': tr('gui.menus.help.github'),
                 'icon': app().icon_store['github'],
                 'triggered': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/')
+                    QDesktopServices.openUrl,
+                    QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/')
                 )
             },
 
@@ -57,19 +58,22 @@ class HelpContextMenu(QMenu):
                 'text': tr('gui.menus.help.issue'),
                 'icon': app().icon_store['github'],
                 'triggered': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose')
+                    QDesktopServices.openUrl,
+                    QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/issues/new/choose')
                 )
             },
 
             (about_view := QAction(self)): {
                 'text': tr('gui.menus.help.about'),
-                'icon': app().get_theme_icon('message_question') or app().icon_store['about'],
+                'icon': (app().get_theme_icon('message_question') or
+                         app().icon_store['about']),
                 'triggered': self.open_about
             },
 
             (about_qt_view := QAction(self)): {
                 'text': tr('gui.menus.help.about_qt'),
-                'icon': app().get_theme_icon('message_question') or app().icon_store['about'],
+                'icon': (app().get_theme_icon('message_question') or
+                         app().icon_store['about']),
                 'triggered': DeferredCallable(
                     QMessageBox(self).aboutQt, self, tr('about.qt.title')
                 )
@@ -77,7 +81,8 @@ class HelpContextMenu(QMenu):
 
             (changelog := QAction(self)): {
                 'text': tr('gui.menus.help.changelog'),
-                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton),
+                'icon': (app().get_theme_icon('message_information') or
+                         self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)),
                 'triggered': lambda: app().windows['changelog_viewer'].show()
             },
 
@@ -89,7 +94,8 @@ class HelpContextMenu(QMenu):
 
             (readme := QAction(self)): {
                 'text': tr('gui.menus.help.readme'),
-                'icon': app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton),
+                'icon': (app().get_theme_icon('message_information') or
+                         self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)),
                 'triggered': lambda: app().windows['readme_viewer'].show()
             }
         })

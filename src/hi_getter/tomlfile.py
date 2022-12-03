@@ -49,7 +49,8 @@ class _MetaCommentValue(type):
 class CommentValue(_CommentValue, metaclass=_MetaCommentValue):
     """Properly typed version of :py:class:`_CommentValue`."""
 
-    def __init__(self, val: TomlValue, comment: str | None = None, new_line: bool = False, _dict_type: type[MutableMapping] = dict) -> None:
+    def __init__(self, val: TomlValue, comment: str | None = None,
+                 new_line: bool = False, _dict_type: type[MutableMapping] = dict) -> None:
         """Properly annotates types for :py:class:`_CommentValue`."""
         comment = f'{_COMMENT_PREFIX}{comment}' if comment is not None else ''
         separator: str = '\n' if new_line else ' '
@@ -171,7 +172,11 @@ class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
     """
 
     def load_value(self, v: str, strictly_valid: bool = True) -> tuple[Any, str]:
-        """If the value is a string and starts with the SPECIAL_PATH_PREFIX, load the value enclosed in quotes as a :py:class:`Path`."""
+        """Load the given string value into its decoded type.
+
+        If the value is a string and starts with the SPECIAL_PATH_PREFIX,
+        load the value enclosed in quotes as a :py:class:`Path`.
+        """
         if v[1:].startswith(_SPECIAL_PATH_PREFIX):
             v_path = Path(v[1:].removeprefix(_SPECIAL_PATH_PREFIX)[:-1])
             return v_path, 'path'
@@ -179,7 +184,7 @@ class PathTomlDecoder(toml.TomlPreserveCommentDecoder):
 
 
 class PathTomlEncoder(toml.TomlEncoder):
-    """Combines both the effects of :py:class:`toml.TomlPreserveCommentEncoder` and of :py:class:`toml.TomlPathlibEncoder`.
+    """Combines both the effects of :py:class:`toml.TomlPreserveCommentEncoder` and :py:class:`toml.TomlPathlibEncoder`.
 
     Has native support for pathlib :py:class:`PurePath`; not abandoning the TOML specification.
     """

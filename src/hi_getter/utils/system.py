@@ -17,6 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ..constants import *
 from .common import bit_rep
 from .common import quote_str
 
@@ -55,7 +56,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
     if not desktop and not start_menu:
         return
 
-    target = target.resolve(strict=True).absolute()
+    target = target.resolve(True).absolute()
     name = 'Shortcut' if name is None else name
     working_dir = Path.home() if working_dir is None else working_dir
 
@@ -192,14 +193,14 @@ def create_shortcut(target: Path, arguments: str | None = None,
             'StartMenu': (start_menu, bit_rep)
         }
 
-        # HI_RESOURCE_PATH script location
-        abs_script_path: Path = (Path(__file__).parents[1] / 'resources/scripts/CreateShortcut.ps1').resolve(strict=True).absolute()
+        abs_script_path: Path = (HI_RESOURCE_PATH / 'resources/scripts/CreateShortcut.ps1').resolve(True).absolute()
         powershell_arguments = [
             'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
         ]
 
         # Append keyword arguments to the powershell script if the value is not None
-        # Every argument is in the form of -<keyword>:<value> with value being represented as a quoted string or raw integer.
+        # Every argument is in the form of -<keyword>:<value> with value being
+        # represented as a quoted string or raw integer.
         powershell_arguments.extend([
             f'-{key}:{factory(value)}' for (key, (value, factory)) in arg_factories.items() if value is not None
         ])
@@ -215,9 +216,11 @@ def get_desktop_path() -> Path:
 
     This function is cached after the first call.
 
-    * On Windows, this returns the path found in the registry, or the default ~/Desktop if the registry could not be read from.
+    * On Windows, this returns the path found in the registry, or
+      the default ~/Desktop if the registry could not be read from.
 
-    * On Linux and macOS, this returns the DESKTOP value in ~/.config/user-dirs.dirs file, or the default ~/Desktop.
+    * On Linux and macOS, this returns the DESKTOP value in ~/.config/user-dirs.dirs file, or
+      the default ~/Desktop.
 
     :return: Path to the user's desktop directory.
     :raises TypeError: If winreg value for Desktop shell folder is not a string/path.
@@ -233,7 +236,7 @@ def get_desktop_path() -> Path:
     desktop: Path
 
     if platform == 'win32':
-        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        shell_folder_key = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
         desktop = Path.home() / 'Desktop'
 
         try:
@@ -242,7 +245,7 @@ def get_desktop_path() -> Path:
                 raise TypeError(f'Winreg value of {shell_folder_key}\\Desktop is not a string.')
 
             # Make sure the path is resolved
-            desktop = Path(val).resolve(strict=True).absolute()
+            desktop = Path(val).resolve(True).absolute()
 
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
@@ -262,7 +265,7 @@ def get_desktop_path() -> Path:
                 if 'DESKTOP' in line:
                     line: str = line.replace('$HOME', str(home))[:-1]
                     config_val: str = line.split('=')[1].strip('\'\"')
-                    desktop = Path(config_val).resolve(strict=True).absolute()
+                    desktop = Path(config_val).resolve(True).absolute()
 
     get_desktop_path.__cached__ = desktop
     return desktop
@@ -273,7 +276,8 @@ def get_start_menu_path() -> Path:
 
     This function is cached after the first call.
 
-    * On Windows, this returns the main Start Menu folder, so it is recommended that you use the "Programs" sub-folder for adding shortcuts.
+    * On Windows, this returns the main Start Menu folder, so it is
+      recommended that you use the "Programs" sub-folder for adding shortcuts.
 
     * On Linux, this returns the ~/.local/share/applications directory.
 
@@ -297,7 +301,7 @@ def get_start_menu_path() -> Path:
         raise FileNotFoundError('macOS has no Start Menu folder.')
 
     if platform == 'win32':
-        shell_folder_key: str = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+        shell_folder_key = r'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
         start_menu = Path.home() / 'AppData/Roaming/Microsoft/Windows/Start Menu'
 
         try:
@@ -306,7 +310,7 @@ def get_start_menu_path() -> Path:
                 raise TypeError(f'Winreg value of {shell_folder_key}\\Start Menu is not a string.')
 
             # Make sure the path is resolved
-            start_menu = Path(val).resolve(strict=True).absolute()
+            start_menu = Path(val).resolve(True).absolute()
 
         except (ImportError, OSError):
             pass  # Return the default windows path if the registry couldn't be read.
@@ -392,7 +396,9 @@ def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | N
 def patch_windows_taskbar_icon(app_id: str = '') -> int | None:
     """Override Python's default Windows taskbar icon with the custom one set by the app window.
 
-    See https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid for more information.
+    See:
+    https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid
+    for more information.
 
     :param app_id: Pointer to the AppUserModelID to assign to the current process.
     :return: None if not on Windows, S_OK if this function succeeds. Otherwise, it returns an HRESULT error code.

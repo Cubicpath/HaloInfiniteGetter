@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 from typing import Final
 from typing import NamedTuple
+from typing import TypeAlias
 
 import toml
 from PySide6.QtCore import *
@@ -53,6 +54,11 @@ _DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
 _LAUNCHED_FILE: Final[Path] = HI_CONFIG_PATH / '.LAUNCHED'
 _SETTINGS_FILE: Final[Path] = HI_CONFIG_PATH / 'settings.toml'
 
+_ButtonsWithRoles: TypeAlias = (
+    Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] |
+    QMessageBox.StandardButton
+)
+
 
 class _DialogResponse(NamedTuple):
     """Response object for GetterApp.show_dialog()."""
@@ -72,7 +78,8 @@ class Theme(NamedTuple):
 class GetterApp(Singleton, QApplication):
     """The main HaloInfiniteGetter PySide application that runs in the background and manages the process.
 
-    :py:class:`GetterApp` is a singleton and can be accessed via the class using the GetterApp.instance() class method or the app() function.
+    :py:class:`GetterApp` is a singleton and can be accessed via the class using the
+    GetterApp.instance() class method or the app() function.
     """
 
     _singleton_base_type = QApplication
@@ -91,7 +98,9 @@ class GetterApp(Singleton, QApplication):
         self._legacy_style: str = self.styleSheet()              # Set legacy style before it is overridden
         self._thread_pool: QThreadPool = QThreadPool.globalInstance()
 
-        self._setting_defaults: dict[str, TomlValue | CommentValue] = toml.loads(_DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder())
+        self._setting_defaults: dict[str, TomlValue | CommentValue] = toml.loads(
+            _DEFAULTS_FILE.read_text(encoding='utf8'), decoder=PathTomlDecoder()
+        )
         self._registered_translations: DistributedCallable[set, None, None] = DistributedCallable(set())
         self._windows: dict[str, QWidget] = {}
 
@@ -121,9 +130,17 @@ class GetterApp(Singleton, QApplication):
 
         # Register callables to events
         EventBus['settings'] = self.settings.event_bus
-        self.settings.event_bus.subscribe(DeferredCallable(self.load_themes), TomlEvents.Import)
-        self.settings.event_bus.subscribe(DeferredCallable(self.updateTranslations.emit), TomlEvents.Import)
-        self.settings.event_bus.subscribe(DeferredCallable(self.update_stylesheet), TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+        EventBus['settings'].subscribe(
+            DeferredCallable(self.load_themes),
+            TomlEvents.Import)
+
+        EventBus['settings'].subscribe(
+            DeferredCallable(self.updateTranslations.emit),
+            TomlEvents.Import)
+
+        EventBus['settings'].subscribe(
+            DeferredCallable(self.update_stylesheet),
+            TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
         self.updateTranslations.connect(lambda: self.translator.__setattr__('language', self.settings['language']))
         self.updateTranslations.connect(lambda: self.setApplicationDisplayName(self.translator('app.name')))
@@ -205,7 +222,7 @@ class GetterApp(Singleton, QApplication):
     def _register_archive_formats(self) -> None:
         if not has_package('py7zr'):
             self.missing_package_dialog('py7zr', 'Importing/Exporting 7Zip Archives')
-        if not has_package('py7zr'):  # Check again, during the dialog, the package may be dynamically installed by user.
+        if not has_package('py7zr'):  # During the dialog, the package may be dynamically installed by user.
             return
 
         from py7zr import pack_7zarchive
@@ -240,11 +257,11 @@ class GetterApp(Singleton, QApplication):
             self.setStyleSheet(self._legacy_style)
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
-                    buttons: Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] | QMessageBox.StandardButton | None = None,
+                    buttons: _ButtonsWithRoles | None = None,
                     default_button: QAbstractButton | QMessageBox.StandardButton | None = None,
                     title_args: Sequence | None = None,
                     description_args: Sequence | None = None) -> _DialogResponse:
-        """Show a dialog. This is a wrapper around QMessageBox creation.
+        r"""Show a dialog. This is a wrapper around QMessageBox creation.
 
         The type of dialog icon depends on the key's first section.
         The following sections are supported::
@@ -254,16 +271,19 @@ class GetterApp(Singleton, QApplication):
             - 'warnings'    -> QMessageBox.Warning
             - 'errors'      -> QMessageBox.Critical
 
-        The dialog title and description are determined from the "title" and "description" child sections of the given key.
+        The dialog title and description are determined from the
+        "title" and "description" child sections of the given key.
+
         Example with given key as "questions.key"::
-            "questions.key.title": "Question Title"
+            "questions.key.title": "Question Title"\n
             "questions.key.description": "Question Description"
 
         WARNING: If a StandardButton is clicked, the button returned is NOT a StandardButton enum, but a QPushButton.
 
         :param key: The translation key to use for the dialog.
         :param parent: The parent widget to use for the dialog. If not supplied, a dummy widget is temporarily created.
-        :param buttons: The buttons to use for the dialog. If button is not a StandardButton, it should be a tuple containing the button and its role.
+        :param buttons: The buttons to use for the dialog. If button is not a StandardButton,
+          it should be a tuple containing the button and its role.
         :param default_button: The default button to use for the dialog.
         :param description_args: The translation arguments used to format the description.
         :param title_args: The translation arguments used to format the title.
@@ -351,7 +371,10 @@ class GetterApp(Singleton, QApplication):
         """
         exec_path = Path(sys.executable)
 
-        install_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('errors.missing_package.install'))
+        install_button = QPushButton(
+            self.get_theme_icon('dialog_ok'),
+            self.translator('errors.missing_package.install')
+        )
 
         consent_to_install: bool = self.show_dialog(
             'errors.missing_package', parent, (
@@ -365,7 +388,10 @@ class GetterApp(Singleton, QApplication):
         if consent_to_install:
             try:
                 # Install the package, Path(sys.executable) contains 0 user input.
-                subprocess.run([exec_path, '-m', 'pip', 'install', package], check=True)  # nosec B603:subprocess_without_shell_equals_true
+                subprocess.run(  # nosec B603:subprocess_without_shell_equals_true
+                    (exec_path, '-m', 'pip', 'install', package),
+                    check=True
+                )
             except (OSError, subprocess.SubprocessError) as e:
                 self.show_dialog(
                     'errors.package_install_failure', parent,
@@ -378,8 +404,14 @@ class GetterApp(Singleton, QApplication):
                 )
 
     def _upgrade_version_dialog(self, _, version: str) -> None:
-        ignore_button = QPushButton(self.translator('information.upgrade_version.ignore'))
-        upgrade_button = QPushButton(self.get_theme_icon('dialog_ok'), self.translator('information.upgrade_version.upgrade'))
+        ignore_button = QPushButton(
+            self.translator('information.upgrade_version.ignore')
+        )
+
+        upgrade_button = QPushButton(
+            self.get_theme_icon('dialog_ok'),
+            self.translator('information.upgrade_version.upgrade')
+        )
 
         match self.show_dialog(
             'information.upgrade_version', None, (
@@ -403,7 +435,7 @@ class GetterApp(Singleton, QApplication):
         """Load environment variables from .env file."""
         if not has_package('python-dotenv'):
             self.missing_package_dialog('python-dotenv', 'Loading environment variables')
-        if not has_package('python-dotenv'):  # Check again, during the dialog, the package may be dynamically installed by user.
+        if not has_package('python-dotenv'):  # During the dialog, the package may be dynamically installed by user.
             return
 
         from dotenv import load_dotenv
@@ -423,7 +455,9 @@ class GetterApp(Singleton, QApplication):
         })
 
         # Load external icon links
-        external_icon_links: dict[str, str] = json.loads((HI_RESOURCE_PATH / 'external_icons.json').read_text(encoding='utf8'))
+        external_icon_links: dict[str, str] = json.loads(
+            (HI_RESOURCE_PATH / 'external_icons.json').read_text(encoding='utf8')
+        )
 
         # Load externally stored icons
         # pylint: disable=cell-var-from-loop
@@ -498,7 +532,8 @@ class GetterApp(Singleton, QApplication):
                             theme_attrs['style'] = theme_resource.read_text(encoding='utf8')
                         elif theme_resource.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
                             # Load all images in the theme directory into the icon store.
-                            self.icon_store[f'hi_theme+{id}+{theme_resource.stem}'] = QIcon(str(theme_resource.resolve()))
+                            theme_key = f'hi_theme+{id}+{theme_resource.stem}'
+                            self.icon_store[theme_key] = QIcon(str(theme_resource.resolve()))
 
                 self.add_theme(Theme(**theme_attrs))
 

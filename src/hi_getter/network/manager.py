@@ -12,7 +12,7 @@ __all__ = (
     'Response',
 )
 
-import datetime
+import datetime as dt
 import json as json_
 import re
 from collections.abc import Callable
@@ -39,7 +39,7 @@ from ..utils import query_to_dict
 from ..utils import wait_for_reply
 
 _StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
-_KnownHeaderValues: TypeAlias = str | bytes | datetime.datetime | datetime.date | datetime.time | _StringPair | list[str]
+_KnownHeaderValues: TypeAlias = (str | bytes | dt.datetime | dt.date | dt.time | _StringPair | list[str])
 _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
 
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
@@ -66,17 +66,22 @@ KNOWN_HEADERS: CaseInsensitiveDict[tuple[QNetworkRequest.KnownHeaders, type]] = 
 # autopep8: on
 
 
-def _translate_header_value(header: str, value: _KnownHeaderValues) -> _KnownHeaderValues | QDateTime | list[QNetworkCookie] | QUrl:
+def _translate_header_value(
+        header: str, value: _KnownHeaderValues
+) -> _KnownHeaderValues | QDateTime | list[QNetworkCookie] | QUrl:
     """Translate a header's value to it's appropriate type for use in QNetworkRequest.setHeader.
 
-    Values are translated to their appropriate type based on the type defined in KNOWN_HEADERS next to the header enum value.
+    Values are translated to their appropriate type based on the
+    type defined in KNOWN_HEADERS next to the header enum value.
 
     The following types are supported:
         - str: Given value is translated into a str.
         - bytes: Translates string value into a utf8 encoded version.
         - QDateTime: Translates string and datetime values into a QDateTime.
-        - QNetworkCookie: Translates string pairs into a QNetworkCookie list. The first value is the cookie name, the second is the cookie value.
-        - QStringListModel: Iterates over value and translates all inner-values to strings. Returns a list of the translated strings.
+        - QNetworkCookie: Translates string pairs into a QNetworkCookie list.
+          The first value is the cookie name, the second is the cookie value.
+        - QStringListModel: Iterates over value and translates all inner-values to strings.
+          Returns a list of the translated strings.
         - QUrl: Calls the QUrl constructor on value and returns result.
 
     :param header: Header defined in KNOWN_HEADERS.
@@ -93,14 +98,14 @@ def _translate_header_value(header: str, value: _KnownHeaderValues) -> _KnownHea
                 return value.encode('utf8')
 
         case 'QDateTime':
-            if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
-                date_value: datetime.datetime | datetime.date | datetime.time = value
+            if isinstance(value, (dt.datetime, dt.date, dt.time)):
+                date_value: dt.datetime | dt.date | dt.time = value
 
                 # Translate datetime objects to a string
-                if not isinstance(value, datetime.datetime):
-                    date: datetime.date = datetime.datetime.now().date() if isinstance(value, datetime.time) else value
-                    time: datetime.time = datetime.datetime.now().time() if isinstance(value, datetime.date) else value
-                    date_value = datetime.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
+                if not isinstance(value, dt.datetime):
+                    date: dt.date = dt.datetime.now().date() if isinstance(value, dt.time) else value
+                    time: dt.time = dt.datetime.now().time() if isinstance(value, dt.date) else value
+                    date_value = dt.datetime.fromisoformat(f'{date.isoformat()}T{time.isoformat()}')
 
                 return QDateTime().fromString(date_value.isoformat(), Qt.DateFormat.ISODateWithMs)
 
@@ -163,14 +168,15 @@ class NetworkSession:
 
         :param manager_parent: Parent of the QNetworkAccessManager.
         """
-        self._headers: CaseInsensitiveDict[Any] = CaseInsensitiveDict()
-        self.manager: QNetworkAccessManager = QNetworkAccessManager(manager_parent)
-        self.default_redirect_policy: QNetworkRequest.RedirectPolicy = QNetworkRequest.RedirectPolicy.UserVerifiedRedirectPolicy
+        self._headers = CaseInsensitiveDict()
+        self.manager = QNetworkAccessManager(manager_parent)
+        self.default_redirect_policy = QNetworkRequest.RedirectPolicy.UserVerifiedRedirectPolicy
 
     @property
     def cookies(self) -> dict[str, str]:
         """Return dictionary representation of the internal QNetworkCookieJar."""
-        return {cookie.name().toStdString(): cookie.value().toStdString() for cookie in self.manager.cookieJar().allCookies()}
+        return {cookie.name().toStdString(): cookie.value().toStdString() for
+                cookie in self.manager.cookieJar().allCookies()}
 
     @cookies.deleter
     def cookies(self) -> None:
@@ -210,7 +216,10 @@ class NetworkSession:
         """
         if method in {'GET', 'HEAD', 'CONNECT', 'OPTIONS', 'TRACE'}:
             if any((kwargs.get('data'), kwargs.get('files'), kwargs.get('json'))):
-                warn(UserWarning(f'{method} requests do not support data attached to the request body. This data is likely to be ignored.'))
+                warn(UserWarning(
+                    f'{method} requests do not support data attached to the request body. '
+                    f'This data is likely to be ignored.'
+                ))
 
     def clear_cookies(self, domain: str | None = None, path: str | None = None, name: str | None = None) -> bool:
         """Clear some cookies. Functionally equivalent to http.cookiejar.clear.
@@ -225,7 +234,8 @@ class NetworkSession:
         :param path: The path of the cookie to remove.
         :param name: The name of the cookie to remove.
         :return: True if any cookies were removed, False otherwise.
-        :raises ValueError: If name is provided, must provide path. If path is provided, must provide domain. Raise otherwise.
+        :raises ValueError: If name is provided, must provide path.
+          If path is provided, must provide domain. Raise otherwise.
         """
 
         def deletion_predicate(cookie: QNetworkCookie) -> bool:
@@ -233,7 +243,8 @@ class NetworkSession:
 
             :param cookie: The cookie to check.
             :return: True if the cookie should be removed, False otherwise.
-            :raises ValueError: If name is provided, must provide path. If path is provided, must provide domain. Raise otherwise.
+            :raises ValueError: If name is provided, must provide path.
+              If path is provided, must provide domain. Raise otherwise.
             """
             # 3 args -- Delete the specific cookie which matches all information.
             if name is not None:
@@ -298,7 +309,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -313,8 +324,9 @@ class NetworkSession:
     def get(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the GET HTTP method.
 
-        GET is the general method used to get a resource from a server. It is the most commonly used method, with GET requests being used
-        by web browsers to download HTML pages, images, and other resources.
+        GET is the general method used to get a resource from a server.
+        It is the most commonly used method, with GET requests being used by web browsers to
+        download HTML pages, images, and other resources.
 
         -----
 
@@ -334,7 +346,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -367,7 +379,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -379,7 +391,8 @@ class NetworkSession:
     def post(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the POST HTTP method.
 
-        POST is the general method used to send data to a server. It does not require a resource to previously exist, nor does it require one to not exist.
+        POST is the general method used to send data to a server.
+        It does not require a resource to previously exist, nor does it require one to not exist.
         This makes it very common for servers to accept POST requests for a multitude of things.
 
         -----
@@ -400,7 +413,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -412,7 +425,8 @@ class NetworkSession:
     def put(self, url: QUrl | str, **kwargs) -> Response:
         """Create and send a request with the PUT HTTP method.
 
-        PUT is a method for completely updating a resource on a server. The data sent by PUT should be the full content of the resource.
+        PUT is a method for completely updating a resource on a server.
+        The data sent by PUT should be the full content of the resource.
 
         -----
 
@@ -432,7 +446,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -464,7 +478,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -496,7 +510,7 @@ class NetworkSession:
         :keyword json: JSON data to send in the request body.
         :keyword wait_until_finished: Process the application eventLoop until the reply is finished.
         :keyword finished: Callback when the request finishes, with request supplied as an argument.
-        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes supplied as arguments.
+        :keyword progress: Callback to update download progress, with the request, received bytes, and total bytes.
 
         :return: Response object, which is not guaranteed to be finished.
         """
@@ -633,20 +647,31 @@ class Request:
             self._request.setRawHeader(name.encode('utf8'), encoded_value)
 
     # pylint: disable=compare-to-zero
-    def _prepare_response(self, reply: QNetworkReply, finished: _ResponseConsumer | None, progress: _ProgressConsumer | None) -> Response:
+    def _prepare_response(
+            self,
+            reply: QNetworkReply,
+            finished: _ResponseConsumer | None,
+            progress: _ProgressConsumer | None
+    ) -> Response:
         _response = Response(self, reply)
 
+        # Put into variables to ignore incorrect known-type errors
+        (reply_redirected, reply_finished, reply_downloadProgress, reply_redirectAllowed) = (
+            reply.redirected, reply.finished,              # pyright: ignore[reportGeneralTypeIssues]
+            reply.downloadProgress, reply.redirectAllowed  # pyright: ignore[reportGeneralTypeIssues]
+        )
+
         if self.allow_redirects:
-            reply.redirected.connect(lambda _: reply.redirectAllowed)                                 # pyright: ignore[reportGeneralTypeIssues]
+            reply_redirected.connect(lambda _: reply_redirectAllowed)
 
         if self.verify is False:
             reply.ignoreSslErrors()
 
         if finished is not None:
-            reply.finished.connect(DeferredCallable(gc_response(finished), _response))                # pyright: ignore[reportGeneralTypeIssues]
+            reply_finished.connect(DeferredCallable(gc_response(finished), _response))
 
         if progress is not None:
-            reply.downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))  # pyright: ignore[reportGeneralTypeIssues]
+            reply_downloadProgress.connect(DeferredCallable(progress, _response, _extra_pos_args=2))
 
         if self.timeout:
             # Create connection timeout timer
@@ -659,7 +684,7 @@ class Request:
             timer = QTimer(reply)
             timer.setSingleShot(True)
             timer.setInterval(connection_timeout)
-            timer.timeout.connect(handle_connection_timeout)                                          # pyright: ignore[reportGeneralTypeIssues]
+            timer.timeout.connect(handle_connection_timeout)  # pyright: ignore[reportGeneralTypeIssues]
             timer.start()
 
         return _response
@@ -683,7 +708,8 @@ class Request:
              session: NetworkSession,
              wait_until_finished: bool = False,
              finished: _ResponseConsumer | None = None,
-             progress: _ProgressConsumer | None = None) -> Response:
+             progress: _ProgressConsumer | None = None
+             ) -> Response:
         """Send the :py:class:`Request` using the specified :py:class:`NetworkSession`.
 
         :param session: Session to use.
@@ -743,7 +769,8 @@ class Request:
             transfer_timeout = int((self.timeout[1] if isinstance(self.timeout, Sequence) else self.timeout) * 1000)
             self._request.setTransferTimeout(transfer_timeout)
 
-        _reply: QNetworkReply = session.manager.sendCustomRequest(self._request, self.method.encode('utf8'), data=request_data)
+        verb: bytes = self.method.encode('utf8')
+        _reply: QNetworkReply = session.manager.sendCustomRequest(self._request, verb, data=request_data)
         response: Response = self._prepare_response(_reply, finished, progress)
 
         if session.manager.redirectPolicy() != session.default_redirect_policy:
@@ -769,8 +796,9 @@ class Response:
     def __del__(self) -> None:
         """Usually the last reference to this :py:class:`Response` is connected to a :py:class:`QNetworkReply` signal.
 
-        So, when the :py:class:`QNetworkReply` is deleted using py:class:`Response`.delete(), ``__del__`` is usually called.
-        If this is not the case, and the :py:class:`QNetworkReply` was not yet deleted, delete it now to prevent a possible memory leak.
+        So, when the :py:class:`QNetworkReply` is deleted using ``Response.delete()``, ``__del__`` is usually called.
+        If this is not the case, and the :py:class:`QNetworkReply` was not yet deleted,
+        delete it now to prevent a possible memory leak.
         """
         if Shiboken.isValid(self._reply):
             self._reply.deleteLater()

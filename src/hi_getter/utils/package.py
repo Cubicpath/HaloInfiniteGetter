@@ -12,7 +12,9 @@ __all__ = (
 )
 
 
-def current_requirement_licenses(package: str, recursive: bool = False, include_extras: bool = False) -> dict[str, list[tuple[str, str]]]:
+def current_requirement_licenses(
+        package: str, recursive: bool = False, include_extras: bool = False
+) -> dict[str, list[tuple[str, str]]]:
     """Return the current licenses for the requirements of the given package.
 
     :param package: Package name to search.
@@ -45,7 +47,8 @@ def current_requirement_licenses(package: str, recursive: bool = False, include_
         # Find the license file(s)
         license_files: list[Path] = [
             item for item in info_path.iterdir() if (
-                item.is_file() and any(keyword in item.name.lower() for keyword in ('license', 'licence', 'copying', 'copyright', 'notice', 'author'))
+                item.is_file() and any(keyword in item.name.lower() for keyword in
+                                       ('license', 'licence', 'copying', 'copyright', 'notice', 'author'))
             )
         ]
 
@@ -91,7 +94,8 @@ def current_requirement_names(package: str, recursive: bool = False, include_ext
             continue
 
         # Don't include testing extras
-        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in {'dev', 'develop', 'development', 'test', 'testing'}:
+        testing_extras = {'dev', 'develop', 'development', 'test', 'testing'}
+        if include_extras and requirement.split('extra ==')[-1].strip().strip('"') in testing_extras:
             continue
 
         # Get the package name from the requirement
@@ -124,7 +128,9 @@ def current_requirement_versions(package: str, recursive: bool = False, include_
     """
     from importlib.metadata import version
 
-    return {name: version(name) for name in current_requirement_names(package, recursive, include_extras) if has_package(name)}
+    return {name: version(name) for
+            name in current_requirement_names(package, recursive, include_extras)
+            if has_package(name)}
 
 
 def has_package(package: str) -> bool:

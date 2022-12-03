@@ -55,7 +55,10 @@ class ComboBox(QComboBox):
 
 
 class HistoryComboBox(ComboBox):
-    """Editable :py:class:`ComboBox` acting as a history wrapper over :py:class:`PasteLineEdit`; has no duplicate values."""
+    """Editable :py:class:`ComboBox` acting as a history wrapper over :py:class:`PasteLineEdit`.
+
+    Has no duplicate values.
+    """
 
     line_edit_class = PasteLineEdit
 

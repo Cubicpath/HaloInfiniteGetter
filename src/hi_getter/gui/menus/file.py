@@ -26,7 +26,10 @@ from ..workers import ExportData
 from ..workers import ImportData
 
 # Default file extension is .7z
-_ARCHIVE_FILTER: str = ';;'.join(('Archive Files (*.7z *.zip *.piz *.tar *.tar.gz *.tgz *.tar.bz2 *.tbz2 *.tar.xz *.txz)', 'All files (*.*)'))
+_ARCHIVE_FILTER: str = ';;'.join((
+    'Archive Files (*.7z *.zip *.piz *.tar *.tar.gz *.tgz *.tar.bz2 *.tbz2 *.tar.xz *.txz)',
+    'All files (*.*)'
+))
 
 
 def export_data() -> None:
@@ -46,9 +49,12 @@ def export_data() -> None:
         app().show_dialog('errors.unsupported_archive_type', description_args=(export_dest, export_dest.suffix,))
         return
 
-    app().start_worker(ExportData(base=HI_CACHE_PATH / 'cached_requests', dest=export_dest, exceptionRaised=lambda e: app().show_dialog(
-        'errors.cache_export_failure', description_args=(export_dest, e,)
-    )))
+    app().start_worker(ExportData(
+        base=HI_CACHE_PATH / 'cached_requests',
+        dest=export_dest,
+        exceptionRaised=lambda e: app().show_dialog(
+            'errors.cache_export_failure', description_args=(export_dest, e,)
+        )))
 
 
 def import_data() -> None:
@@ -65,9 +71,12 @@ def import_data() -> None:
         return
 
     # Attempt to unpack file into temp dir
-    app().start_worker(ImportData(archive=archive_file, dest=HI_CACHE_PATH, exceptionRaised=lambda e: app().show_dialog(
-        'errors.cache_import_failure', description_args=(archive_file, e,)
-    )))
+    app().start_worker(ImportData(
+        archive=archive_file,
+        dest=HI_CACHE_PATH,
+        exceptionRaised=lambda e: app().show_dialog(
+            'errors.cache_import_failure', description_args=(archive_file, e,)
+        )))
 
 
 class FileContextMenu(QMenu):
@@ -82,9 +91,11 @@ class FileContextMenu(QMenu):
         init_objects({
             (open_explorer := QAction(self)): {
                 'text': tr('gui.menus.file.open'),
-                'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
+                'icon': (app().get_theme_icon('dialog_open') or
+                         app().icon_store['folder']),
                 'triggered': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl(HI_CACHE_PATH.as_uri())
+                    QDesktopServices.openUrl,
+                    QUrl(HI_CACHE_PATH.as_uri())
                 )
             },
 
@@ -92,7 +103,8 @@ class FileContextMenu(QMenu):
                 # DISABLED IF EMPTY DIRECTORY
                 'disabled': not any(HI_CACHE_PATH.iterdir()),
                 'text': tr('gui.menus.file.flush'),
-                'icon': app().get_theme_icon('dialog_discard') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogDiscardButton),
+                'icon': (app().get_theme_icon('dialog_discard') or
+                         self.style().standardIcon(QStyle.StandardPixmap.SP_DialogDiscardButton)),
                 'triggered': self.flush_cache
             },
 
@@ -104,7 +116,8 @@ class FileContextMenu(QMenu):
 
             (export_to := QAction(self)): {
                 # DISABLED IF EMPTY DIRECTORY OR NOT DIRECTORY
-                'disabled': True if (cached_requests.is_dir() and not any(cached_requests.iterdir())) else not cached_requests.is_dir(),
+                'disabled': (True if (cached_requests.is_dir() and not any(cached_requests.iterdir()))
+                             else not cached_requests.is_dir()),
                 'text': tr('gui.menus.file.export'),
                 'icon': app().icon_store['export'],
                 'triggered': export_data

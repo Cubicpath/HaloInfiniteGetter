@@ -51,7 +51,12 @@ def default_language_file() -> Path:
     return default_lang_file
 
 
-def format_value(value: str, *args: Any, _language: Language | None = None, _key_eval: bool = True) -> str:
+def format_value(
+        value: str,
+        *args: Any,
+        _language: Language | None = None,
+        _key_eval: bool = True
+) -> str:
     r"""Format a str with positional arguments.
 
     You can use {0} notation to refer to a specific positional argument.
@@ -123,7 +128,13 @@ def to_lang(language: str | Language) -> Language:
 class Language:
     """Object containing language data. Retrieves stored data with associated RFC 5646 language tags."""
 
-    def __init__(self, primary: str, region: str | None = None, _selected_file: Path | None = None, **kwargs: str | None) -> None:
+    def __init__(
+            self,
+            primary: str,
+            region: str | None = None,
+            _selected_file: Path | None = None,
+            **kwargs: str | None
+    ) -> None:
         """Build a new Language object using given sub-tags.
 
         For more information on RFC 5646, visit https://datatracker.ietf.org/doc/html/rfc5646

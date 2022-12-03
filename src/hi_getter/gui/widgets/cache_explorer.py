@@ -145,23 +145,27 @@ class CacheExplorer(QTreeView):
     def expandAll(self) -> None:
         """Call super().expandall ~50 times."""
         timer = QTimer(self)
-        timer.timeout.connect(DeferredCallable(super().expandAll))                           # pyright: ignore[reportGeneralTypeIssues]
+        timer.timeout.connect(              # pyright: ignore[reportGeneralTypeIssues]
+            DeferredCallable(super().expandAll)
+        )
         timer.start(5)
 
         timer2 = QTimer(self)
         timer2.setSingleShot(True)
-        timer2.timeout.connect(timer.stop)                                                   # pyright: ignore[reportGeneralTypeIssues]
+        timer2.timeout.connect(timer.stop)  # pyright: ignore[reportGeneralTypeIssues]
         timer2.start(500)
 
     def expandRecursively(self, *args, **kwargs) -> None:
         """Call super().expandRecursively ~50 times."""
         timer = QTimer(self)
-        timer.timeout.connect(DeferredCallable(super().expandRecursively, *args, **kwargs))  # pyright: ignore[reportGeneralTypeIssues]
+        timer.timeout.connect(              # pyright: ignore[reportGeneralTypeIssues]
+            DeferredCallable(super().expandRecursively, *args, **kwargs)
+        )
         timer.start(5)
 
         timer2 = QTimer(self)
         timer2.setSingleShot(True)
-        timer2.timeout.connect(timer.stop)                                                   # pyright: ignore[reportGeneralTypeIssues]
+        timer2.timeout.connect(timer.stop)  # pyright: ignore[reportGeneralTypeIssues]
         timer2.start(500)
 
     def model(self) -> QFileSystemModel:

@@ -31,9 +31,10 @@ class ChangelogViewer(QWidget):
     def __init__(self, *args, **kwargs) -> None:
         """Create a new :py:class:`ChangelogViewer` and initialize UI."""
         super().__init__(*args, **kwargs)
-        self.setWindowTitle(tr('gui.changelog_viewer.title'))
-        self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
         self.resize(QSize(600, 800))
+        self.setWindowTitle(tr('gui.changelog_viewer.title'))
+        self.setWindowIcon(app().get_theme_icon('message_information') or
+                           self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
 
         self.changelog_url: str = 'https://raw.githubusercontent.com/Cubicpath/HaloInfiniteGetter/master/CHANGELOG.md'
         self.latest_version: str = __version__
@@ -65,14 +66,16 @@ class ChangelogViewer(QWidget):
             (github_button := QPushButton(self)): {
                 'size': {'fixed': (180, None)},
                 'clicked': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/CHANGELOG.md')
+                    QDesktopServices.openUrl,
+                    QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/blob/master/CHANGELOG.md')
                 )
             },
 
             (releases_button := QPushButton(self)): {
                 'size': {'fixed': (110, None)},
                 'clicked': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/releases')
+                    QDesktopServices.openUrl,
+                    QUrl('https://github.com/Cubicpath/HaloInfiniteGetter/releases')
                 )
             }
         })

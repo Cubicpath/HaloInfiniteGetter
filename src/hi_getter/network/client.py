@@ -38,8 +38,11 @@ class Client(QObject):
     def __init__(self, parent: QObject, **kwargs) -> None:
         """Initialize Halo Waypoint Client.
 
-        token is first taken from token kwarg, then HI_SPARTAN_AUTH environment variable, then from user's .token file.
-        wpauth is first taken from wpauth kwarg, then HI_WAYPOINT_AUTH environment variable, then from the user's .wpauth file.
+        Order of precedence for token and wpauth values::
+
+            1. token/wpauth kwarg value
+            2. HI_SPARTAN_AUTH/HI_WAYPOINT_AUTH environment variables
+            3. user's .token/.wpauth config file (Created by application)
 
         :keyword token: Token to authenticate self to 343 API.
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
@@ -48,7 +51,7 @@ class Client(QObject):
         self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
 
         self.parent_path: str = '/hi/'
-        self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']  # Must be defined before session headers
+        self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
         self.searched_paths: set[str] = set()
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
@@ -80,7 +83,8 @@ class Client(QObject):
         })
         self.web_session: NetworkSession = NetworkSession(self)
         self.web_session.headers = self.api_session.headers | {
-            'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9', 'image/avif', 'image/webp', '*/*;q=0.8')),
+            'Accept': ','.join(('text/html', 'application/xhtml+xml', 'application/xml;q=0.9',
+                                'image/avif', 'image/webp', '*/*;q=0.8')),
             'Host': self.endpoints['webHost'],
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
@@ -167,7 +171,10 @@ class Client(QObject):
 
     def to_os_path(self, path: str, parent: Path = HI_WEB_DUMP_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""
-        return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path.replace('/file/', '/').lower()
+        return (parent /
+                self.sub_host.replace('-', '_') /
+                self.parent_path.strip('/') /
+                path.replace('/file/', '/').lower())
 
     def to_get_path(self, path: str) -> str:
         """Translate a given cache location to the equivalent GET path."""

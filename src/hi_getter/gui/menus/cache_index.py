@@ -44,7 +44,7 @@ class CacheIndexContextMenu(QMenu):
     """Context menu that shows actions to manipulate files."""
 
     def __init__(self, parent: CacheExplorer, index: QModelIndex):
-        """Create a new :py:class:`CacheIndexContextMenu` for the given :py:class:`CacheExplorer` and :py:class:`QModelIndex`."""
+        """Create a new :py:class:`CacheIndexContextMenu` for the given parent and index."""
         super().__init__(parent)
 
         file_path = Path(parent.model().filePath(index))
@@ -73,17 +73,22 @@ class CacheIndexContextMenu(QMenu):
             (open_in_default_app := QAction(self)): {
                 'disabled': file_path.is_dir(),
                 'text': tr('gui.menus.cached_file.open_in_default_app'),
-                'icon': parent.model().iconProvider()._fallback_provider.icon(parent.model().fileInfo(index)),  # type: ignore
+                'icon': parent.model().iconProvider()._fallback_provider.icon(  # type: ignore
+                    parent.model().fileInfo(index)
+                ),
                 'triggered': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl(file_path.as_uri())
+                    QDesktopServices.openUrl,
+                    QUrl(file_path.as_uri())
                 )
             },
 
             (open_in_explorer := QAction(self)): {
                 'text': tr('gui.menus.cached_file.view_in_explorer'),
-                'icon': app().get_theme_icon('dialog_open') or app().icon_store['folder'],
+                'icon': (app().get_theme_icon('dialog_open') or
+                         app().icon_store['folder']),
                 'triggered': DeferredCallable(
-                    QDesktopServices.openUrl, QUrl(dir_path.as_uri())
+                    QDesktopServices.openUrl,
+                    QUrl(dir_path.as_uri())
                 )
             },
 
@@ -134,7 +139,8 @@ class CacheIndexContextMenu(QMenu):
 
             (delete := QAction(self)): {
                 'text': tr('gui.menus.cached_file.delete', 'Folder' if file_path.is_dir() else 'File'),
-                'icon': app().get_theme_icon('dialog_cancel') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton),
+                'icon': (app().get_theme_icon('dialog_cancel') or
+                         self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)),
                 'triggered': DeferredCallable(parent.delete_index, index)
             },
         })

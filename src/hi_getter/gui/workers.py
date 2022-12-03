@@ -65,10 +65,12 @@ class _Worker(QRunnable):
             raise RuntimeError('Worker started before application instance is defined.')
 
         # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
-        app.aboutToQuit.connect(self._dummy_method, Qt.ConnectionType.BlockingQueuedConnection)  # pyright: ignore[reportGeneralTypeIssues]
+        app.aboutToQuit.connect(  # pyright: ignore[reportGeneralTypeIssues]
+            self._dummy_method, Qt.ConnectionType.BlockingQueuedConnection
+        )
 
         try:
-            # If the return value of the implemented _run function is not None, emit it through the `valueReturned` signal.
+            # Emit non-None return values through the `valueReturned` signal.
             if (ret_val := self._run()) is not None:
                 self.signals.valueReturned.emit(ret_val)
 
@@ -81,7 +83,7 @@ class _Worker(QRunnable):
             self.signals.exceptionRaised.emit(e)
 
         # Disconnect deadlock safeguard if successful to avoid possible leak
-        app.aboutToQuit.disconnect(self._dummy_method)                                           # pyright: ignore[reportGeneralTypeIssues]
+        app.aboutToQuit.disconnect(self._dummy_method)  # pyright: ignore[reportGeneralTypeIssues]
 
         # Delete if not deleted
         if Shiboken.isValid(self.signals):
@@ -109,8 +111,10 @@ class ExportData(_Worker):
     def _run(self) -> None:
         # This implicitly raises ValueError if the destination suffix is not a valid extension format.
         temp_archive_path: str = shutil.make_archive(
-            QDir.tempPath() + f'/{self.dest.stem}', self.EXTENSION_FORMATS.get(self.dest.suffix, f'.{self.dest.suffix}'),
-            root_dir=self.base.parent, base_dir=f'./{self.base.name}'
+            base_name=QDir.tempPath() + f'/{self.dest.stem}',
+            format=self.EXTENSION_FORMATS.get(self.dest.suffix, f'.{self.dest.suffix}'),
+            root_dir=self.base.parent,
+            base_dir=f'./{self.base.name}'
         )
 
         shutil.move(

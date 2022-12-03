@@ -32,7 +32,8 @@ class ReadmeViewer(QWidget):
         """Create a new :py:class:`ReadmeViewer` and initialize UI."""
         super().__init__(*args, **kwargs)
         self.setWindowTitle(tr('gui.readme_viewer.title'))
-        self.setWindowIcon(app().get_theme_icon('message_information') or self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
+        self.setWindowIcon(app().get_theme_icon('message_information') or
+                           self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton))
         self.resize(QSize(750, 750))
         self.readme_viewer: ExternalTextBrowser
         self._init_ui()

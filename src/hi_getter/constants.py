@@ -42,8 +42,9 @@ SUPPORTED_IMAGE_EXTENSIONS: Final[frozenset[str]] = frozenset({
 
 SUPPORTED_IMAGE_MIME_TYPES: Final[frozenset[str]] = frozenset({
     'image/bmp', 'image/gif', 'image/jpeg', 'image/png', 'image/svg+xml', 'image/svg+xml-compressed',
-    'image/tiff', 'image/vnd.microsoft.icon', 'image/vnd.wap.wbmp', 'image/webp', 'image/x-icns', 'image/x-portable-bitmap',
-    'image/x-portable-graymap', 'image/x-portable-pixmap', 'image/x-tga', 'image/x-xbitmap', 'image/x-xpixmap'
+    'image/tiff', 'image/vnd.microsoft.icon', 'image/vnd.wap.wbmp', 'image/webp', 'image/x-icns',
+    'image/x-portable-bitmap', 'image/x-portable-graymap', 'image/x-portable-pixmap', 'image/x-tga',
+    'image/x-xbitmap', 'image/x-xpixmap'
 })
 """Set containing all image mime types supported by application."""
 
@@ -81,7 +82,9 @@ HI_PATH_PATTERN: Final[re.Pattern] = re.compile(
     r'[/\\]?(?P<pre_path>[\w\-_.]+[/\\]file[/\\])?'
     r'(?P<dir_name>(?:[\w\-_.]+[/\\])+)'
     r'(?P<file_name>[\w\-_]*\.\w+)')
-"""Regex pattern for finding a resource path. Finds quoted substrings with at least one folder name and file name (with a file extension)."""
+"""Regex pattern for finding a resource path.
+Finds quoted substrings with at least one folder name and file name (with a file extension).
+"""
 
 HI_URL_PATTERN: Final[re.Pattern] = re.compile(
     r'(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|'
@@ -90,7 +93,9 @@ HI_URL_PATTERN: Final[re.Pattern] = re.compile(
     r'\(\S+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|'
     r'\(\S+?\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’])|'
     r'(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.][a-z]{2,}\b/?(?!@))')
-"""Regex pattern for finding URLs. Derived from https://gist.github.com/gruber/8891611."""
+"""Regex pattern for finding URLs.
+Derived from https://gist.github.com/gruber/8891611.
+"""
 
 MARKDOWN_IMG_LINK_PATTERN: Final[re.Pattern] = re.compile(
     r'\[!\s*(?P<alt>\[[^\t\n\r()\[\]]*])\s*'
@@ -130,7 +135,8 @@ Example langtags that follow RFC 5646::
     - "sr-Latn-RS" represents Serbian ('sr') written using Latin script ('Latn') as used in Serbia ('RS').
     - "es-419" represents Spanish ('es') appropriate to the UN-defined Latin America and Caribbean region ('419').
     - "sl-nedis" represents the Natisone or Nadiza dialect of Slovenian.
-    - "de-CH-1996" represents German as used in Switzerland and as written using the spelling reform beginning in the year 1996 C.E.
+    - "de-CH-1996" represents German as used in Switzerland and as written using the spelling
+            reform beginning in the year 1996 C.E.
     - en-a-bbb-x-a-ccc
     - x-private-tag-example
 """

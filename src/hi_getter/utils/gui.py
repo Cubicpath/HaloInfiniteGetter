@@ -76,7 +76,13 @@ def icon_from_bytes(data: bytes) -> QIcon:
     return icon
 
 
-def init_layouts(layout_data: dict[QLayout, dict[Literal['childLayouts', 'childWidgets', 'items'], Sequence[_LAYOUT_OBJ | Sequence]]]) -> None:
+def init_layouts(layout_data: dict[
+    QLayout,
+    dict[
+        Literal['childLayouts', 'childWidgets', 'items'],
+        Sequence[_LAYOUT_OBJ | Sequence]
+    ]
+]) -> None:
     """Initialize :py:class:`QLayout` hierarchies with the given data.
 
     The only secondary dictionary keys allowed are ``'childLayouts'``, ``'childWidgets'``, and ``'items'``.
@@ -197,7 +203,10 @@ def scroll_to_top(widget: QTextEdit) -> None:
 
 
 def set_or_swap_icon(mapping: dict[str, QIcon], key: str, value: QIcon):
-    """Given a mapping, replace a QIcon value mapped to the given key with data from another, while keeping the same object references."""
+    """Given a mapping, replace a :py:class:`QIcon` value mapped to the given ``key`` with data from another.
+
+    This keeps the same object references.
+    """
     if key in mapping:
         mapping[key].swap(value)
     else:

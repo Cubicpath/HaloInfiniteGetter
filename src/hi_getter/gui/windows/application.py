@@ -78,10 +78,13 @@ class AppWindow(Singleton, QMainWindow):
         self.detached: dict[str, QMainWindow | None] = {'media': None, 'text': None}
         self.resize(size)
 
-        for subscribe_params in (
-            (DeferredCallable(self.resize_image), TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/')),
-            (lambda val: self.text_output.setLineWrapMode(val.new), TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode'),
-        ): EventBus['settings'].subscribe(*subscribe_params)
+        EventBus['settings'].subscribe(
+            DeferredCallable(self.resize_image),
+            TomlEvents.Set, lambda event: event.key.startswith('gui/media_output/'))
+
+        EventBus['settings'].subscribe(
+            lambda event: self.text_output.setLineWrapMode(event.new),
+            TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode')
 
         self.exception_reporter: ExceptionReporter
         self.input_field: HistoryComboBox
@@ -202,7 +205,11 @@ class AppWindow(Singleton, QMainWindow):
                 }
             })
 
-            window.closeEvent = lambda *_: handler() if self.detached[id_] is not None else None  # pyright: ignore[reportGeneralTypeIssues]
+            def close_event(*_) -> None:
+                if self.detached[id_]:
+                    handler()
+
+            window.closeEvent = close_event  # pyright: ignore[reportGeneralTypeIssues]
             return window
 
         def toggle_media_detach() -> None:
@@ -285,7 +292,8 @@ class AppWindow(Singleton, QMainWindow):
         # Define widget attributes
         # Cannot be defined in init_objects() as walrus operators are not allowed for object attribute assignment.
         # This works in the standard AST, but is a seemingly arbitrary limitation set by the interpreter.
-        # See: https://stackoverflow.com/questions/64055314/why-cant-pythons-walrus-operator-be-used-to-set-instance-attributes#answer-66617839
+        # See:
+        # https://stackoverflow.com/questions/64055314/why-cant-pythons-walrus-operator-be-used-to-set-instance-attributes#answer-66617839
         (
             self.input_field, self.image_size_label, self.text_size_label,
             self.image_detach_button, self.text_detach_button, self.clear_picture, self.copy_picture,
@@ -481,11 +489,10 @@ class AppWindow(Singleton, QMainWindow):
     def navigate_to(self, path: QUrl) -> None:
         """Set input field text to path and get resource."""
         str_path = decode_url(path.toDisplayString())
-        if (  # Open local absolute resource locations
-                sys.platform.startswith('win') and (str_path[0] in string.ascii_letters and str_path[1:].startswith(':\\'))
-                or
-                sys.platform.startswith('linux') and str_path.startswith('/')
-        ):
+        has_volume_id = str_path[0] in string.ascii_letters and str_path[1:].startswith(':\\')
+
+        if (sys.platform == 'win32' and has_volume_id) or sys.platform.startswith('linux') and str_path.startswith('/'):
+            # Open local absolute resource locations
             QDesktopServices.openUrl(QUrl(str_path))
         else:
             self.input_field.addItem(str_path)

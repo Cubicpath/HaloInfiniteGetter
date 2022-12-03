@@ -21,7 +21,10 @@ class ColumnContextMenu(QMenu):
     """A general context menu for hiding/unhiding columns in a :py:class:`QTreeView`."""
 
     def __init__(self, parent: QTreeView, disabled_indices: set[int] | None = None):
-        """Create a new :py:class:`ColumnContextMenu` for the given :py:class:`QTreeView` with any disabled header indices."""
+        """Create a new :py:class:`ColumnContextMenu` for the given :py:class:`QTreeView`.
+
+        You can specifically disable any header indices you want.
+        """
         super().__init__(parent)
 
         disabled_indices = set() if disabled_indices is None else disabled_indices

@@ -78,13 +78,16 @@ def _stringify(major: int, minor: int, micro: int = 0, releaselevel: str = 'fina
     releaselevel = releaselevel.strip()
     separators: tuple[str, ...] = ('', '.', '-', '_')
     post_spellings: tuple[str, ...] = ('post', 'rev', 'r')
-    release_levels: tuple[str, ...] = ('a', 'b', 'c', 'rc', 'pre', 'alpha', 'beta', 'candidate', 'preview', 'final', 'release')
+    release_levels: tuple[str, ...] = ('a', 'b', 'c', 'rc', 'pre', 'alpha', 'beta',
+                                       'candidate', 'preview', 'final', 'release')
 
     for attr in ('major', 'minor', 'micro', 'local_ver', 'post', 'dev', 'dev_post'):
         if vars()[attr] is not None and not isinstance(vars()[attr], int):
             raise TypeError(f'Argument "{attr}" should be of type {int}')  # pragma: no cover
-    if (False in (sep in separators for sep in (pre_sep, pre_ver_sep, post_sep, post_ver_sep, dev_sep, dev_post_sep, dev_post_ver_sep)) or
-            local_ver_sep not in separators[1:]):
+    if (local_ver_sep not in separators[1:] or False in (
+            sep in separators for sep in (pre_sep, pre_ver_sep, post_sep, post_ver_sep,
+                                          dev_sep, dev_post_sep, dev_post_ver_sep)
+    )):
         raise ValueError(f'A separator given is not in allowed separators {separators}')
     if post_spelling not in post_spellings:
         raise ValueError(f'Post-release spelling not allowed as "{post_spelling}"')

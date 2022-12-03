@@ -84,7 +84,11 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
             repr_ += f'{event.__name__}[{len(self[event])}], '
         return f'({repr_.rstrip(", ")})'
 
-    def add(self, event: type[_ET], callable_pair: tuple[_EventRunnable, _EventPredicate | None]) -> None:
+    def add(self,
+            event: type[_ET],
+            callable_pair:
+            tuple[_EventRunnable, _EventPredicate | None]
+            ) -> None:
         """Add a callable pair to an Event subscriber list.
 
         :raises TypeError:
@@ -253,7 +257,11 @@ class EventBus(Generic[_ET], metaclass=_EventBusMeta):
                         e_callable_pair[0](event)
 
     # pylint: disable=useless-param-doc
-    def subscribe(self, __callable: _EventRunnable, /, event: type[_ET], event_predicate: _EventPredicate | None = None) -> None:
+    def subscribe(self,
+                  __callable: _EventRunnable, /,
+                  event: type[_ET],
+                  event_predicate: _EventPredicate | None = None
+                  ) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
         By default, every time an :py:class:`Event` is fired, it will call the callable with the event as an argument.
