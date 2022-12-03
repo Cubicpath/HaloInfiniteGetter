@@ -334,8 +334,6 @@ class SettingsWindow(Singleton, QWidget):
             DeferredCallable(self.refresh_dropdowns),
             TomlEvents.Import)
 
-        self.refresh_dropdowns()
-
     def refresh_dropdowns(self) -> None:
         """Refresh all dropdown widgets with the current settings assigned to them."""
         settings = app().settings
@@ -350,6 +348,7 @@ class SettingsWindow(Singleton, QWidget):
     def showEvent(self, event: QShowEvent) -> None:
         """Auto hides the key upon un-minimizing."""
         super().showEvent(event)
+        self.refresh_dropdowns()
 
         init_objects({
             self.key_field: {
