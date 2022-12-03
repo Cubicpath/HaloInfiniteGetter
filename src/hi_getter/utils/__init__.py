@@ -17,6 +17,7 @@ __all__ = (
     'dict_to_query',
     'dump_data',
     'encode_url_params',
+    'format_tb',
     'get_desktop_path',
     'get_parent_doc',
     'get_start_menu_path',
@@ -41,6 +42,7 @@ __all__ = (
 
 from .common import bit_rep
 from .common import dump_data
+from .common import format_tb
 from .common import get_parent_doc
 from .common import return_arg
 from .common import quote_str

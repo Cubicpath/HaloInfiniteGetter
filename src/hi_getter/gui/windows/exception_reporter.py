@@ -6,12 +6,9 @@ from __future__ import annotations
 
 __all__ = (
     'ExceptionReporter',
-    'format_tb',
 )
 
-import traceback
 from getpass import getuser
-from types import TracebackType
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -23,18 +20,14 @@ from ...exception_hook import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
 from ...utils import delete_layout_widgets
+from ...utils import encode_url_params
+from ...utils import format_tb
 from ...utils import init_layouts
 from ...utils import init_objects
-from ...utils import encode_url_params
 from ..aliases import app
 from ..aliases import tr
 from ..widgets import ExceptionLogger
 from ..widgets import ExternalTextBrowser
-
-
-def format_tb(tb: TracebackType) -> str:
-    """Format a traceback with linebreaks."""
-    return '\n'.join(traceback.format_tb(tb))
 
 
 class ExceptionReporter(QWidget):
@@ -141,8 +134,7 @@ class ExceptionReporter(QWidget):
 
         exc_name: str = type(selected.exception).__name__
         exc_msg: str = str(selected.exception).rstrip('.')
-        exc_tb: str = ('' if selected.traceback is None else
-                       format_tb(selected.traceback).strip().replace(getuser(), '%USERNAME%'))
+        exc_tb: str = format_tb(selected.traceback).strip().replace(getuser(), '%USERNAME%')
 
         base: str = 'https://github.com/Cubicpath/HaloInfiniteGetter/issues/new'
         params: dict[str, str] = {
@@ -191,9 +183,7 @@ class ExceptionReporter(QWidget):
             ), False))
             clicked.connect(DeferredCallable(self.trace_back_viewer.setText, DeferredCallable(
                 tr, 'gui.exception_reporter.traceback_view',
-                type(error.exception).__name__,
-                error.exception,
-                format_tb(error.traceback) if error.traceback is not None else '',
+                type(error.exception).__name__, error.exception, format_tb(error.traceback),
                 key_eval=False
             )))
 

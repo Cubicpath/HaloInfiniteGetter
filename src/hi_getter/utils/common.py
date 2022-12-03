@@ -7,6 +7,7 @@ from __future__ import annotations
 __all__ = (
     'bit_rep',
     'dump_data',
+    'format_tb',
     'get_parent_doc',
     'get_weakref_object',
     'quote_str',
@@ -17,6 +18,7 @@ __all__ = (
 from collections.abc import Iterable
 from collections.abc import Mapping
 from pathlib import Path
+from types import TracebackType
 from typing import TypeVar
 from weakref import ProxyType
 
@@ -52,6 +54,16 @@ def dump_data(path: Path | str, data: bytes | dict | str, encoding: str | None =
         # Write dictionaries as json files
         with path.open(mode='w', encoding=encoding or default_encoding) as file:
             json.dump(data, file, indent=2)
+
+
+def format_tb(tb: TracebackType | None) -> str:
+    """Format a traceback with linebreaks."""
+    import traceback
+
+    if tb is None:
+        return ''
+
+    return '\n'.join(traceback.format_tb(tb))
 
 
 def get_parent_doc(__type: type, /) -> str | None:
