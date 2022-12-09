@@ -445,9 +445,10 @@ class GetterApp(Singleton, QApplication):
             description_args=(version, __version__)
         ).role:
             case QMessageBox.ButtonRole.YesRole:
-                QProcess.execute('pip', arguments=('install', '--upgrade', f'{HI_PACKAGE_NAME.replace("_", "-")}'))
-                QProcess.startDetached(sys.executable, arguments=('-m', HI_PACKAGE_NAME))
-                self.exit(0)
+                QProcess.startDetached(sys.executable, arguments=[
+                    str((HI_RESOURCE_PATH / 'scripts/upgrade_version.py').absolute().resolve(True)),
+                    f'{HI_PACKAGE_NAME.replace("_", "-")}', HI_PACKAGE_NAME
+                ])
             case QMessageBox.ButtonRole.NoRole:
                 self.version_checker.newerVersion.disconnect(self._upgrade_version_dialog)
                 self.settings['ignore_updates'] = True
