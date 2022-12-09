@@ -1,14 +1,14 @@
 HaloInfiniteGetter
 ===============
-A simple way to get live Halo data straight from Halo Waypoint.
 
-------------------------------
-
-[![MIT License](https://img.shields.io/github/license/Cubicpath/HaloInfiniteGetter?style=for-the-badge)][license]
-
+[![MIT License](https://img.shields.io/github/license/Cubicpath/HaloInfiniteGetter?style=flat-square)][license]
 [![PyPI](https://img.shields.io/pypi/v/hi-getter?label=PyPI&logo=pypi&style=flat-square)][homepage]
 [![Python](https://img.shields.io/pypi/pyversions/hi-getter?label=Python&logo=python&style=flat-square)][python]
 [![CPython](https://img.shields.io/pypi/implementation/hi-getter?label=Impl&logo=python&style=flat-square)][python]
+
+------------------------------
+
+A simple way to get live Halo data straight from Halo Waypoint.
 
 ------------------------------
 
