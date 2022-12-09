@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Ability to select text in Message Boxes
+
+### Fixed
+- Settings dropdown menus in incorrect position
+- Possible crash on startup
+- `Upgrade and Restart` dialog
+
 ## [0.12.2] - 2022-11-30 [PyPI](https://pypi.org/project/hi-getter/0.12.2/)
 ### Added
 - Photosensitivity warning for SCAN
