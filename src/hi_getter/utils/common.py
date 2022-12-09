@@ -72,7 +72,7 @@ def get_parent_doc(__type: type, /) -> str | None:
     :return The closest docstring for an object's class, None if not found.
     """
     doc = None
-    for parent in __type.__mro__:
+    for parent in __type.__mro__:  # type: ignore
         if doc := parent.__doc__:
             break
     return doc

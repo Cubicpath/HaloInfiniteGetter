@@ -29,7 +29,7 @@ class _SignalHolder(QObject):
 
 
 class _Worker(QRunnable):
-    _signal_holder = _SignalHolder
+    _signal_holder: type[_SignalHolder] = _SignalHolder
 
     def __init__(self, **kwargs: Callable | Slot) -> None:
         super().__init__()
