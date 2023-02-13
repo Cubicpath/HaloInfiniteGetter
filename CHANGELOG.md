@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Ability to select text in Message Boxes
 
+### Changed
+- `PySide6` version to 6.4.2
+- `python-dotenv` version to 0.21.1
+- `py7zr` version to 0.20.4
+
 ### Fixed
 - Settings dropdown menus in incorrect position
 - Possible crash on startup
