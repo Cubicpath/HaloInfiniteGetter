@@ -38,6 +38,7 @@ all = [
 dev = [
     "autopep8>=2.0.1",
     "bandit>=1.7.4",
+    "pydocstyle>=6.3.0",
     "pylint>=2.16.2",
     "pyright>=1.1.293",
     "pyupgrade>=3.3.1",
