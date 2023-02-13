@@ -146,15 +146,14 @@ class RecursiveSearch(_Worker):
         self.search_path = search_path
 
     def _run(self) -> None:
-        self._recursive_search(self.search_path)
+        self.client.receivedJson.connect(self._recursive_search)
+        self.client.get_hi_data(self.search_path)
 
-    def _recursive_search(self, search_path: str) -> None:
+    def _recursive_search(self, path: str, data: dict[str, Any] | bytes | int):
         # This set is shared between all recursive calls, so no duplicate searches should occur
         searched: set[str] = self.client.searched_paths
-        searched.add(search_path.lower())
+        searched.add(path.lower())
 
-        # Get data from Client, and return if it's not JSON
-        data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
         if isinstance(data, (bytes, int)):
             return
 
@@ -162,7 +161,7 @@ class RecursiveSearch(_Worker):
         # This process ignores already-searched values
         for value in unique_values(data):
             if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
-                path: str = match[0]
+                path = match[0]
                 ext: str = match['file_name'].split('.')[-1].lower()
                 has_pre_path: bool = match['pre_path'] is not None
 
@@ -174,7 +173,7 @@ class RecursiveSearch(_Worker):
                     if path.lower() in searched:
                         continue
 
-                    self._recursive_search(path)
+                    self.client.get_hi_data(path)
 
                 # If it's an image, download it then ignore the result
                 elif ext in SUPPORTED_IMAGE_EXTENSIONS:
