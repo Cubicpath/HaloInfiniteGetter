@@ -15,4 +15,4 @@ py7zr == 0.20.2
     texttable
 
 # To load .env files
-python-dotenv == 0.21.0
+python-dotenv == 0.21.1
