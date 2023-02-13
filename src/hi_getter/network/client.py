@@ -10,6 +10,7 @@ __all__ = (
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from typing import Final
@@ -101,66 +102,75 @@ class Client(QObject):
             self.api_session.headers['x-343-authorization-spartan'] = self.token
             self.set_cookie('343-spartan-token', self.token)
 
-    def _get(self, path: str, update_auth_on_401: bool = True, **kwargs) -> Response:
+    def _get(self,
+             path: str,
+             update_auth_on_401: bool = True,
+             finished: Callable[[Response], None] | None = None,
+             **kwargs
+             ) -> None:
         """Get a :py:class:`Response` from HaloWaypoint.
 
         :param path: path to append to the API root
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
-        :param kwargs: Key word arguments to pass to the requests GET Request.
+        :param finished: Key word arguments to pass to the requests GET Request.
+        :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
         """
-        response: Response = self.api_session.get(self.api_root + path.strip(), wait_until_finished=True, **kwargs)
+        def handle_reply(response: Response):
+            if response.code and not response.ok:
+                # Handle errors
+                if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
+                    self.refresh_auth()
+                    self._get(path, False, finished=finished, **kwargs)
+            elif finished is not None:
+                # Send OK response to the given consumer
+                finished(response)
 
-        if response.code and not response.ok:
-            # Handle errors
-            if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
-                self.refresh_auth()
-                response = self._get(path, False, **kwargs)
+        self.api_session.get(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
-        return response
-
-    def get_hi_data(self, path: str, dump_path: Path = HI_WEB_DUMP_PATH) -> dict[str, Any] | bytes | int:
+    def get_hi_data(self,
+                    path: str,
+                    dump_path: Path = HI_WEB_DUMP_PATH,
+                    ) -> None:
         """Return data from a path. Return type depends on the resource.
 
-        :return: dict for JSON objects, bytes for media, int for error codes.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
         os_path: Path = self.to_os_path(path, parent=dump_path)
-        data: dict[str, Any] | bytes
 
         if not os_path.is_file():
-            response: Response = self._get(path)
-            content_type: str | None = response.headers.get('Content-Type')
+            def handle_reply(response: Response):
+                if response.code and not response.ok:
+                    print(f'ERROR [{response.code}] for {path} ')
+                    self.receivedError.emit(path, response.code)
+                    return
 
-            if response.code and not response.ok:
-                print(f'ERROR [{response.code}] for {path} ')
-                self.receivedError.emit(path, response.code)
-                return response.code
+                content_type: str | None = response.headers.get('Content-Type')
+                response_data: dict[str, Any] | bytes
 
-            if not content_type:
-                raise ValueError('Successful status code but no Content-Type header.')
+                if not content_type:
+                    raise ValueError('Successful status code but no Content-Type header.')
 
-            if 'json' in content_type:
-                data = response.json
-                self.receivedJson.emit(path, data)
-            elif content_type in SUPPORTED_IMAGE_MIME_TYPES:
-                data = response.data
-                self.receivedData.emit(path, data)
-            else:
-                raise ValueError(f'Unsupported content type received: {content_type}')
+                if 'json' in content_type:
+                    response_data = response.json
+                    self.receivedJson.emit(path, response_data)
+                elif content_type in SUPPORTED_IMAGE_MIME_TYPES:
+                    response_data = response.data
+                    self.receivedData.emit(path, response_data)
+                else:
+                    raise ValueError(f'Unsupported content type received: {content_type}')
 
-            print(f'DOWNLOADED {path} >>> {content_type}')
-            dump_data(os_path, data)
+                print(f'DOWNLOADED {path} >>> {content_type}')
+                dump_data(os_path, response_data)
+
+            self._get(path, finished=handle_reply)
 
         else:
             print(path)
-            data = os_path.read_bytes()
+            data: bytes = os_path.read_bytes()
             if os_path.suffix == '.json':
-                data = json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8'))
-                self.receivedJson.emit(path, data)
+                self.receivedJson.emit(path, json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8')))
             else:
                 self.receivedData.emit(path, data)
-
-        return data
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
@@ -187,15 +197,16 @@ class Client(QObject):
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
-        self.web_session.get('https://www.halowaypoint.com/', wait_until_finished=True)
+        def handle_reply(_: Response):
+            wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
+            token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
 
-        wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
-        token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
+            if wpauth and self.wpauth != wpauth:
+                self.wpauth = wpauth
+            if token:
+                self.token = token
 
-        if wpauth and self.wpauth != wpauth:
-            self.wpauth = wpauth
-        if token:
-            self.token = token
+        self.web_session.get('https://www.halowaypoint.com/', finished=handle_reply)
 
     def delete_cookie(self, name: str) -> None:
         """Delete given cookie if cookie exists."""
