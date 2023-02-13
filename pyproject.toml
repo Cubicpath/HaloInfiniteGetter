@@ -32,7 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [
-    "py7zr>=0.20.2",
+    "py7zr>=0.20.4",
     "python-dotenv>=0.21.1",
 ]
 dev = [
