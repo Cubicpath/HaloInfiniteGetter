@@ -193,7 +193,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
             'StartMenu': (start_menu, bit_rep)
         }
 
-        abs_script_path: Path = (HI_RESOURCE_PATH / 'resources/scripts/CreateShortcut.ps1').resolve(True).absolute()
+        abs_script_path: Path = (HI_RESOURCE_PATH / 'scripts/CreateShortcut.ps1').resolve(True).absolute()
         powershell_arguments = [
             'powershell.exe', '-ExecutionPolicy', 'Unrestricted', abs_script_path,
         ]
