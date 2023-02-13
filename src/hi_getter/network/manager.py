@@ -40,7 +40,7 @@ from ..utils import query_to_dict
 from ..utils import wait_for_reply
 
 _StringPair: TypeAlias = dict[str, str] | list[tuple[str, str]]
-_KnownHeaderValues: TypeAlias = (str | bytes | dt.datetime | dt.date | dt.time | _StringPair | list[str])
+_KnownHeaderValues: TypeAlias = str | bytes | dt.datetime | dt.date | dt.time | _StringPair | list[str]
 _HeaderValue: TypeAlias = dict[str, _KnownHeaderValues] | list[tuple[str, _KnownHeaderValues]]
 
 _INT_PATTERN: Final[re.Pattern] = re.compile(r'[1-9]\d*|0')
