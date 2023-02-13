@@ -33,7 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 all = [
     "py7zr>=0.20.2",
-    "python-dotenv>=0.21.0",
+    "python-dotenv>=0.21.1",
 ]
 dev = [
     "autopep8>=2.0.1",
