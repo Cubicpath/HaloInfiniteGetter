@@ -126,8 +126,6 @@ defining-attr-methods = [
     "setUp",
 ]
 exclude-protected = ["_dump_str",]
-# Temporarily defined due to bug, see pylint issue gh-7782
-valid-metaclass-classmethod-first-arg = ["mcs",]
 
 [tool.pylint.'DESIGN']
 max-args = 999
