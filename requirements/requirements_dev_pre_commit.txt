@@ -28,7 +28,7 @@ bandit == 1.7.4
 
 # Documentation-Specific Checker
 pydocstyle == 6.3.0
-    snowballstemmer
+    snowballstemmer >= 2.2.0
 
 # General Code Linter
 pylint == 2.16.2
