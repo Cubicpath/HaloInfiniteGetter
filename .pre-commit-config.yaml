@@ -47,7 +47,7 @@ repos:
           ]
 
   -   repo: https://github.com/pycqa/pydocstyle
-      rev: 6.1.1
+      rev: 6.3.0
       hooks:
       - id: pydocstyle
         additional_dependencies: ["pydocstyle[toml]",]
