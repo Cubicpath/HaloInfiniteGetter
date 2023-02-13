@@ -110,10 +110,9 @@ class Client(QObject):
              ) -> None:
         """Get a :py:class:`Response` from HaloWaypoint.
 
-        :param path: path to append to the API root
-        :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
-        :param finished: Key word arguments to pass to the requests GET Request.
-        :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized
+        :param path: path to append to the API root.
+        :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized.
+        :param finished: Callback to send finished request to.
         """
         def handle_reply(response: Response):
             if response.code and not response.ok:
