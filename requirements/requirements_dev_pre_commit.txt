@@ -33,7 +33,8 @@ pydocstyle == 6.3.0
 # General Code Linter
 pylint == 2.16.2
     astroid <= 2.16.0-dev0, >= 2.14.2
-        wrapt < 2, >= 1.11
+        wrapt < 2, >= 1.11; python_version < "3.11"
+        wrapt < 2, >= 1.14; python_version >= "3.11"
         lazy-object-proxy >= 1.4.0
     colorama >= 0.4.5; sys_platform == 'win32'
     dill >= 0.2; python_version < "3.11"
