@@ -31,17 +31,18 @@ pydocstyle == 6.1.1
     snowballstemmer
 
 # General Code Linter
-pylint == 2.15.8
-    astroid <= 2.14.0-dev0, >= 2.12.12
+pylint == 2.16.2
+    astroid <= 2.16.0-dev0, >= 2.14.2
         wrapt < 2, >= 1.11
         lazy-object-proxy >= 1.4.0
     colorama >= 0.4.5; sys_platform == 'win32'
-    dill >= 0.2
+    dill >= 0.2; python_version < "3.11"
+    dill >= 0.3.6; python_version >= "3.11"
     isort < 6, >= 4.2.5
     mccabe < 0.8, >= 0.6
     platformdirs >= 2.2.0
     tomlkit >= 0.10.1
-    tomli >= 1.1.0
+    tomli >= 1.1.0; python_version < "3.11"
 
 # Type Checker
 pyright == 1.1.293

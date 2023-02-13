@@ -60,7 +60,7 @@ repos:
         args: ["--py310-plus",]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.15.8
+    rev: v2.16.2
     hooks:
       - id: pylint
         name: pylint

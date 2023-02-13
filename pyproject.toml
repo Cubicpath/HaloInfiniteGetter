@@ -38,7 +38,7 @@ all = [
 dev = [
     "autopep8>=2.0.1",
     "bandit>=1.7.4",
-    "pylint>=2.15.8",
+    "pylint>=2.16.2",
     "pyright>=1.1.293",
     "pyupgrade>=3.3.1",
 ]
@@ -126,8 +126,6 @@ defining-attr-methods = [
     "setUp",
 ]
 exclude-protected = ["_dump_str",]
-# Temporarily defined due to bug, see pylint issue gh-7782
-valid-metaclass-classmethod-first-arg = ["mcs",]
 
 [tool.pylint.'DESIGN']
 max-args = 999
