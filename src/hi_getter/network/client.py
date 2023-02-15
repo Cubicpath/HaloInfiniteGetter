@@ -115,11 +115,18 @@ class Client(QObject):
         :param finished: Callback to send finished request to.
         """
         def handle_reply(response: Response):
-            if response.code and not response.ok:
+            if not response.code or response.headers.get('Content-Type') is not None and not response.data:
+                # If response finished but was malformed, wait 500ms and retry.
+                print('RETRYING', response.url)
+                QCoreApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 500)
+                self._get(path, update_auth_on_401, finished, **kwargs)
+
+            elif not response.ok:
                 # Handle errors
                 if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
                     self.refresh_auth()
-                    self._get(path, False, finished=finished, **kwargs)
+                    self._get(path, False, finished, **kwargs)
+
             elif finished is not None:
                 # Send OK response to the given consumer
                 finished(response)
