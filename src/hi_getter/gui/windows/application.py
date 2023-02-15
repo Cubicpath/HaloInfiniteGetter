@@ -42,7 +42,6 @@ from ..widgets import HistoryComboBox
 from ..widgets import ExceptionLogger
 from ..widgets import ExternalTextBrowser
 from ..widgets import PasteLineEdit
-from ..workers import RecursiveSearch
 from .exception_reporter import ExceptionReporter
 
 
@@ -519,7 +518,7 @@ class AppWindow(Singleton, QMainWindow):
 
         if search_path:
             if scan:
-                app().start_worker(RecursiveSearch(app().client, search_path))
+                app().client.recursive_search(search_path)
             else:
                 app().client.get_hi_data(search_path)
 

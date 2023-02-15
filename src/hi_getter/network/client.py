@@ -23,6 +23,7 @@ from ..utils import dump_data
 from ..utils import decode_url
 from ..utils import guess_json_utf
 from ..utils import hide_windows_file
+from ..utils import unique_values
 from .manager import NetworkSession
 from .manager import Response
 
@@ -135,19 +136,25 @@ class Client(QObject):
 
     def get_hi_data(self,
                     path: str,
-                    dump_path: Path = HI_WEB_DUMP_PATH,
+                    consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None
                     ) -> None:
-        """Return data from a path. Return type depends on the resource.
+        """Get a resource hosted on the HaloWaypoint API.
 
+        Resulting resource is returned via a positional argument in a `received-` signal or the given consumer.
+
+        :param path: Path to get data from.
+        :param consumer: Consumer to send received data to.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
-        os_path: Path = self.to_os_path(path, parent=dump_path)
+        os_path: Path = self.to_os_path(path, parent=HI_WEB_DUMP_PATH)
 
         if not os_path.is_file():
             def handle_reply(response: Response):
                 if response.code and not response.ok:
                     print(f'ERROR [{response.code}] for {path} ')
                     self.receivedError.emit(path, response.code)
+                    if consumer is not None:
+                        consumer(path, response.code)
                     return
 
                 content_type: str | None = response.headers.get('Content-Type')
@@ -167,16 +174,71 @@ class Client(QObject):
 
                 print(f'DOWNLOADED {path} >>> {content_type}')
                 dump_data(os_path, response_data)
+                if consumer is not None:
+                    consumer(path, response_data)
 
             self._get(path, finished=handle_reply)
 
         else:
             print(path)
-            data: bytes = os_path.read_bytes()
+            data: dict[str, Any] | bytes = os_path.read_bytes()
             if os_path.suffix == '.json':
-                self.receivedJson.emit(path, json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8')))
+                data = json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8'))
+                self.receivedJson.emit(path, data)
             else:
                 self.receivedData.emit(path, data)
+
+            if consumer is not None:
+                consumer(path, data)
+
+    def recursive_search(self, path: str) -> None:
+        """Get a file and recursively look through its contents for paths.
+
+        :param path: Path to search.
+        """
+        path = path.lstrip('/')
+
+        # This set is shared between all recursive calls, so no duplicate searches should occur
+        self.searched_paths.add(path.lower())
+
+        self.get_hi_data(path, consumer=self.handle_recursive_data)
+
+    def handle_recursive_data(self, _, data: dict[str, Any] | bytes | int) -> None:
+        """Recursively look through JSON data for resource paths.
+
+        :param data: Data received from path. If not JSON, return early.
+        """
+        if isinstance(data, (bytes, int)):
+            return
+
+        # Iterate over all values in the JSON data
+        # This process ignores already-searched values
+        for value in unique_values(data):
+            if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
+                new_path: str = match[0].lstrip('/')
+                ext: str = match['file_name'].split('.')[-1].lower()
+                has_pre_path: bool = match['pre_path'] is not None
+
+                # If a value ends in .json, get the data for that path and start the process over again
+                if ext in {'json'}:
+                    if not has_pre_path:
+                        new_path = 'progression/file/' + new_path
+
+                    if new_path.lower() in self.searched_paths:
+                        continue
+
+                    self.recursive_search(new_path)
+
+                # If it's an image, download it then ignore the result
+                elif ext in SUPPORTED_IMAGE_EXTENSIONS:
+                    if not has_pre_path:
+                        new_path = 'images/file/' + new_path
+
+                    if new_path.lower() in self.searched_paths:
+                        continue
+
+                    self.searched_paths.add(new_path.lower())
+                    self.get_hi_data(new_path)
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
