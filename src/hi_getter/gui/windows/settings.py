@@ -54,12 +54,6 @@ class SettingsWindow(Singleton, QWidget):
             TomlEvents.Fail, event_predicate=lambda event: event.failure == 'import'
         )
 
-        self.theme_dropdown: QComboBox
-        self.aspect_ratio_dropdown: QComboBox
-        self.transformation_dropdown: QComboBox
-        self.line_wrap_dropdown: QComboBox
-        self.key_set_button: QPushButton
-        self.key_field: QLineEdit
         self._init_ui()
 
     def _init_ui(self) -> None:

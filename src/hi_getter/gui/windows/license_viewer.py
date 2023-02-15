@@ -33,12 +33,6 @@ class LicenseViewer(QWidget):
         self.setWindowIcon(app().icon_store['copyright'])
         self.resize(QSize(750, 800))
 
-        self.license_dropdown: QComboBox
-        self.license_index_label: QLabel
-        self.license_text_edit: ExternalTextBrowser
-        self.next_license_button: QPushButton
-        self.prev_license_button: QPushButton
-
         self.license_data: list[tuple[str, str, str]] = []
         for pkg, licenses in current_requirement_licenses(HI_PACKAGE_NAME, include_extras=True).items():
             for title, text in licenses:

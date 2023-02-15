@@ -38,7 +38,6 @@ class ChangelogViewer(QWidget):
 
         self.changelog_url: str = 'https://raw.githubusercontent.com/Cubicpath/HaloInfiniteGetter/master/CHANGELOG.md'
         self.latest_version: str = __version__
-        self.text_browser: ExternalTextBrowser
         self._init_ui()
 
     def _init_ui(self) -> None:

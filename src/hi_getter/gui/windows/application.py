@@ -86,21 +86,6 @@ class AppWindow(Singleton, QMainWindow):
             lambda event: self.text_output.setLineWrapMode(event.new),
             TomlEvents.Set, lambda event: event.key == 'gui/text_output/line_wrap_mode')
 
-        self.exception_reporter: ExceptionReporter
-        self.input_field: HistoryComboBox
-        self.media_frame: QFrame
-        self.image_size_label: QLabel
-        self.image_detach_button: QPushButton
-        self.media_output: QGraphicsView
-        self.text_frame: QFrame
-        self.text_size_label: QLabel
-        self.text_detach_button: QPushButton
-        self.text_output: ExternalTextBrowser
-        self.clear_picture: QPushButton
-        self.copy_picture: QPushButton
-        self.clear_text: QPushButton
-        self.copy_text: QPushButton
-
         self._init_toolbar()
         self._init_ui()
 
@@ -171,7 +156,7 @@ class AppWindow(Singleton, QMainWindow):
             logger.label.setText: 'gui.status.default'
         })
 
-        self.exception_reporter = logger.reporter
+        self.exception_reporter: ExceptionReporter = logger.reporter
 
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, menu_bar)
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, status_bar)
