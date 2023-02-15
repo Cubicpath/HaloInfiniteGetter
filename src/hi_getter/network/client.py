@@ -33,6 +33,9 @@ _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
 class Client(QObject):
     """Asynchronous HTTP REST Client that interfaces with Halo Waypoint to get data."""
 
+    finishedSearch = Signal()
+    startedSearch = Signal()
+
     receivedData = Signal(str, bytes)
     receivedError = Signal(str, int)
     receivedJson = Signal(str, dict)
@@ -51,6 +54,7 @@ class Client(QObject):
         """
         super().__init__(parent)
         self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
+        self._recursive_calls_in_progress: int = 0
 
         self.parent_path: str = '/hi/'
         self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
@@ -196,12 +200,19 @@ class Client(QObject):
 
         :param path: Path to search.
         """
+        self._recursive_calls_in_progress += 1
+        if self._recursive_calls_in_progress == 1:
+            self.startedSearch.emit()
+
         path = path.lstrip('/')
 
         # This set is shared between all recursive calls, so no duplicate searches should occur
         self.searched_paths.add(path.lower())
-
         self.get_hi_data(path, consumer=self.handle_recursive_data)
+
+        self._recursive_calls_in_progress -= 1
+        if not self._recursive_calls_in_progress:
+            self.finishedSearch.emit()
 
     def handle_recursive_data(self, _, data: dict[str, Any] | bytes | int) -> None:
         """Recursively look through JSON data for resource paths.
