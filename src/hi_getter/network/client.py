@@ -59,6 +59,7 @@ class Client(QObject):
         self.parent_path: str = '/hi/'
         self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
         self.searched_paths: set[str] = set()
+        self.finishedSearch.connect(self.searched_paths.clear)
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
         if self._token is None and HI_TOKEN_PATH.is_file():
