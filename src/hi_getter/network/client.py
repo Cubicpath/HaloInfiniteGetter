@@ -279,11 +279,14 @@ class Client(QObject):
         return path
 
     def to_os_path(self, path: str, parent: Path = HI_WEB_DUMP_PATH) -> Path:
-        """Translate a given GET path to the equivalent cache location."""
-        return (parent /
-                self.sub_host.replace('-', '_') /
-                self.parent_path.strip('/') /
-                path.replace('/file/', '/').lower())
+        """Translate a given GET path to the equivalent cache location.
+
+        ``path`` is assumed to be normalized.
+
+        :param path: path to translate.
+        :param parent: OS path to use as parent directory.
+        """
+        return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path
 
     def to_get_path(self, path: str) -> str:
         """Translate a given cache location to the equivalent GET path."""
