@@ -122,12 +122,10 @@ class Client(QObject):
         """
         def handle_reply(response: Response):
             if not response.code or response.headers.get('Content-Type') is not None and not response.data:
-                # If response finished but was malformed, wait 500ms and retry.
-                print('RETRYING', response.url)
-                QCoreApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 500)
-                self._get(path, update_auth_on_401, finished, **kwargs)
+                print(f'COULDNT GET {response.url}')
+                return
 
-            elif not response.ok:
+            if not response.ok:
                 # Handle errors
                 if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
                     self.refresh_auth()
@@ -189,7 +187,7 @@ class Client(QObject):
             self._get(path, finished=handle_reply)
 
         else:
-            print(path)
+            print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
             if os_path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
                 self.receivedData.emit(path, data)
