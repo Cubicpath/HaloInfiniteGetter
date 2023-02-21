@@ -615,6 +615,7 @@ class AppWindow(Singleton, QMainWindow):
                 app().show_dialog('warnings.photosensitivity.scan')
                 warned_file.write('warnings.photosensitivity.scan\n')
 
+        app().client.searched_paths.clear()
         self.use_input(scan=True)
 
     # # # # # Events
