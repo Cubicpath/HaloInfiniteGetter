@@ -132,6 +132,9 @@ class Client(QObject):
                 if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
                     self.refresh_auth()
                     self._get(path, False, finished, **kwargs)
+                elif finished is not None:
+                    # Send ERR response to the given consumer
+                    finished(response)
 
             elif finished is not None:
                 # Send OK response to the given consumer
