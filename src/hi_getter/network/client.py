@@ -151,6 +151,7 @@ class Client(QObject):
         :param consumer: Consumer to send received data to.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
+        path = self.normalize_search_path(path)
         os_path: Path = self.to_os_path(path, parent=HI_WEB_DUMP_PATH)
 
         if not os_path.is_file():
@@ -187,11 +188,12 @@ class Client(QObject):
         else:
             print(path)
             data: dict[str, Any] | bytes = os_path.read_bytes()
-            if os_path.suffix == '.json':
+            if os_path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
+                self.receivedData.emit(path, data)
+            else:
+                # Assume json if not an image
                 data = json.loads(data.decode(encoding=guess_json_utf(data) or 'utf8'))
                 self.receivedJson.emit(path, data)
-            else:
-                self.receivedData.emit(path, data)
 
             if consumer is not None:
                 consumer(path, data)
@@ -205,10 +207,10 @@ class Client(QObject):
         if self._recursive_calls_in_progress == 1:
             self.startedSearch.emit()
 
-        path = path.lstrip('/')
+        path = self.normalize_search_path(path)
 
         # This set is shared between all recursive calls, so no duplicate searches should occur
-        self.searched_paths.add(path.lower())
+        self.searched_paths.add(path)
         self.get_hi_data(path, consumer=self.handle_recursive_data)
 
         self._recursive_calls_in_progress -= 1
@@ -227,30 +229,22 @@ class Client(QObject):
         # This process ignores already-searched values
         for value in unique_values(data):
             if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
-                new_path: str = match[0].lstrip('/')
-                ext: str = match['file_name'].split('.')[-1].lower()
-                has_pre_path: bool = match['pre_path'] is not None
-
-                # If a value ends in .json, get the data for that path and start the process over again
-                if ext in {'json'}:
-                    if not has_pre_path:
-                        new_path = 'progression/file/' + new_path
-
-                    if new_path.lower() in self.searched_paths:
-                        continue
-
-                    self.recursive_search(new_path)
+                new_path: str = self.normalize_search_path(match[0])
 
                 # If it's an image, download it then ignore the result
-                elif ext in SUPPORTED_IMAGE_EXTENSIONS:
-                    if not has_pre_path:
-                        new_path = 'images/file/' + new_path
-
+                if match['file_name'].split('.')[-1].lower() in SUPPORTED_IMAGE_EXTENSIONS:
                     if new_path.lower() in self.searched_paths:
                         continue
 
                     self.searched_paths.add(new_path.lower())
                     self.get_hi_data(new_path)
+
+                # Otherwise, start the process over again
+                else:
+                    if new_path.lower() in self.searched_paths:
+                        continue
+
+                    self.recursive_search(new_path)
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
@@ -258,6 +252,31 @@ class Client(QObject):
         if key is not None and len(key) > 6:
             return f'{key[:3]}{"." * 50}{key[-3:]}'
         return 'None'
+
+    def normalize_search_path(self, path: str) -> str:
+        """Normalize and expand search paths.
+
+        If path starts with the ``api_root``, assume the contents are already expanded.
+        If not explicitly an images file but has an image extension, assume it's from images/file/ directory.
+        If not explicitly a progression file but has a json extension, assume it's from progression/file/ directory.
+
+        :param path: Search path to normalize.
+        :return: Normalized version of ``path``.
+        """
+        # Ensure lowercase
+        path = path.lower().lstrip('/')
+        parent_path = self.parent_path.lower().lstrip('/')
+        file_ext = path.split('.')[-1]
+
+        # Expand paths
+        if path.startswith(parent_path):
+            path = path.removeprefix(parent_path)
+        elif not path.startswith('images/file/') and (file_ext in SUPPORTED_IMAGE_EXTENSIONS):
+            path = f'images/file/{path}'
+        elif not path.startswith('progression/file/') and (file_ext == 'json'):
+            path = f'progression/file/{path}'
+
+        return path
 
     def to_os_path(self, path: str, parent: Path = HI_WEB_DUMP_PATH) -> Path:
         """Translate a given GET path to the equivalent cache location."""

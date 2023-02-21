@@ -508,15 +508,7 @@ class AppWindow(Singleton, QMainWindow):
         if not (user_input := self.input_field.currentText()):
             return
 
-        search_path = user_input.strip()
-
-        if '/file/' not in user_input:
-            if search_path.split('.')[-1] in SUPPORTED_IMAGE_EXTENSIONS:
-                search_path = f'images/file/{search_path}'
-            else:
-                search_path = f'progression/file/{search_path}'
-
-        if search_path:
+        if search_path := user_input.strip():
             if scan:
                 app().client.recursive_search(search_path)
             else:
