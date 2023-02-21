@@ -210,22 +210,23 @@ class Client(QObject):
         if self._recursive_calls_in_progress == 1:
             self.startedSearch.emit()
 
-        path = self.normalize_search_path(path)
-
-        # This set is shared between all recursive calls, so no duplicate searches should occur
-        self.searched_paths.add(path)
         self.get_hi_data(path, consumer=self.handle_recursive_data)
 
-        self._recursive_calls_in_progress -= 1
-        if not self._recursive_calls_in_progress:
-            self.finishedSearch.emit()
-
-    def handle_recursive_data(self, _, data: dict[str, Any] | bytes | int) -> None:
+    def handle_recursive_data(self, path: str, data: dict[str, Any] | bytes | int) -> None:
         """Recursively look through JSON data for resource paths.
 
+        :param path: Path data is from.
         :param data: Data received from path. If not JSON, return early.
         """
+        # This set is shared between all recursive calls, so no duplicate searches should occur
+        self.searched_paths.add(path)
+
         if isinstance(data, (bytes, int)):
+            # Return early, decrementing counter
+            self._recursive_calls_in_progress -= 1
+            if not self._recursive_calls_in_progress:
+                self.finishedSearch.emit()
+
             return
 
         # Iterate over all values in the JSON data
@@ -236,18 +237,23 @@ class Client(QObject):
 
                 # If it's an image, download it then ignore the result
                 if match['file_name'].split('.')[-1].lower() in SUPPORTED_IMAGE_EXTENSIONS:
-                    if new_path.lower() in self.searched_paths:
+                    if new_path in self.searched_paths:
                         continue
 
-                    self.searched_paths.add(new_path.lower())
+                    self.searched_paths.add(new_path)
                     self.get_hi_data(new_path)
 
                 # Otherwise, start the process over again
                 else:
-                    if new_path.lower() in self.searched_paths:
+                    if new_path in self.searched_paths:
                         continue
 
+                    self.searched_paths.add(new_path)
                     self.recursive_search(new_path)
+
+        self._recursive_calls_in_progress -= 1
+        if not self._recursive_calls_in_progress:
+            self.finishedSearch.emit()
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
