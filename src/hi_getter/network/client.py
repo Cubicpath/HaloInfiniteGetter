@@ -303,9 +303,8 @@ class Client(QObject):
 
     def to_get_path(self, path: str) -> str:
         """Translate a given cache location to the equivalent GET path."""
-        resource = path.split(self.parent_path, maxsplit=1)[1]
-        pre, post = resource.split('/', maxsplit=1)
-        return f'{pre}/file/{post}'
+        resource = path.split(self.parent_path, maxsplit=1)[-1]
+        return resource
 
     def refresh_auth(self) -> None:
         """Refresh authentication to Halo Waypoint servers.
