@@ -271,7 +271,7 @@ class Client(QObject):
         :return: Normalized version of ``path``.
         """
         # Ensure lowercase
-        path = path.lower().lstrip('/')
+        path = path.lower().strip().lstrip('/')
         parent_path = self.parent_path.lower().lstrip('/')
         file_ext = path.split('.')[-1]
 
