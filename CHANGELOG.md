@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ability to select text in Message Boxes
 
 ### Changed
+- Client requests are now asynchronous (~1500% faster scanning) from [gh-78](https://github.com/Cubicpath/HaloInfiniteGetter/pull/78)
+    - This may block the GUI from working correctly for about a minute
+- Cached resource paths now preserve the `/file/` subdirectory
 - `PySide6` version to 6.4.2
 - `python-dotenv` version to 0.21.1
 - `py7zr` version to 0.20.4
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings dropdown menus in incorrect position
 - Possible crash on startup
 - `Upgrade and Restart` dialog
+- [gh-72](https://github.com/Cubicpath/HaloInfiniteGetter/issues/72)
 
 ## [0.12.2] - 2022-11-30 [PyPI](https://pypi.org/project/hi-getter/0.12.2/)
 ### Added
