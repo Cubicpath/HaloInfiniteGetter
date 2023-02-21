@@ -1,5 +1,5 @@
 ###################################################################################################
-#                              MIT Licence (C) 2022 Cubicpath@Github                              #
+#                              MIT Licence (C) 2023 Cubicpath@Github                              #
 ###################################################################################################
 """Relative package containing all things handling GUI elements."""
 # TODO: Redo ExceptionLogger implementation, with more functionality given to ExceptionReporter.

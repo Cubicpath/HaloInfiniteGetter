@@ -1,5 +1,5 @@
 ###################################################################################################
-#                              MIT Licence (C) 2022 Cubicpath@Github                              #
+#                              MIT Licence (C) 2023 Cubicpath@Github                              #
 ###################################################################################################
 """An independent script to upgrade the version of a given package, then launch it."""
 

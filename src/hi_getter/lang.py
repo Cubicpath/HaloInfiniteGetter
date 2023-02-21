@@ -1,5 +1,5 @@
 ###################################################################################################
-#                              MIT Licence (C) 2022 Cubicpath@Github                              #
+#                              MIT Licence (C) 2023 Cubicpath@Github                              #
 ###################################################################################################
 """Module containing code related to translation and language files."""
 from __future__ import annotations

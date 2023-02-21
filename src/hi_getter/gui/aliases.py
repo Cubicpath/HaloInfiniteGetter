@@ -1,5 +1,5 @@
 ###################################################################################################
-#                              MIT Licence (C) 2022 Cubicpath@Github                              #
+#                              MIT Licence (C) 2023 Cubicpath@Github                              #
 ###################################################################################################
 """Convenience alias functions."""
 from __future__ import annotations

@@ -1,5 +1,5 @@
 ###################################################################################################
-#                              MIT Licence (C) 2022 Cubicpath@Github                              #
+#                              MIT Licence (C) 2023 Cubicpath@Github                              #
 ###################################################################################################
 """A simple way to get live Halo data straight from Halo Waypoint."""
 # TODO: Add logging functionality
