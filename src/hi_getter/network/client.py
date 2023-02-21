@@ -184,7 +184,7 @@ class Client(QObject):
                 if consumer is not None:
                     consumer(path, response_data)
 
-            self._get(path, finished=handle_reply)
+            self._get(path, finished=handle_reply, timeout=120)
 
         else:
             print(f'READING {path}')
