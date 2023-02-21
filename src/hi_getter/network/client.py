@@ -224,10 +224,11 @@ class Client(QObject):
             self.searched_paths.add(path)
 
         if isinstance(data, (bytes, int)):
-            # Return early, decrementing counter
-            self._recursive_calls_in_progress -= 1
-            if not self._recursive_calls_in_progress:
-                self.finishedSearch.emit()
+            if path is not None:
+                # Return early, decrementing counter
+                self._recursive_calls_in_progress -= 1
+                if not self._recursive_calls_in_progress:
+                    self.finishedSearch.emit()
 
             return
 
@@ -253,9 +254,10 @@ class Client(QObject):
                     self.searched_paths.add(new_path)
                     self.recursive_search(new_path)
 
-        self._recursive_calls_in_progress -= 1
-        if not self._recursive_calls_in_progress:
-            self.finishedSearch.emit()
+        if path is not None:
+            self._recursive_calls_in_progress -= 1
+            if not self._recursive_calls_in_progress:
+                self.finishedSearch.emit()
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""
