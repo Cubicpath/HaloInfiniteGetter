@@ -210,14 +210,18 @@ class Client(QObject):
 
         self.get_hi_data(path, consumer=self.handle_recursive_data)
 
-    def handle_recursive_data(self, path: str, data: dict[str, Any] | bytes | int) -> None:
+    def handle_recursive_data(self, path: str | None, data: dict[str, Any] | bytes | int) -> None:
         """Recursively look through JSON data for resource paths.
+
+        If only providing data (from local or otherwise), you can call this function with
+        a path value of ``None``.
 
         :param path: Path data is from.
         :param data: Data received from path. If not JSON, return early.
         """
         # This set is shared between all recursive calls, so no duplicate searches should occur
-        self.searched_paths.add(path)
+        if path is not None:
+            self.searched_paths.add(path)
 
         if isinstance(data, (bytes, int)):
             # Return early, decrementing counter
