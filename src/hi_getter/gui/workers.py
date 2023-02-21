@@ -7,20 +7,14 @@ from __future__ import annotations
 __all__ = (
     'ExportData',
     'ImportData',
-    'RecursiveSearch',
 )
 
 import shutil
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from PySide6.QtCore import *
 from shiboken6 import Shiboken
-
-from ..constants import *
-from ..network import Client
-from ..utils import unique_values
 
 
 class _SignalHolder(QObject):
@@ -64,7 +58,7 @@ class _Worker(QRunnable):
         if (app := QCoreApplication.instance()) is None:
             raise RuntimeError('Worker started before application instance is defined.')
 
-        # No idea how, but this fixes application deadlock cause by RecursiveSearch (issue #31)
+        # Workaround for application deadlock (issue #31)
         app.aboutToQuit.connect(  # pyright: ignore[reportGeneralTypeIssues]
             self._dummy_method, Qt.ConnectionType.BlockingQueuedConnection
         )
@@ -134,55 +128,3 @@ class ImportData(_Worker):
 
     def _run(self) -> None:
         shutil.unpack_archive(str(self.archive), extract_dir=self.dest)
-
-
-class RecursiveSearch(_Worker):
-    """Recursively get Halo Waypoint files linked to the search_path through Mapping keys."""
-
-    def __init__(self, client: Client, search_path: str, **kwargs: Callable | Slot) -> None:
-        """Create a new :py:class:`RecursiveSearch` worker to use the given ``client`` and base ``search_path``."""
-        super().__init__(**kwargs)
-        self.client = client
-        self.search_path = search_path
-
-    def _run(self) -> None:
-        self._recursive_search(self.search_path)
-
-    def _recursive_search(self, search_path: str) -> None:
-        # This set is shared between all recursive calls, so no duplicate searches should occur
-        searched: set[str] = self.client.searched_paths
-        searched.add(search_path.lower())
-
-        # Get data from Client, and return if it's not JSON
-        data: dict[str, Any] | bytes | int = self.client.get_hi_data(search_path)
-        if isinstance(data, (bytes, int)):
-            return
-
-        # Iterate over all values in the JSON data
-        # This process ignores already-searched values
-        for value in unique_values(data):
-            if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
-                path: str = match[0]
-                ext: str = match['file_name'].split('.')[-1].lower()
-                has_pre_path: bool = match['pre_path'] is not None
-
-                # If a value ends in .json, get the data for that path and start the process over again
-                if ext in {'json'}:
-                    if not has_pre_path:
-                        path = 'progression/file/' + path
-
-                    if path.lower() in searched:
-                        continue
-
-                    self._recursive_search(path)
-
-                # If it's an image, download it then ignore the result
-                elif ext in SUPPORTED_IMAGE_EXTENSIONS:
-                    if not has_pre_path:
-                        path = 'images/file/' + path
-
-                    if path.lower() in searched:
-                        continue
-
-                    searched.add(path.lower())
-                    self.client.get_hi_data(path)

@@ -141,5 +141,6 @@ class FileContextMenu(QMenu):
         ).role == QMessageBox.ButtonRole.AcceptRole
 
         if do_flush:
+            app().client.searched_paths.clear()
             QDir(HI_CACHE_PATH).removeRecursively()
             HI_CACHE_PATH.mkdir(exist_ok=True)
