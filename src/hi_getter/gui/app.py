@@ -199,6 +199,7 @@ class GetterApp(Singleton, QApplication):
         from .windows import ChangelogViewer
         from .windows import LicenseViewer
         from .windows import ReadmeViewer
+        from .windows import ScanSelectorDialog
         from .windows import SettingsWindow
 
         SettingsWindow.create(QSize(420, 600))
@@ -211,6 +212,7 @@ class GetterApp(Singleton, QApplication):
         self._windows['changelog_viewer'] = ChangelogViewer()
         self._windows['license_viewer'] = LicenseViewer()
         self._windows['readme_viewer'] = ReadmeViewer()
+        self._windows['scan_selector'] = ScanSelectorDialog()
         self._windows['settings'] = SettingsWindow.instance()  # type: ignore
         self._windows['app'] = AppWindow.instance()            # type: ignore
 

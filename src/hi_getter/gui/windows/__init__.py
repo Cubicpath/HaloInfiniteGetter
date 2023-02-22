@@ -9,6 +9,7 @@ __all__ = (
     'ExceptionReporter',
     'LicenseViewer',
     'ReadmeViewer',
+    'ScanSelectorDialog',
     'SettingsWindow',
 )
 
@@ -17,4 +18,5 @@ from .changelog_viewer import ChangelogViewer
 from .exception_reporter import ExceptionReporter
 from .license_viewer import LicenseViewer
 from .readme_viewer import ReadmeViewer
+from .scan_selector_dialog import ScanSelectorDialog
 from .settings import SettingsWindow

@@ -66,6 +66,12 @@ class ToolsContextMenu(QMenu):
 
         # noinspection PyUnresolvedReferences
         init_objects({
+            (scan_selector := QAction(self)): {
+                'text': tr('gui.menus.tools.scan_selector_dialog'),
+                'icon': self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView),
+                'triggered': app().windows['scan_selector'].show
+            },
+
             (shortcut_tool := QAction(self)): {
                 'text': tr('gui.menus.tools.create_shortcut'),
                 'icon': self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon),
@@ -80,5 +86,6 @@ class ToolsContextMenu(QMenu):
         })
 
         add_menu_items(self, [
-            'Tools', shortcut_tool, exception_reporter
+            'Network', scan_selector,
+            'Other', shortcut_tool, exception_reporter
         ])
