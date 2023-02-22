@@ -80,8 +80,9 @@
     "gui.readme_viewer.close": "Close",
     "gui.readme_viewer.title": "README Viewer",
     "gui.scan_selector_dialog.cancel": "Cancel",
-    "gui.scan_selector_dialog.filepaths_placeholder": "PLACEHOLDER",
+    "gui.scan_selector_dialog.filepaths_placeholder": "File paths seperated by commas (ex: \"D:\\my file.json\", \"~\\other_file.json\")",
     "gui.scan_selector_dialog.scan": "Start Scan",
+    "gui.scan_selector_dialog.select_files": "Select Files...",
     "gui.scan_selector_dialog.title": "Scan Selector",
 
     "gui.menu_bar.title": "Menu Bar",
