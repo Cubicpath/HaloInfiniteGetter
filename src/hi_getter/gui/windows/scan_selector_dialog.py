@@ -16,6 +16,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from ...constants import *
 from ...utils import init_layouts
 from ...utils import init_objects
 from ..aliases import app
@@ -113,7 +114,7 @@ class ScanSelectorDialog(QWidget):
     def select_files(self) -> None:
         """Select JSON files to scan through a file dialog."""
         names: list[str] = QFileDialog.getOpenFileNames(self, caption=tr('gui.scan_selector_dialog.select_files'),
-                                                        dir=str(Path.home() / 'Downloads'),
+                                                        dir=str(HI_WEB_DUMP_PATH),
                                                         filter=_SCAN_FILTER)[0]
         # If no filenames are selected, do nothing.
         if not names:
