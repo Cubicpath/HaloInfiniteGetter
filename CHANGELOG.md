@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Ability to scan arbitrary JSON files, from [gh-80](https://github.com/Cubicpath/HaloInfiniteGetter/pull/80)
 - Ability to select text in Message Boxes
 
 ### Changed
