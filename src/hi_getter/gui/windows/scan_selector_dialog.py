@@ -40,6 +40,7 @@ class ScanSelectorDialog(QWidget):
     def _init_ui(self) -> None:
         self.filepaths_input = QLineEdit(self)
         self.scan_button = QPushButton(self)
+        self.do_recursive = QCheckBox(self)
 
         init_objects({
             self: {
@@ -57,6 +58,10 @@ class ScanSelectorDialog(QWidget):
                 'clicked': self.select_files
             },
 
+            self.do_recursive: {
+                'checked': True
+            },
+
             self.scan_button: {
                 'clicked': self.scan_files,
             },
@@ -70,6 +75,7 @@ class ScanSelectorDialog(QWidget):
             self.setWindowTitle: 'gui.scan_selector_dialog.title',
             self.filepaths_input.setPlaceholderText: 'gui.scan_selector_dialog.filepaths_placeholder',
             filepaths_selector.setText: 'gui.scan_selector_dialog.select_files',
+            self.do_recursive.setText: 'gui.scan_selector_dialog.do_recursive',
 
             self.scan_button.setText: 'gui.scan_selector_dialog.scan',
             cancel_button.setText: 'gui.scan_selector_dialog.cancel'
@@ -86,7 +92,7 @@ class ScanSelectorDialog(QWidget):
 
             # Main layout
             QVBoxLayout(self): {
-                'items': (input_layout, bottom)
+                'items': (input_layout, self.do_recursive, bottom)
             }
         })
 
@@ -112,7 +118,7 @@ class ScanSelectorDialog(QWidget):
             if i == len(paths) - 1:
                 app().client.finishedSearch.connect(app().client._on_finished_search)
 
-            app().client.start_handle_json(data, True)
+            app().client.start_handle_json(data, self.do_recursive.isChecked())
 
         self.close()
 
