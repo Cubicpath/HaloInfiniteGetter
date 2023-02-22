@@ -100,6 +100,7 @@ class ScanSelectorDialog(QWidget):
         if not (user_input := self.filepaths_input.text()):
             return
 
+        app().warn_for('warnings.photosensitivity.scan')
         paths: tuple[Path] = tuple(Path(name.strip(' \'\",')) for name in user_input.split(', '))
 
         for i, path in enumerate(paths):
