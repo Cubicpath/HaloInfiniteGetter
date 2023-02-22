@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13a1] - 2023-2-22 [PyPI](https://pypi.org/project/hi-getter/0.13a1/)
 ### Added
-- Ability to scan arbitrary JSON files, from [gh-80](https://github.com/Cubicpath/HaloInfiniteGetter/pull/80)
+- Ability to scan arbitrary JSON files with the `Scan File...` tool, from [gh-80](https://github.com/Cubicpath/HaloInfiniteGetter/pull/80)
 - Ability to select text in Message Boxes
 
 ### Changed
-- Client requests are now asynchronous (~1500% faster scanning) from [gh-78](https://github.com/Cubicpath/HaloInfiniteGetter/pull/78)
+- Client requests are now asynchronous (~1500% faster scanning), from [gh-78](https://github.com/Cubicpath/HaloInfiniteGetter/pull/78)
     - This may block the GUI from working correctly for about a minute
 - Cached resource paths now preserve the `/file/` subdirectory
 - `PySide6` version to 6.4.2
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Possible crash on startup
 - `Upgrade and Restart` dialog
 - [gh-72](https://github.com/Cubicpath/HaloInfiniteGetter/issues/72)
+
 
 ## [0.12.2] - 2022-11-30 [PyPI](https://pypi.org/project/hi-getter/0.12.2/)
 ### Added
