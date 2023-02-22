@@ -117,6 +117,7 @@ class ScanSelectorDialog(QWidget):
         app().client.finishedSearch.disconnect(app().client._on_finished_search)
         try:
             for i, path in enumerate(paths):
+                path = path.expanduser().resolve(strict=True)
                 data: dict[str, Any] = json.loads(path.read_bytes())
 
                 if i == len(paths) - 1:
