@@ -102,7 +102,10 @@ class ScanSelectorDialog(QWidget):
     # noinspection PyProtectedMember
     # pylint: disable=protected-access
     def scan_files(self) -> None:
-        """Parse the input for paths, then read json data and tell the application's Client to scan it."""
+        """Parse the input for paths, then read json data and tell the application's Client to scan it.
+
+        :raises Exception: If an exception occurs when searching files, it is handled then reraised.
+        """
         # If no filenames are selected, do nothing.
         if not (user_input := self.filepaths_input.text()):
             return
@@ -112,13 +115,19 @@ class ScanSelectorDialog(QWidget):
 
         # Disconnect _on_finished_search so searched_paths isn't cleared prematurely
         app().client.finishedSearch.disconnect(app().client._on_finished_search)
-        for i, path in enumerate(paths):
-            data: dict[str, Any] = json.loads(path.read_bytes())
+        try:
+            for i, path in enumerate(paths):
+                data: dict[str, Any] = json.loads(path.read_bytes())
 
-            if i == len(paths) - 1:
-                app().client.finishedSearch.connect(app().client._on_finished_search)
+                if i == len(paths) - 1:
+                    app().client.finishedSearch.connect(app().client._on_finished_search)
 
-            app().client.start_handle_json(data, self.do_recursive.isChecked())
+                app().client.start_handle_json(data, self.do_recursive.isChecked())
+
+        # If an exception occurs, reconnect the _on_finished_search method and reraise
+        except Exception as e:
+            app().client.finishedSearch.connect(app().client._on_finished_search)
+            raise e
 
         self.close()
 
