@@ -830,6 +830,16 @@ class Response:
         """Representation of the :py:class:`Response` with its HTTP status code."""
         return f'<Response [{self.code}]>'
 
+    def get_internal_error(self) -> tuple[QNetworkReply.NetworkError, str] | None:
+        """Return a tuple containing a ``QNetworkReply.NetworkError`` and its description.
+
+        If the ``QNetworkReply.NetworkError`` is ``NoError``, return ``None``.
+        """
+        if (err := self._reply.error()) == QNetworkReply.NetworkError.NoError:
+            return None
+
+        return err, self._reply.errorString()
+
     @property
     def code(self) -> int | None:
         """Return the HTTP status code of the :py:class:`Response`.
