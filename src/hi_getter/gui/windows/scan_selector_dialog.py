@@ -22,7 +22,6 @@ from ...utils import init_objects
 from ..aliases import app
 from ..aliases import tr
 
-
 _SCAN_FILTER: str = ';;'.join((
     'JSON Files (*.json)',
     'All files (*.*)'
@@ -48,6 +47,10 @@ class ScanSelectorDialog(QWidget):
                 'windowFlags': Qt.WindowType.Dialog,
                 'windowModality': Qt.WindowModality.ApplicationModal,
                 'windowIcon': self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView),
+            },
+
+            self.filepaths_input: {
+                'maxLength': (2 ** 31) - 1,  # Max int for shiboken
             },
 
             (filepaths_selector := QPushButton(self)): {
