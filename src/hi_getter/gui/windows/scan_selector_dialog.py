@@ -94,6 +94,7 @@ class ScanSelectorDialog(QWidget):
         self.filepaths_input.clear()
 
     # noinspection PyProtectedMember
+    # pylint: disable=protected-access
     def scan_files(self) -> None:
         """Parse the input for paths, then read json data and tell the application's Client to scan it."""
         # If no filenames are selected, do nothing.
@@ -103,15 +104,15 @@ class ScanSelectorDialog(QWidget):
         app().warn_for('warnings.photosensitivity.scan')
         paths: tuple[Path] = tuple(Path(name.strip(' \'\",')) for name in user_input.split(', '))
 
+        # Disconnect _on_finished_search so searched_paths isn't cleared prematurely
+        app().client.finishedSearch.disconnect(app().client._on_finished_search)
         for i, path in enumerate(paths):
             data: dict[str, Any] = json.loads(path.read_bytes())
 
-            # Workaround to emit finishedSearch signal after last data is searched
             if i == len(paths) - 1:
-                app().client._recursive_calls_in_progress += 1
-                app().client.handle_recursive_data('', data)
-            else:
-                app().client.handle_recursive_data(None, data)
+                app().client.finishedSearch.connect(app().client._on_finished_search)
+
+            app().client.start_handle_json(data, True)
 
         self.close()
 
