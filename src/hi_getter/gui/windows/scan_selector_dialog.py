@@ -8,7 +8,9 @@ __all__ = (
     'ScanSelectorDialog',
 )
 
+import json
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -52,7 +54,7 @@ class ScanSelectorDialog(QWidget):
             },
 
             self.scan_button: {
-                # 'clicked': start_sign_in,
+                'clicked': self.scan_files,
             },
 
             (cancel_button := QPushButton(self)): {
@@ -87,7 +89,26 @@ class ScanSelectorDialog(QWidget):
     def _reset_widgets(self) -> None:
         self.filepaths_input.clear()
 
-        self.scan_button.setDisabled(True)
+    # noinspection PyProtectedMember
+    def scan_files(self) -> None:
+        """Parse the input for paths, then read json data and tell the application's Client to scan it."""
+        # If no filenames are selected, do nothing.
+        if not (user_input := self.filepaths_input.text()):
+            return
+
+        paths: tuple[Path] = tuple(Path(name.strip(' \'\",')) for name in user_input.split(', '))
+
+        for i, path in enumerate(paths):
+            data: dict[str, Any] = json.loads(path.read_bytes())
+
+            # Workaround to emit finishedSearch signal after last data is searched
+            if i == len(paths) - 1:
+                app().client._recursive_calls_in_progress += 1
+                app().client.handle_recursive_data('', data)
+            else:
+                app().client.handle_recursive_data(None, data)
+
+        self.close()
 
     def select_files(self) -> None:
         """Select JSON files to scan through a file dialog."""
