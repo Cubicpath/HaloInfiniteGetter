@@ -79,6 +79,12 @@
     "gui.outputs.text.label_empty": "Text Output:",
     "gui.readme_viewer.close": "Close",
     "gui.readme_viewer.title": "README Viewer",
+    "gui.scan_selector_dialog.cancel": "Cancel",
+    "gui.scan_selector_dialog.do_recursive": "Recursive",
+    "gui.scan_selector_dialog.filepaths_placeholder": "File paths seperated by commas (ex: \"D:\\my file.json\", \"~\\other_file.json\")",
+    "gui.scan_selector_dialog.scan": "Start Scan",
+    "gui.scan_selector_dialog.select_files": "Select Files...",
+    "gui.scan_selector_dialog.title": "Scan Selector",
 
     "gui.menu_bar.title": "Menu Bar",
     "gui.menus.cached_file.copy_contents": "Copy File Contents",
@@ -114,6 +120,7 @@
     "gui.menus.tools.create_shortcut.only_start_menu": "Start Menu",
     "gui.menus.tools.create_shortcut.both": "Both",
     "gui.menus.tools.exception_reporter": "Open Exception Reporter",
+    "gui.menus.tools.scan_selector_dialog": "Scan Files...",
     "gui.status.default": "No current exceptions...",
     "gui.status_bar.title": "Status Bar",
 

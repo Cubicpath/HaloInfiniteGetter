@@ -17,6 +17,7 @@ __all__ = (
     'LicenseViewer',
     'PasteLineEdit',
     'ReadmeViewer',
+    'ScanSelectorDialog',
     'SettingsWindow',
     'Theme',
     'ToolsContextMenu',
@@ -42,4 +43,5 @@ from .windows import ChangelogViewer
 from .windows import ExceptionReporter
 from .windows import LicenseViewer
 from .windows import ReadmeViewer
+from .windows import ScanSelectorDialog
 from .windows import SettingsWindow

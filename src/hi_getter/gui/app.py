@@ -178,6 +178,7 @@ class GetterApp(Singleton, QApplication):
         from .windows import ChangelogViewer
         from .windows import LicenseViewer
         from .windows import ReadmeViewer
+        from .windows import ScanSelectorDialog
         from .windows import SettingsWindow
 
         SettingsWindow.create(QSize(420, 600))
@@ -190,6 +191,7 @@ class GetterApp(Singleton, QApplication):
         self._windows['changelog_viewer'] = ChangelogViewer()
         self._windows['license_viewer'] = LicenseViewer()
         self._windows['readme_viewer'] = ReadmeViewer()
+        self._windows['scan_selector'] = ScanSelectorDialog()
         self._windows['settings'] = SettingsWindow.instance()  # type: ignore
         self._windows['app'] = AppWindow.instance()            # type: ignore
 
@@ -496,6 +498,19 @@ class GetterApp(Singleton, QApplication):
 
         # Set the default icon for all windows.
         self.setWindowIcon(self.icon_store['hi'])
+
+    def warn_for(self, warning_key: str) -> None:
+        """One-time warning for users of application.
+
+        :param warning_key: language key to show dialog for and to write in the ``.warned`` config file.
+        """
+        with (HI_CONFIG_PATH / '.warned').open(mode='a+', encoding='utf8') as warned_file:
+            warned_file.seek(0)
+            acknowledged_warnings: set[str] = {line.strip() for line in warned_file.readlines()}
+
+            if warning_key not in acknowledged_warnings:
+                self.show_dialog(warning_key)
+                warned_file.write(f'{warning_key}\n')
 
     def get_theme_icon(self, icon: str) -> QIcon:
         """Return the icon for the given theme.

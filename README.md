@@ -98,6 +98,9 @@ Recursively scan a given JSON resource for paths to more resources, ignoring alr
 This results in caching ALL resources that are referenced by any other resource with some tie to the original
 resource path.
 
+If you want to scan your own json file(s) for resource paths, you can use the `Scan Files...` tool in the
+`Tools` context menu.
+
 ### Cache Explorer:
 You can view all cached files using the Cache Explorer, which is on the left-hand side of the main window.
 

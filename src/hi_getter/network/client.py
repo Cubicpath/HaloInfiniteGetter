@@ -54,12 +54,13 @@ class Client(QObject):
         """
         super().__init__(parent)
         self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
+        self._emit_received_signals: bool = True
         self._recursive_calls_in_progress: int = 0
 
         self.parent_path: str = '/hi/'
         self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
         self.searched_paths: set[str] = set()
-        self.finishedSearch.connect(self.searched_paths.clear)
+        self.finishedSearch.connect(self._on_finished_search)
 
         self._token: str | None = kwargs.pop('token', os.getenv('HI_SPARTAN_AUTH', None))
         if self._token is None and HI_TOKEN_PATH.is_file():
@@ -120,6 +121,7 @@ class Client(QObject):
         :param update_auth_on_401: run self._refresh_auth if response status code is 401 Unauthorized.
         :param finished: Callback to send finished request to.
         """
+
         def handle_reply(response: Response):
             if not response.code or response.headers.get('Content-Type') is not None and not response.data:
                 print(f'COULDNT GET {response.url}')
@@ -140,9 +142,54 @@ class Client(QObject):
 
         self.api_session.get(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
+    def _handle_json(self, data: dict[str, Any], recursive: bool = False):
+        """Look through JSON data for resource paths.
+
+        :param data: JSON data to search through for paths.
+        :param recursive: Whether to start recursively searching.
+        """
+        for value in unique_values(data):
+            if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
+                new_path: str = self.normalize_search_path(match[0])
+
+                if not recursive:
+                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+                    continue
+
+                # If it's an image, download it then ignore the result
+                if match['file_name'].split('.')[-1].lower() in SUPPORTED_IMAGE_EXTENSIONS:
+                    if new_path in self.searched_paths:
+                        continue
+
+                    self.searched_paths.add(new_path)
+                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+
+                # Otherwise, start the process over again
+                else:
+                    if new_path in self.searched_paths:
+                        continue
+
+                    self.searched_paths.add(new_path)
+                    self.recursive_search(new_path)
+
+    def _increment_counter(self):
+        self._recursive_calls_in_progress += 1
+        if self._recursive_calls_in_progress == 1:
+            self.startedSearch.emit()
+
+    def _decrement_counter(self):
+        self._recursive_calls_in_progress -= 1
+        if not self._recursive_calls_in_progress:
+            self.finishedSearch.emit()
+
+    def _on_finished_search(self):
+        self._emit_received_signals = True
+        self.searched_paths.clear()
+
     def get_hi_data(self,
                     path: str,
-                    consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None
+                    consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
+                    emit_signals: bool = True
                     ) -> None:
         """Get a resource hosted on the HaloWaypoint API.
 
@@ -150,6 +197,7 @@ class Client(QObject):
 
         :param path: Path to get data from.
         :param consumer: Consumer to send received data to.
+        :param emit_signals: Whether to emit received* signals.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
         path = self.normalize_search_path(path)
@@ -159,7 +207,8 @@ class Client(QObject):
             def handle_reply(response: Response):
                 if response.code and not response.ok:
                     print(f'ERROR [{response.code}] for {path} ')
-                    self.receivedError.emit(path, response.code)
+                    if emit_signals:
+                        self.receivedError.emit(path, response.code)
                     if consumer is not None:
                         consumer(path, response.code)
                     return
@@ -172,10 +221,12 @@ class Client(QObject):
 
                 if 'json' in content_type:
                     response_data = response.json
-                    self.receivedJson.emit(path, response_data)
+                    if emit_signals:
+                        self.receivedJson.emit(path, response_data)
                 elif content_type in SUPPORTED_IMAGE_MIME_TYPES:
                     response_data = response.data
-                    self.receivedData.emit(path, response_data)
+                    if emit_signals:
+                        self.receivedData.emit(path, response_data)
                 else:
                     raise ValueError(f'Unsupported content type received: {content_type}')
 
@@ -204,60 +255,44 @@ class Client(QObject):
 
         :param path: Path to search.
         """
-        self._recursive_calls_in_progress += 1
-        if self._recursive_calls_in_progress == 1:
-            self.startedSearch.emit()
+        self._emit_received_signals = False
+        self._increment_counter()
+        self.get_hi_data(path, consumer=self.handle_recursive_data, emit_signals=self._emit_received_signals)
 
-        self.get_hi_data(path, consumer=self.handle_recursive_data)
+    def start_handle_json(self, data: dict[str, Any], recursive: bool = False):
+        """Look through JSON data for resource paths.
 
-    def handle_recursive_data(self, path: str | None, data: dict[str, Any] | bytes | int) -> None:
-        """Recursively look through JSON data for resource paths.
+        Increments and decrements counter to correctly emit the ``finishedSearch`` signal.
 
-        If only providing data (from local or otherwise), you can call this function with
-        a path value of ``None``.
+        :param data: JSON data to search through for paths.
+        :param recursive: Whether to start recursively searching.
+        """
+        if recursive:
+            self._increment_counter()
+
+        self._handle_json(data, recursive)
+
+        if recursive:
+            self._decrement_counter()
+
+    def handle_recursive_data(self, path: str, data: dict[str, Any] | bytes | int) -> None:
+        """Recursively look through JSON data for resource paths, decrementing counter when finished.
 
         :param path: Path data is from.
         :param data: Data received from path. If not JSON, return early.
         """
         # This set is shared between all recursive calls, so no duplicate searches should occur
-        if path is not None:
-            self.searched_paths.add(path)
+        self.searched_paths.add(path)
 
         if isinstance(data, (bytes, int)):
-            if path is not None:
-                # Return early, decrementing counter
-                self._recursive_calls_in_progress -= 1
-                if not self._recursive_calls_in_progress:
-                    self.finishedSearch.emit()
-
+            # Return early, decrementing counter
+            self._decrement_counter()
             return
 
         # Iterate over all values in the JSON data
         # This process ignores already-searched values
-        for value in unique_values(data):
-            if isinstance(value, str) and (match := HI_PATH_PATTERN.match(value)):
-                new_path: str = self.normalize_search_path(match[0])
-
-                # If it's an image, download it then ignore the result
-                if match['file_name'].split('.')[-1].lower() in SUPPORTED_IMAGE_EXTENSIONS:
-                    if new_path in self.searched_paths:
-                        continue
-
-                    self.searched_paths.add(new_path)
-                    self.get_hi_data(new_path)
-
-                # Otherwise, start the process over again
-                else:
-                    if new_path in self.searched_paths:
-                        continue
-
-                    self.searched_paths.add(new_path)
-                    self.recursive_search(new_path)
-
-        if path is not None:
-            self._recursive_calls_in_progress -= 1
-            if not self._recursive_calls_in_progress:
-                self.finishedSearch.emit()
+        self._handle_json(data, recursive=True)
+        self._decrement_counter()
 
     def hidden_key(self) -> str:
         """:return: The first and last 3 characters of the waypoint token, seperated by periods."""

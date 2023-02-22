@@ -592,14 +592,7 @@ class AppWindow(Singleton, QMainWindow):
 
         Displays a photosensitivity warning for first-time use.
         """
-        with (HI_CONFIG_PATH / '.warned').open(mode='a+', encoding='utf8') as warned_file:
-            warned_file.seek(0)
-            acknowledged_warnings: set[str] = {line.strip() for line in warned_file.readlines()}
-
-            if 'warnings.photosensitivity.scan' not in acknowledged_warnings:
-                app().show_dialog('warnings.photosensitivity.scan')
-                warned_file.write('warnings.photosensitivity.scan\n')
-
+        app().warn_for('warnings.photosensitivity.scan')
         app().client.searched_paths.clear()
         self.use_input(scan=True)
 
