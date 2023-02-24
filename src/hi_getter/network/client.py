@@ -87,7 +87,7 @@ class Client(QObject):
             'Sec-Fetch-Site': 'same-site',
             'Sec-GPC': '1',
             'TE': 'trailers',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:110.0) Gecko/20100101 Firefox/110.0',
         })
         self.web_session: NetworkSession = NetworkSession(self)
         self.web_session.headers = self.api_session.headers | {
