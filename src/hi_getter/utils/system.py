@@ -10,11 +10,13 @@ __all__ = (
     'get_start_menu_path',
     'get_winreg_value',
     'hide_windows_file',
+    'patch_incompatible_pywin32_shibokensupport__mod_uses_pyside',
     'patch_windows_taskbar_icon',
 )
 
 from collections.abc import Callable
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 from ..constants import *
@@ -391,6 +393,31 @@ def hide_windows_file(file_path: Path | str, *, unhide: bool = False) -> int | N
             if is_hidden:
                 subtracted_attributes: int = current_attributes ^ FILE_ATTRIBUTE_HIDDEN
                 return windll.kernel32.SetFileAttributesW(file_path, subtracted_attributes)
+
+
+# noinspection All
+# pylint: disable=protected-access
+def patch_incompatible_pywin32_shibokensupport__mod_uses_pyside() -> None:
+    """Patch an incompatibility with ``shibokensupport`` and ``pywin32``.
+
+    This causes a crash when an import hook calls ``_mod_uses_pyside``, which tries to load
+    a ``pywin32_system32`` DLL as a Python module.
+
+    See https://github.com/Cubicpath/HaloInfiniteGetter/issues/82 for more information.
+    """
+    import shibokensupport  # pyright: ignore[reportMissingImports]
+
+    def patch(func: Callable[[ModuleType], bool]) -> Callable:
+        def wrapper(*args, **kwargs) -> bool:
+            try:
+                return func(*args, **kwargs)
+            except SyntaxError as e:
+                print(f'{shibokensupport.__name__}: {e}')
+                return False
+
+        return wrapper
+
+    shibokensupport.feature._mod_uses_pyside = patch(shibokensupport.feature._mod_uses_pyside)
 
 
 def patch_windows_taskbar_icon(app_id: str = '') -> int | None:

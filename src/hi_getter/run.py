@@ -13,6 +13,7 @@ import sys
 from ._version import __version__
 from .exception_hook import ExceptionHook
 from .gui import GetterApp
+from .utils import patch_incompatible_pywin32_shibokensupport__mod_uses_pyside
 from .utils import patch_windows_taskbar_icon
 
 
@@ -22,6 +23,7 @@ def main(*args: str) -> int:
     Args are passed to a QApplication instance.
     """
     patch_windows_taskbar_icon(f'cubicpath.{__package__}.app.{__version__}')
+    patch_incompatible_pywin32_shibokensupport__mod_uses_pyside()
 
     # ExceptionHook is required for subscribing to ExceptionEvents
     with ExceptionHook():

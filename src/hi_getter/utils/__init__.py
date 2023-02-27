@@ -31,6 +31,7 @@ __all__ = (
     'init_objects',
     'is_error_status',
     'patch_windows_taskbar_icon',
+    'patch_incompatible_pywin32_shibokensupport__mod_uses_pyside',
     'query_to_dict',
     'quote_str',
     'return_arg',
@@ -72,4 +73,5 @@ from .system import get_desktop_path
 from .system import get_start_menu_path
 from .system import get_winreg_value
 from .system import hide_windows_file
+from .system import patch_incompatible_pywin32_shibokensupport__mod_uses_pyside
 from .system import patch_windows_taskbar_icon
