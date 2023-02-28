@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 __all__ = (
+    'cached_etags',
     'Client',
 )
 
@@ -28,6 +29,29 @@ from .manager import NetworkSession
 from .manager import Response
 
 _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
+_ETAG_PATH: Final[Path] = HI_CACHE_PATH / 'etags.json'
+
+
+def cached_etags() -> dict[str, Any]:
+    """JSON representation of the currently cached etags.
+
+    If etag data is malformed JSON, back it up to ``etags.malformed``.
+    """
+    if not _ETAG_PATH.is_file():
+        _ETAG_PATH.write_text('{}', encoding='utf8')
+
+    data: bytes = _ETAG_PATH.read_bytes()
+    etags: dict[str, Any] = {}
+
+    try:
+        etags = json.loads(data)
+    except json.JSONDecodeError:
+        if data:
+            _ETAG_PATH.with_suffix('.malformed').write_bytes(data)
+
+        _ETAG_PATH.write_text('{}', encoding='utf8')
+
+    return etags
 
 
 class Client(QObject):
@@ -53,10 +77,11 @@ class Client(QObject):
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
         super().__init__(parent)
-        self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
+        self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_bytes())
         self._emit_received_signals: bool = True
         self._recursive_calls_in_progress: int = 0
 
+        self.etags: dict[str, Any] = cached_etags()
         self.parent_path: str = '/hi/'
         self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
         self.searched_paths: set[str] = set()
