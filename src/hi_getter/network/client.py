@@ -17,6 +17,7 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import Final
+from urllib.parse import quote
 
 from PySide6.QtCore import *
 
@@ -54,6 +55,11 @@ def cached_etags() -> dict[str, Any]:
         _ETAG_PATH.write_text('{}', encoding='utf8')
 
     return etags
+
+
+def save_etags(etags: dict[str, Any]) -> int:
+    """Save dictionary representation of etags to ``_ETAGS_PATH``."""
+    return _ETAG_PATH.write_text(json.dumps(etags, indent=2))
 
 
 class Client(QObject):
@@ -151,6 +157,7 @@ class Client(QObject):
 
         def handle_reply(response: Response):
             if not response.code or response.headers.get('Content-Type') is not None and not response.data:
+                print(response, response.get_internal_error())
                 print(f'COULDNT GET {response.url}')
                 return
 
@@ -168,6 +175,35 @@ class Client(QObject):
                 finished(response)
 
         self.api_session.get(self.api_root + path.strip(), finished=handle_reply, **kwargs)
+
+    def _check_etag(self, path: str, finished: Callable[[Response], None] | None = None, **kwargs) -> None:
+        def handle_reply(response: Response):
+            if not response.code or not (etag := response.headers['ETag'].strip('"')):
+                print(f'COULDNT CHECK {response.url}')
+                return
+
+            path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
+            is_new_version: bool = etag not in self.etags.get('paths', {}).get(path_key, {}).get('etags', [])
+            self._store_etag(path, etag)
+
+            # If there is a new version available, and we have an old version, download the new version.
+            # and cache the old version in a separate directory.
+            # If we don't an old version, assume the new version is currently being downloaded by get_hi_data.
+            if is_new_version and (cached_path := self.to_os_path(path)).is_file():
+                archive_path: Path = self.to_os_path(path, parent=HI_CACHE_PATH / 'old_files').with_stem(
+                    f'{cached_path.stem}_etag+{quote(etag, safe="")}'
+                )
+                archive_path.parent.mkdir(parents=True, exist_ok=True)
+                archive_path.write_bytes(cached_path.read_bytes())
+                cached_path.unlink()
+
+                self.get_hi_data(path, check_etag=False)
+
+            if finished is not None:
+                # Send OK response to the given consumer
+                finished(response)
+
+        self.api_session.head(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
     def _handle_json(self, data: dict[str, Any], recursive: bool = False):
         """Look through JSON data for resource paths.
@@ -212,6 +248,7 @@ class Client(QObject):
     def _on_finished_search(self):
         self._emit_received_signals = True
         self.searched_paths.clear()
+        save_etags(self.etags)
 
     def _store_etag(self, path: str, etag: str):
         path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
@@ -231,7 +268,8 @@ class Client(QObject):
     def get_hi_data(self,
                     path: str,
                     consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
-                    emit_signals: bool = True
+                    emit_signals: bool = True,
+                    check_etag: bool = True
                     ) -> None:
         """Get a resource hosted on the HaloWaypoint API.
 
@@ -243,7 +281,10 @@ class Client(QObject):
         :raises ValueError: If the response is not JSON or a supported image type.
         """
         path = self.normalize_search_path(path)
-        os_path: Path = self.to_os_path(path, parent=HI_WEB_DUMP_PATH)
+        os_path: Path = self.to_os_path(path)
+
+        if check_etag:
+            self._check_etag(path)
 
         if not os_path.is_file():
             def handle_reply(response: Response):
