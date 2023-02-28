@@ -424,9 +424,15 @@ class Client(QObject):
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path
 
     def to_get_path(self, path: Path) -> str:
-        """Translate a given cache location to the equivalent GET path."""
+        """Translate a given cache location to the equivalent GET path.
+
+        Return an empty string if path doesn't include an endpoint following the parent_path.
+        """
         no_etag: Path = path.with_stem(path.stem.split('_etag+', maxsplit=1)[0])
         resource = no_etag.as_posix().split(self.parent_path, maxsplit=1)[-1]
+        if Path(resource).is_absolute():
+            return ''
+
         return resource
 
     def refresh_auth(self) -> None:
