@@ -90,7 +90,7 @@ match_dir = "(?!venv|tests|_vendor|__pycache__)[^\\.].*"
 # Pylint configuration.
 # ---------------------
 [tool.pylint.'MASTER']
-ignore-paths = ['.*/_vendor/.*']
+ignore-paths = [".*/_vendor/.*"]
 jobs = 0
 load-plugins = [
     "pylint.extensions.bad_builtin",
