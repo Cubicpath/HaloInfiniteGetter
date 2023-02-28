@@ -23,6 +23,7 @@ from PySide6.QtCore import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
+from ..models import DeferredCallable
 from ..utils import dump_data
 from ..utils import decode_url
 from ..utils import guess_json_utf
@@ -176,7 +177,10 @@ class Client(QObject):
 
         self.api_session.get(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
-    def _check_etag(self, path: str, finished: Callable[[Response], None] | None = None, **kwargs) -> None:
+    def _check_etag(self,
+                    path: str,
+                    consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
+                    **kwargs) -> None:
         def handle_reply(response: Response):
             if not response.code or not (etag := response.headers.get('ETag', '').strip('"')):
                 print(f'COULDNT CHECK {response.url}', response.get_internal_error())
@@ -197,13 +201,8 @@ class Client(QObject):
                 archive_path.write_bytes(cached_path.read_bytes())
                 cached_path.unlink()
 
-                self.get_hi_data(path, check_etag=False)
+                self.get_hi_data(path, consumer, check_etag=False)
 
-            if finished is not None:
-                # Send OK response to the given consumer
-                finished(response)
-
-        print('CHECKING', path)
         self.api_session.head(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
     def _handle_json(self, data: dict[str, Any], recursive: bool = False):
@@ -217,7 +216,11 @@ class Client(QObject):
                 new_path: str = self.normalize_search_path(match[0])
 
                 if not recursive:
-                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+                    self.get_hi_data(
+                        new_path,
+                        consumer=DeferredCallable(save_etags, self.etags),
+                        emit_signals=self._emit_received_signals
+                    )
                     continue
 
                 # If it's an image, download it then ignore the result
@@ -297,7 +300,7 @@ class Client(QObject):
                 content_type: str | None = response.headers.get('Content-Type')
                 response_data: dict[str, Any] | bytes
 
-                if etag := response.headers.get('ETag'):
+                if etag := response.headers.get('ETag', '').strip('"'):
                     self._store_etag(path, etag)
 
                 if not content_type:
@@ -323,7 +326,7 @@ class Client(QObject):
 
         else:
             if check_etag:
-                self._check_etag(path)
+                self._check_etag(path, consumer, timeout=120)
 
             print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
