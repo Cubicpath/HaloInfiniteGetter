@@ -12,6 +12,8 @@ __all__ = (
 import json
 import os
 from collections.abc import Callable
+from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import Final
@@ -210,6 +212,21 @@ class Client(QObject):
     def _on_finished_search(self):
         self._emit_received_signals = True
         self.searched_paths.clear()
+
+    def _store_etag(self, path: str, etag: str):
+        path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
+        path_etags: set[str] = set(self.etags.get('paths', {}).get(path_key, {}).get('etags', []))
+        path_etags.add(etag)
+
+        self.etags['timestamps'] = self.etags.get('timestamps', {}) | {
+            etag: datetime.now(timezone.utc).strftime(HI_DATE_FORMAT)
+        }
+
+        self.etags['paths'] = self.etags.get('paths', {}) | {
+            path_key: {
+                'etags': list(path_etags)
+            }
+        }
 
     def get_hi_data(self,
                     path: str,
