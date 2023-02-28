@@ -282,6 +282,7 @@ class Client(QObject):
         :param path: Path to get data from.
         :param consumer: Consumer to send received data to.
         :param emit_signals: Whether to emit received* signals.
+        :param check_etag: Whether to call ``_check_etag`` if path is already cached.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
         path = self.normalize_search_path(path)
