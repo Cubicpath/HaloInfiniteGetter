@@ -46,12 +46,12 @@ repos:
             "--py310-plus",
           ]
 
-  -   repo: https://github.com/pycqa/pydocstyle
-      rev: 6.3.0
-      hooks:
-      - id: pydocstyle
-        additional_dependencies: ["pydocstyle[toml]",]
-        pass_filenames: false
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+    - id: pydocstyle
+      additional_dependencies: ["pydocstyle[toml]",]
+      pass_filenames: false
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
@@ -71,6 +71,6 @@ repos:
           ]
 
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.295
+    rev: v1.1.296
     hooks:
       - id: pyright

@@ -262,7 +262,7 @@ class GetterApp(Singleton, QApplication):
 
     def show_dialog(self, key: str, parent: QWidget | None = None,
                     buttons: _ButtonsWithRoles | None = None,
-                    default_button: QAbstractButton | QMessageBox.StandardButton | None = None,
+                    default_button: QPushButton | QMessageBox.StandardButton | None = None,
                     title_args: Sequence | None = None,
                     description_args: Sequence | None = None,
                     details_text: str = '') -> _DialogResponse:
