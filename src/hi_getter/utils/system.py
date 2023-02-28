@@ -407,7 +407,7 @@ def patch_incompatible_pywin32_shibokensupport__mod_uses_pyside() -> None:
     """
     import shibokensupport  # pyright: ignore[reportMissingImports]
 
-    def patch(func: Callable[[ModuleType], bool]) -> Callable:
+    def patch(func: Callable[[ModuleType], bool]) -> Callable[[ModuleType], bool]:
         def wrapper(*args, **kwargs) -> bool:
             try:
                 return func(*args, **kwargs)
