@@ -52,7 +52,7 @@ class CacheIndexContextMenu(QMenu):
             dir_path = file_path.parent
 
         try:
-            os_path = app().client.to_get_path(file_path.as_posix())
+            os_path = app().client.to_get_path(file_path)
         except (IndexError, ValueError):
             os_path = ''
 
