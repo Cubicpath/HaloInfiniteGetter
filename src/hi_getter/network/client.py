@@ -178,8 +178,8 @@ class Client(QObject):
 
     def _check_etag(self, path: str, finished: Callable[[Response], None] | None = None, **kwargs) -> None:
         def handle_reply(response: Response):
-            if not response.code or not (etag := response.headers['ETag'].strip('"')):
-                print(f'COULDNT CHECK {response.url}')
+            if not response.code or not (etag := response.headers.get('ETag', '').strip('"')):
+                print(f'COULDNT CHECK {response.url}', response.get_internal_error())
                 return
 
             path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
@@ -203,6 +203,7 @@ class Client(QObject):
                 # Send OK response to the given consumer
                 finished(response)
 
+        print('CHECKING', path)
         self.api_session.head(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
     def _handle_json(self, data: dict[str, Any], recursive: bool = False):
@@ -283,9 +284,6 @@ class Client(QObject):
         path = self.normalize_search_path(path)
         os_path: Path = self.to_os_path(path)
 
-        if check_etag:
-            self._check_etag(path)
-
         if not os_path.is_file():
             def handle_reply(response: Response):
                 if response.code and not response.ok:
@@ -298,6 +296,9 @@ class Client(QObject):
 
                 content_type: str | None = response.headers.get('Content-Type')
                 response_data: dict[str, Any] | bytes
+
+                if etag := response.headers.get('ETag'):
+                    self._store_etag(path, etag)
 
                 if not content_type:
                     raise ValueError('Successful status code but no Content-Type header.')
@@ -321,6 +322,9 @@ class Client(QObject):
             self._get(path, finished=handle_reply, timeout=120)
 
         else:
+            if check_etag:
+                self._check_etag(path)
+
             print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
             if os_path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
