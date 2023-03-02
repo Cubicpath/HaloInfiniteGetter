@@ -606,7 +606,7 @@ class AppWindow(Singleton, QMainWindow):
             app().windows['readme_viewer'].show()
             app().show_dialog('information.first_launch', self)
 
-        elif not self.shown_key_warning and app().client.token is None:
+        elif not self.shown_key_warning and app().client.wpauth is None and app().client.token is None:
             app().show_dialog('warnings.empty_token', self)
             self.__class__.shown_key_warning = True
 
