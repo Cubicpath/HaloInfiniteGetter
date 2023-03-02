@@ -256,8 +256,12 @@ class Client(QObject):
 
     def _store_etag(self, path: str, etag: str):
         path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
-        path_etags: set[str] = set(self.etags.get('paths', {}).get(path_key, {}).get('etags', []))
-        path_etags.add(etag)
+        path_etags: list[str] = self.etags.get('paths', {}).get(path_key, {}).get('etags', [])
+
+        # Do this instead of using a set
+        # 1 iteration (in) vs 2 (casting to set then back to list for json.dumps)
+        if etag not in path_etags:
+            path_etags.append(etag)
 
         self.etags['timestamps'] = self.etags.get('timestamps', {}) | {
             etag: datetime.now(timezone.utc).strftime(HI_DATE_FORMAT)
@@ -265,7 +269,7 @@ class Client(QObject):
 
         self.etags['paths'] = self.etags.get('paths', {}) | {
             path_key: {
-                'etags': list(path_etags)
+                'etags': path_etags
             }
         }
 
