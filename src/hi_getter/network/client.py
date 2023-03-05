@@ -88,6 +88,7 @@ class Client(QObject):
         super().__init__(parent)
         self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_bytes())
         self.check_etags: bool = True
+        self._auth_in_progress: bool = False
         self._emit_received_signals: bool = True
         self._recursive_calls_in_progress: int = 0
 
@@ -180,11 +181,17 @@ class Client(QObject):
 
     def _check_etag(self,
                     path: str,
+                    update_auth_on_401: bool = True,
                     consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
                     **kwargs) -> None:
         def handle_reply(response: Response):
             if not response.code or not (etag := response.headers.get('ETag', '').strip('"')):
                 print(f'COULDNT CHECK {response.url}', response.get_internal_error())
+                return
+
+            if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
+                self.refresh_auth()
+                self._check_etag(path, False, consumer, **kwargs)
                 return
 
             path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
@@ -339,7 +346,7 @@ class Client(QObject):
 
         else:
             if check_etags:
-                self._check_etag(path, consumer, timeout=120)
+                self._check_etag(path, consumer=consumer, timeout=120)
 
             print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
@@ -460,6 +467,12 @@ class Client(QObject):
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
+        print('REFRESHING AUTH')
+
+        if self._auth_in_progress:
+            return
+        self._auth_in_progress = True
+
         def handle_reply(_: Response):
             wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
             token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
@@ -468,6 +481,8 @@ class Client(QObject):
                 self.wpauth = wpauth
             if token:
                 self.token = token
+
+            self._auth_in_progress = False
 
         self.web_session.get('https://www.halowaypoint.com/', finished=handle_reply)
 
