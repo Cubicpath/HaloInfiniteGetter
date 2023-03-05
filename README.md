@@ -78,6 +78,14 @@ Guide:
 
 ### Searching:
 
+When you access a resource and are properly authenticated, it is cached to your
+`~/.cache/hi_getter/cached_requests` directory.
+
+By default, when you access an already-cached resource, HaloInfiniteGetter checks for a new
+version of said resource on HaloWaypoint servers. The old version is stored in
+`~/.cache/hi_getter/old_files` along with its version identifier.
+- You can disable this behaviour by unchecking the **Update Cached Resources** checkbox in Settings.
+
 #### Knowing Where to Search:
 
 ![Input Section](https://i.imgur.com/8JPsG5y.png)
