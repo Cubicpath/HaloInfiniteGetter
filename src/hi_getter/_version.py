@@ -7,7 +7,7 @@
 # 2) We can load it in setup.cfg
 # 3) We can import it into modules
 
-__version_info__ = (0, 13, 0, 'alpha', 1)
+__version_info__ = (0, 13, 0, 'final', 0)
 """Major, Minor, Micro, Release level, Serial in respective order."""
 
 

@@ -4,15 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.13]
 ### Added
 - Ability to find new versions of already cached resources and download them, from [gh-85](https://github.com/Cubicpath/HaloInfiniteGetter/pull/85)
   - `Update Cached Resources` checkbox in settings toggles this feature
   - `old_files` directory which contains older versions of files and their given ETag (version id)
   - Timestamps of when a given etag was last downloaded are stored in `~/.cache/hi_getter/etags.json`
+- Ability to scan arbitrary JSON files with the `Scan File...` tool, from [gh-80](https://github.com/Cubicpath/HaloInfiniteGetter/pull/80)
+- Ability to select text in Message Boxes
 
 ### Changed
+- Client requests are now asynchronous (~1500% faster scanning), from [gh-78](https://github.com/Cubicpath/HaloInfiniteGetter/pull/78)
+    - This may block the GUI from working correctly for about a minute
+- Cached resource paths now preserve the `/file/` subdirectory
+- `PySide6` version to 6.4.2
 - `python-dotenv` version to 1.0.0
+- `py7zr` version to 0.20.4
+
+### Fixed
+- Settings dropdown menus in incorrect position
+- Possible crash on startup
+- `Upgrade and Restart` dialog
+- [gh-72](https://github.com/Cubicpath/HaloInfiniteGetter/issues/72)
+
 
 ## [0.13a1] - 2023-2-22 [PyPI](https://pypi.org/project/hi-getter/0.13a1/)
 ### Added
@@ -297,7 +311,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Uploaded to GitHub
 
 
-[Unreleased]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.13a1...HEAD
+[Unreleased]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.13...HEAD
+[0.13]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.13a1...v0.13
 [0.13a1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12.2...v0.13a1
 [0.12.2]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/Cubicpath/HaloInfiniteGetter/compare/v0.12...v0.12.1
