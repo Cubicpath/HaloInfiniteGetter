@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Ability to find new versions of already cached resources and download them, from [gh-85](https://github.com/Cubicpath/HaloInfiniteGetter/pull/85)
+  - `Update Cached Resources` checkbox in settings toggles this feature
+  - `old_files` directory which contains older versions of files and their given ETag (version id)
+  - Timestamps of when a given etag was last downloaded are stored in `~/.cache/hi_getter/etags.json`
+
 ### Changed
 - `python-dotenv` version to 1.0.0
 
