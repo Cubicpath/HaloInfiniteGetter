@@ -215,6 +215,10 @@ class GetterApp(Singleton, QApplication):
             DeferredCallable(self.update_stylesheet),
             TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
 
+        EventBus['settings'].subscribe(
+            lambda *_: setattr(self.client, 'check_etags', self.settings['network/client/check_etags']),
+            TomlEvents.Set, event_predicate=lambda e: e.key == 'network/client/check_etags')
+
         if not self.settings['ignore_updates']:
             self.version_checker.newerVersion.connect(self._upgrade_version_dialog)
 
