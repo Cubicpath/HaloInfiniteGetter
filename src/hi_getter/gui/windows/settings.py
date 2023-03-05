@@ -112,12 +112,12 @@ class SettingsWindow(Singleton, QWidget):
         (
             self.key_set_button, self.token_clear_button,
             self.theme_dropdown, self.aspect_ratio_dropdown, self.transformation_dropdown,
-            self.line_wrap_dropdown, self.icon_mode_dropdown,
+            self.line_wrap_dropdown, self.icon_mode_dropdown, self.check_etags_checkbox,
             self.key_field
         ) = (
             QPushButton(self), QPushButton(self),
             TranslatableComboBox(self), TranslatableComboBox(self), TranslatableComboBox(self),
-            TranslatableComboBox(self), TranslatableComboBox(self),
+            TranslatableComboBox(self), TranslatableComboBox(self), QCheckBox(self),
             PasteLineEdit(self)
         )
 
@@ -168,6 +168,14 @@ class SettingsWindow(Singleton, QWidget):
             self.token_clear_button: {
                 'disabled': not app().client.token,
                 'clicked': clear_token
+            },
+            self.check_etags_checkbox: {
+                'checked': app().settings['network/client/check_etags'],
+                'stateChanged': DeferredCallable(
+                    app().settings.__setitem__,
+                    'network/client/check_etags',
+                    self.check_etags_checkbox.isChecked
+                ),
             },
 
             # Line editors
@@ -258,7 +266,8 @@ class SettingsWindow(Singleton, QWidget):
             open_editor_button.setText: 'gui.settings.open_editor',
             key_show_button.setText: 'gui.settings.auth.edit',
             self.key_set_button.setText: 'gui.settings.auth.set',
-            self.token_clear_button.setText: 'gui.settings.auth.clear_token'
+            self.token_clear_button.setText: 'gui.settings.auth.clear_token',
+            self.check_etags_checkbox.setText: 'gui.settings.check_etags'
         })
 
         init_layouts({
@@ -291,7 +300,7 @@ class SettingsWindow(Singleton, QWidget):
                 'items': [theme_label, self.theme_dropdown]
             },
             (middle := QVBoxLayout()): {
-                'items': [theme_layout, output_layout, cache_layout]
+                'items': [theme_layout, output_layout, cache_layout, self.check_etags_checkbox]
             },
 
             # Add top widgets
