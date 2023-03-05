@@ -134,6 +134,7 @@ class GetterApp(Singleton, QApplication):
         # Must load client last, but before windows
         self.load_env(verbose=True)
         self.client = Client(self)
+        self.client.check_etags = self.settings['network/client/check_etags']  # type: ignore
         self._connect_events()
 
         # Setup window instances
