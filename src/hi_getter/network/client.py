@@ -87,6 +87,7 @@ class Client(QObject):
         """
         super().__init__(parent)
         self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_bytes())
+        self.check_etags: bool = True
         self._emit_received_signals: bool = True
         self._recursive_calls_in_progress: int = 0
 
@@ -201,7 +202,7 @@ class Client(QObject):
                 archive_path.write_bytes(cached_path.read_bytes())
                 cached_path.unlink()
 
-                self.get_hi_data(path, consumer, check_etag=False)
+                self.get_hi_data(path, consumer, check_etag_override=False)
 
         self.api_session.head(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
@@ -229,7 +230,10 @@ class Client(QObject):
                         continue
 
                     self.searched_paths.add(new_path)
-                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+                    self.get_hi_data(
+                        new_path,
+                        emit_signals=self._emit_received_signals
+                    )
 
                 # Otherwise, start the process over again
                 else:
@@ -277,7 +281,7 @@ class Client(QObject):
                     path: str,
                     consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
                     emit_signals: bool = True,
-                    check_etag: bool = True
+                    check_etag_override: bool | None = None
                     ) -> None:
         """Get a resource hosted on the HaloWaypoint API.
 
@@ -286,9 +290,13 @@ class Client(QObject):
         :param path: Path to get data from.
         :param consumer: Consumer to send received data to.
         :param emit_signals: Whether to emit received* signals.
-        :param check_etag: Whether to call ``_check_etag`` if path is already cached.
+        :param check_etag_override: Whether to call ``_check_etag`` if path is already cached.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
+        check_etags = self.check_etags
+        if check_etag_override is not None:
+            check_etags = check_etag_override
+
         path = self.normalize_search_path(path)
         os_path: Path = self.to_os_path(path)
 
@@ -330,7 +338,7 @@ class Client(QObject):
             self._get(path, finished=handle_reply, timeout=120)
 
         else:
-            if check_etag:
+            if check_etags:
                 self._check_etag(path, consumer, timeout=120)
 
             print(f'READING {path}')
@@ -352,7 +360,11 @@ class Client(QObject):
         """
         self._emit_received_signals = False
         self._increment_counter()
-        self.get_hi_data(path, consumer=self.handle_recursive_data, emit_signals=self._emit_received_signals)
+        self.get_hi_data(
+            path,
+            consumer=self.handle_recursive_data,
+            emit_signals=self._emit_received_signals
+        )
 
     def start_handle_json(self, data: dict[str, Any], recursive: bool = False):
         """Look through JSON data for resource paths.
