@@ -1,6 +1,9 @@
 ignore_updates = false
 language = "en-US"
 
+[network.client]
+check_etags = true  # Whether to check for new versions of cached files
+
 [gui.window]
 x_size = 900 # Minimum value of 100
 y_size = 500 # Minimum value of 100

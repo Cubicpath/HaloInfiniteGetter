@@ -68,7 +68,7 @@ class VersionChecker(QObject):
             # Sort versions on date released
             versions: list[str] = sorted(
                 releases := reply.json['releases'],
-                key=lambda v: datetime.strptime(releases[v][0]['upload_time_iso_8601'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                key=lambda v: datetime.strptime(releases[v][0]['upload_time_iso_8601'], HI_DATE_FORMAT)
             )
 
             # Get local version of given package. Use __version__ attribute for own package.

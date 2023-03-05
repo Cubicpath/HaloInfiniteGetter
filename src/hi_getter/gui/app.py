@@ -134,6 +134,7 @@ class GetterApp(Singleton, QApplication):
         # Must load client last, but before windows
         self.load_env(verbose=True)
         self.client = Client(self)
+        self.client.check_etags = self.settings['network/client/check_etags']  # type: ignore
         self._connect_events()
 
         # Setup window instances
@@ -214,6 +215,10 @@ class GetterApp(Singleton, QApplication):
         EventBus['settings'].subscribe(
             DeferredCallable(self.update_stylesheet),
             TomlEvents.Set, event_predicate=lambda e: e.key == 'gui/themes/selected')
+
+        EventBus['settings'].subscribe(
+            lambda *_: setattr(self.client, 'check_etags', self.settings['network/client/check_etags']),
+            TomlEvents.Set, event_predicate=lambda e: e.key == 'network/client/check_etags')
 
         if not self.settings['ignore_updates']:
             self.version_checker.newerVersion.connect(self._upgrade_version_dialog)

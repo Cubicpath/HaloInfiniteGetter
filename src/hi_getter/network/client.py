@@ -5,20 +5,25 @@
 from __future__ import annotations
 
 __all__ = (
+    'cached_etags',
     'Client',
 )
 
 import json
 import os
 from collections.abc import Callable
+from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import Final
+from urllib.parse import quote
 
 from PySide6.QtCore import *
 
 from ..constants import *
 from ..models import CaseInsensitiveDict
+from ..models import DeferredCallable
 from ..utils import dump_data
 from ..utils import decode_url
 from ..utils import guess_json_utf
@@ -28,6 +33,34 @@ from .manager import NetworkSession
 from .manager import Response
 
 _ENDPOINT_PATH: Final[Path] = HI_RESOURCE_PATH / 'wp_endpoint_hosts.json'
+_ETAG_PATH: Final[Path] = HI_CACHE_PATH / 'etags.json'
+
+
+def cached_etags() -> dict[str, Any]:
+    """JSON representation of the currently cached etags.
+
+    If etag data is malformed JSON, back it up to ``etags.malformed``.
+    """
+    if not _ETAG_PATH.is_file():
+        _ETAG_PATH.write_text('{}', encoding='utf8')
+
+    data: bytes = _ETAG_PATH.read_bytes()
+    etags: dict[str, Any] = {}
+
+    try:
+        etags = json.loads(data)
+    except json.JSONDecodeError:
+        if data:
+            _ETAG_PATH.with_suffix('.malformed').write_bytes(data)
+
+        _ETAG_PATH.write_text('{}', encoding='utf8')
+
+    return etags
+
+
+def save_etags(etags: dict[str, Any]) -> int:
+    """Save dictionary representation of etags to ``_ETAGS_PATH``."""
+    return _ETAG_PATH.write_text(json.dumps(etags, indent=2))
 
 
 class Client(QObject):
@@ -53,10 +86,13 @@ class Client(QObject):
         :keyword wpauth: Halo Waypoint authentication key, allows for creation of 343 auth tokens.
         """
         super().__init__(parent)
-        self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_text(encoding='utf8'))
+        self.endpoints: dict[str, Any] = json.loads(_ENDPOINT_PATH.read_bytes())
+        self.check_etags: bool = True
+        self._auth_in_progress: bool = False
         self._emit_received_signals: bool = True
         self._recursive_calls_in_progress: int = 0
 
+        self.etags: dict[str, Any] = cached_etags()
         self.parent_path: str = '/hi/'
         self.sub_host: str = self.endpoints['endpoints']['gameCmsService']['subdomain']
         self.searched_paths: set[str] = set()
@@ -124,6 +160,7 @@ class Client(QObject):
 
         def handle_reply(response: Response):
             if not response.code or response.headers.get('Content-Type') is not None and not response.data:
+                print(response, response.get_internal_error())
                 print(f'COULDNT GET {response.url}')
                 return
 
@@ -142,6 +179,40 @@ class Client(QObject):
 
         self.api_session.get(self.api_root + path.strip(), finished=handle_reply, **kwargs)
 
+    def _check_etag(self,
+                    path: str,
+                    update_auth_on_401: bool = True,
+                    consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
+                    **kwargs) -> None:
+        def handle_reply(response: Response):
+            if not response.code or not (etag := response.headers.get('ETag', '').strip('"')):
+                print(f'COULDNT CHECK {response.url}', response.get_internal_error())
+                return
+
+            if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
+                self.refresh_auth()
+                self._check_etag(path, False, consumer, **kwargs)
+                return
+
+            path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
+            is_new_version: bool = etag not in self.etags.get('paths', {}).get(path_key, {}).get('etags', [])
+            self._store_etag(path, etag)
+
+            # If there is a new version available, and we have an old version, download the new version.
+            # and cache the old version in a separate directory.
+            # If we don't an old version, assume the new version is currently being downloaded by get_hi_data.
+            if is_new_version and (cached_path := self.to_os_path(path)).is_file():
+                archive_path: Path = self.to_os_path(path, parent=HI_CACHE_PATH / 'old_files').with_stem(
+                    f'{cached_path.stem}_etag+{quote(etag, safe="")}'
+                )
+                archive_path.parent.mkdir(parents=True, exist_ok=True)
+                archive_path.write_bytes(cached_path.read_bytes())
+                cached_path.unlink()
+
+                self.get_hi_data(path, consumer, check_etag_override=False)
+
+        self.api_session.head(self.api_root + path.strip(), finished=handle_reply, **kwargs)
+
     def _handle_json(self, data: dict[str, Any], recursive: bool = False):
         """Look through JSON data for resource paths.
 
@@ -153,7 +224,11 @@ class Client(QObject):
                 new_path: str = self.normalize_search_path(match[0])
 
                 if not recursive:
-                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+                    self.get_hi_data(
+                        new_path,
+                        consumer=DeferredCallable(save_etags, self.etags),
+                        emit_signals=self._emit_received_signals
+                    )
                     continue
 
                 # If it's an image, download it then ignore the result
@@ -162,7 +237,10 @@ class Client(QObject):
                         continue
 
                     self.searched_paths.add(new_path)
-                    self.get_hi_data(new_path, emit_signals=self._emit_received_signals)
+                    self.get_hi_data(
+                        new_path,
+                        emit_signals=self._emit_received_signals
+                    )
 
                 # Otherwise, start the process over again
                 else:
@@ -185,11 +263,32 @@ class Client(QObject):
     def _on_finished_search(self):
         self._emit_received_signals = True
         self.searched_paths.clear()
+        save_etags(self.etags)
+
+    def _store_etag(self, path: str, etag: str):
+        path_key: str = f'{self.host}{self.parent_path}{path}'.lower()
+        path_etags: list[str] = self.etags.get('paths', {}).get(path_key, {}).get('etags', [])
+
+        # Do this instead of using a set
+        # 1 iteration (in) vs 2 (casting to set then back to list for json.dumps)
+        if etag not in path_etags:
+            path_etags.append(etag)
+
+        self.etags['timestamps'] = self.etags.get('timestamps', {}) | {
+            etag: datetime.now(timezone.utc).strftime(HI_DATE_FORMAT)
+        }
+
+        self.etags['paths'] = self.etags.get('paths', {}) | {
+            path_key: {
+                'etags': path_etags
+            }
+        }
 
     def get_hi_data(self,
                     path: str,
                     consumer: Callable[[str, dict[str, Any] | bytes | int], None] | None = None,
-                    emit_signals: bool = True
+                    emit_signals: bool = True,
+                    check_etag_override: bool | None = None
                     ) -> None:
         """Get a resource hosted on the HaloWaypoint API.
 
@@ -198,10 +297,15 @@ class Client(QObject):
         :param path: Path to get data from.
         :param consumer: Consumer to send received data to.
         :param emit_signals: Whether to emit received* signals.
+        :param check_etag_override: Whether to call ``_check_etag`` if path is already cached.
         :raises ValueError: If the response is not JSON or a supported image type.
         """
+        check_etags = self.check_etags
+        if check_etag_override is not None:
+            check_etags = check_etag_override
+
         path = self.normalize_search_path(path)
-        os_path: Path = self.to_os_path(path, parent=HI_WEB_DUMP_PATH)
+        os_path: Path = self.to_os_path(path)
 
         if not os_path.is_file():
             def handle_reply(response: Response):
@@ -215,6 +319,9 @@ class Client(QObject):
 
                 content_type: str | None = response.headers.get('Content-Type')
                 response_data: dict[str, Any] | bytes
+
+                if etag := response.headers.get('ETag', '').strip('"'):
+                    self._store_etag(path, etag)
 
                 if not content_type:
                     raise ValueError('Successful status code but no Content-Type header.')
@@ -238,6 +345,9 @@ class Client(QObject):
             self._get(path, finished=handle_reply, timeout=120)
 
         else:
+            if check_etags:
+                self._check_etag(path, consumer=consumer, timeout=120)
+
             print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
             if os_path.suffix.lstrip('.') in SUPPORTED_IMAGE_EXTENSIONS:
@@ -257,7 +367,11 @@ class Client(QObject):
         """
         self._emit_received_signals = False
         self._increment_counter()
-        self.get_hi_data(path, consumer=self.handle_recursive_data, emit_signals=self._emit_received_signals)
+        self.get_hi_data(
+            path,
+            consumer=self.handle_recursive_data,
+            emit_signals=self._emit_received_signals
+        )
 
     def start_handle_json(self, data: dict[str, Any], recursive: bool = False):
         """Look through JSON data for resource paths.
@@ -336,12 +450,13 @@ class Client(QObject):
         """
         return parent / self.sub_host.replace('-', '_') / self.parent_path.strip('/') / path
 
-    def to_get_path(self, path: str) -> str:
+    def to_get_path(self, path: Path) -> str:
         """Translate a given cache location to the equivalent GET path.
 
         Return an empty string if path doesn't include an endpoint following the parent_path.
         """
-        resource = path.split(self.parent_path, maxsplit=1)[-1]
+        no_etag: Path = path.with_stem(path.stem.split('_etag+', maxsplit=1)[0])
+        resource = no_etag.as_posix().split(self.parent_path, maxsplit=1)[-1]
         if Path(resource).is_absolute():
             return ''
 
@@ -352,6 +467,12 @@ class Client(QObject):
 
         wpauth MUST have a value for this to work. A lone 343 spartan token is not enough to generate a new one.
         """
+        print('REFRESHING AUTH')
+
+        if self._auth_in_progress:
+            return
+        self._auth_in_progress = True
+
         def handle_reply(_: Response):
             wpauth: str = decode_url(self.web_session.cookies.get('wpauth') or '')
             token: str = decode_url(self.web_session.cookies.get('343-spartan-token') or '')
@@ -360,6 +481,8 @@ class Client(QObject):
                 self.wpauth = wpauth
             if token:
                 self.token = token
+
+            self._auth_in_progress = False
 
         self.web_session.get('https://www.halowaypoint.com/', finished=handle_reply)
 

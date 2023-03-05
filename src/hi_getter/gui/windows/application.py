@@ -26,6 +26,7 @@ from ...exception_hook import ExceptionEvent
 from ...models import DeferredCallable
 from ...models import DistributedCallable
 from ...models import Singleton
+from ...network.client import save_etags
 from ...tomlfile import TomlEvents
 from ...utils import init_layouts
 from ...utils import init_objects
@@ -497,7 +498,7 @@ class AppWindow(Singleton, QMainWindow):
             if scan:
                 app().client.recursive_search(search_path)
             else:
-                app().client.get_hi_data(search_path)
+                app().client.get_hi_data(search_path, consumer=DeferredCallable(save_etags, app().client.etags))
 
     def update_image(self, _: str, data: bytes) -> None:
         """Update the image output with the given data."""

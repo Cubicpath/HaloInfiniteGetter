@@ -131,6 +131,7 @@
     "gui.settings.cache.icon_mode.default": "Default",
     "gui.settings.cache.icon_mode.no_icons": "No Icons",
     "gui.settings.cache.icon_mode.preview": "Preview Images",
+    "gui.settings.check_etags": "Update Cached Resources",
     "gui.settings.export": "Export Settings",
     "gui.settings.import": "Import Settings",
     "gui.settings.media.aspect_ratio": "Aspect Ratio:",
