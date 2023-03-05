@@ -37,7 +37,7 @@ all = [
     "python-dotenv>=1.0.0",
 ]
 dev = [
-    "autopep8>=2.0.1",
+    "autopep8>=2.0.2",
     "bandit>=1.7.4",
     "pydocstyle>=6.3.0",
     "pylint>=2.16.2",
