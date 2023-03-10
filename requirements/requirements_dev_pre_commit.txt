@@ -21,7 +21,7 @@ reorder-python-imports == 3.9.0
 # ------------------
 
 # Security-Specific Checker
-bandit == 1.7.4
+bandit == 1.7.5
     GitPython >= 1.0.1
     PyYAML >= 5.3.1
     stevedore >= 1.20.0
