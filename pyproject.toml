@@ -41,7 +41,7 @@ dev = [
     "bandit>=1.7.5",
     "pydocstyle>=6.3.0",
     "pylint>=2.17.0",
-    "pyright>=1.1.296",
+    "pyright>=1.1.298",
     "pyupgrade>=3.3.1",
 ]
 
