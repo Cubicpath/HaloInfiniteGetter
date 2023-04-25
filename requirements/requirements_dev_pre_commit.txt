@@ -9,7 +9,7 @@ autopep8 == 2.0.2
     pycodestyle >= 2.10.0
 
 # Automatically Upgrade Syntax
-pyupgrade == 3.3.1
+pyupgrade == 3.3.2
     tokenize-rt >= 3.2.0
 
 # Import Formatter
