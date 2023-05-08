@@ -31,7 +31,7 @@ pydocstyle == 6.3.0
     snowballstemmer >= 2.2.0
 
 # General Code Linter
-pylint == 2.17.0
+pylint == 2.17.4
     astroid <= 2.16.0-dev0, >= 2.14.2
         wrapt < 2, >= 1.11; python_version < "3.11"
         wrapt < 2, >= 1.14; python_version >= "3.11"
