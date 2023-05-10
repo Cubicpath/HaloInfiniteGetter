@@ -46,5 +46,5 @@ pylint == 2.17.0
     tomli >= 1.1.0; python_version < "3.11"
 
 # Type Checker
-pyright == 1.1.298
+pyright == 1.1.307
     nodeenv >= 1.6.0
