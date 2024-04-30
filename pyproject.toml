@@ -37,12 +37,13 @@ all = [
     "python-dotenv>=1.0.0",
 ]
 dev = [
-    "autopep8>=2.0.2",
-    "bandit>=1.7.5",
+    "autopep8>=2.1.0",
+    "bandit>=1.7.8",
     "pydocstyle>=6.3.0",
-    "pylint>=2.17.0",
-    "pyright>=1.1.298",
-    "pyupgrade>=3.3.1",
+    "pylint>=3.1.0",
+    "pyright>=1.1.360",
+    "pyupgrade>=3.15.2",
+    "reorder-python-imports>=3.12.0",
 ]
 
 [project.urls]
@@ -97,14 +98,12 @@ load-plugins = [
     # "pylint.extensions.broad_try_clause",
     "pylint.extensions.check_elif",
     "pylint.extensions.code_style",
-    "pylint.extensions.comparetozero",
     "pylint.extensions.comparison_placement",
     # "pylint.extensions.confusing_elif",
     "pylint.extensions.consider_ternary_expression",
     "pylint.extensions.docparams",
     "pylint.extensions.docstyle",
     "pylint.extensions.empty_comment",
-    "pylint.extensions.emptystring",
     # "pylint.extensions.eq_without_hash",
     "pylint.extensions.for_any_all",
     # "pylint.extensions.mccabe",
@@ -152,6 +151,9 @@ max-module-lines = 1000
 allow-wildcard-with-all = true
 
 [tool.pylint.'MESSAGES CONTROL']
+enable = [
+    "prefer-typing-namedtuple",      # R6105
+]
 disable = [
     # Conventions
     "invalid-name",                  # C0103
@@ -159,6 +161,7 @@ disable = [
     # Inspections (?)
     "c-extension-no-member",         # I1101
     # Refactors
+    "cyclic-import",                 # R0401
     "duplicate-code",                # R0801
     "inconsistent-return-statements",# R1710
     # These do not work with custom bitshifts that return None
