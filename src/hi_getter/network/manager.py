@@ -123,7 +123,8 @@ def _translate_header_value(
             # Translate tuples, lists, etc. that contain two strings (name and value)
             elif isinstance(value, Sequence) and not isinstance(value, (bytes, str)):
                 for pair in value:
-                    cookie_list.append(QNetworkCookie(pair[0].encode('utf8'), pair[1].encode('utf8')))
+                    encoded = pair[0].encode('utf8'), pair[1].encode('utf8')  # pyright: ignore[reportIndexIssue]
+                    cookie_list.append(QNetworkCookie(*encoded))
 
             return cookie_list
 
@@ -608,7 +609,9 @@ class Request:
         self.method = method
         self.url = url
         self.params = {} if params is None else dict(params)
-        self.data = dict(data) if (isinstance(data, Sequence) and not isinstance(data, (bytes, str))) else data
+        self.data = dict(data) if (  # pyright: ignore[reportCallIssue, reportArgumentType]
+            isinstance(data, Sequence) and not isinstance(data, (bytes, str))
+        ) else data
         self.headers = {} if headers is None else dict(headers)
         self.cookies = {} if cookies is None else dict(cookies)
         # self.files = files
@@ -894,6 +897,7 @@ class Response:
                 elif string_val.lower() == 'false':
                     value = False
 
+                # Possible bug here, regex match vs fullmatch
                 elif match := _INT_PATTERN.match(string_val):
                     value = int(match[0])
 

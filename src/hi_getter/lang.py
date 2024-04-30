@@ -185,7 +185,7 @@ class Language:
 
         :raises ValueError: If tag is not a valid language tag.
         """
-        return cls(**matched_subtags(tag))
+        return cls(**matched_subtags(tag))  # pyright: ignore[reportArgumentType]
 
     @classmethod
     def from_path(cls, path: Path | str) -> Language:

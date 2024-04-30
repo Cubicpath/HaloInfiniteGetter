@@ -397,14 +397,11 @@ class Client(QObject):
         # This set is shared between all recursive calls, so no duplicate searches should occur
         self.searched_paths.add(path)
 
-        if isinstance(data, (bytes, int)):
-            # Return early, decrementing counter
-            self._decrement_counter()
-            return
+        if isinstance(data, dict):
+            # Iterate over all values in the JSON data
+            # This process ignores already-searched values
+            self._handle_json(data, recursive=True)
 
-        # Iterate over all values in the JSON data
-        # This process ignores already-searched values
-        self._handle_json(data, recursive=True)
         self._decrement_counter()
 
     def hidden_key(self) -> str:

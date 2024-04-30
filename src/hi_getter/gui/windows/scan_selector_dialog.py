@@ -111,7 +111,7 @@ class ScanSelectorDialog(QWidget):
             return
 
         app().warn_for('warnings.photosensitivity.scan')
-        paths: tuple[Path] = tuple(Path(name.strip(' \'\",')) for name in user_input.split(', '))
+        paths: tuple[Path, ...] = tuple(Path(name.strip(' \'\",')) for name in user_input.split(', '))
 
         # Disconnect _on_finished_search so searched_paths isn't cleared prematurely
         app().client.finishedSearch.disconnect(app().client._on_finished_search)

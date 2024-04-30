@@ -35,10 +35,12 @@ def current_requirement_licenses(
         except DistributionNotFound:
             continue
 
+        if dist.location is None:
+            continue
+
         name: str = dist.project_name.replace('-', '_')
         licenses: list[tuple[str, str]] = []
 
-        # Find the distribution's information directory
         info_path = Path(dist.location) / f'{name}-{dist.version}.dist-info'
         if not info_path.is_dir():
             if (egg_path := info_path.with_name(f'{name}.egg-info')).is_dir():
@@ -54,7 +56,7 @@ def current_requirement_licenses(
 
         # If the distribution has no 'License' field, get the distribution's Trove classifier
         if not (dist_license := metadata(name).get('License')):  # type: ignore
-            for classifier in metadata(name).get_all('Classifier'):
+            for classifier in metadata(name).get_all('Classifier') or ():
                 if classifier.startswith('License'):
                     # Ex: 'License :: OSI Approved :: MIT License'
                     dist_license = classifier.split('::')[-1].strip()

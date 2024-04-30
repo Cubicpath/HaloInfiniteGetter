@@ -54,7 +54,7 @@ SUPPORTED_IMAGE_MIME_TYPES: Final[frozenset[str]] = frozenset({
 HI_DATE_FORMAT: Final[str] = '%Y-%m-%dT%H:%M:%S.%fZ'
 """Format to use for datetime objects."""
 
-HI_PACKAGE_NAME: Final[str] = __package__.split('.', maxsplit=1)[0]
+HI_PACKAGE_NAME: Final[str] = __package__.split('.', maxsplit=1)[0] if __package__ else ''
 """The base package name for this application, for use in sub-packages."""
 
 HI_SAMPLE_RESOURCE: Final[str] = 'Progression/file/Calendars/Seasons/SeasonCalendar.json'

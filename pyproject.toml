@@ -214,6 +214,8 @@ pythonVersion = "3.10"
 venvPath = "."
 venv = "venv"
 
+reportAttributeAccessIssue = false
+reportIncompatibleMethodOverride = false
 reportSelfClsParameterName = false
 reportUnusedExpression = false
 reportWildcardImportFromLibrary = false

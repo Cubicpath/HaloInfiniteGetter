@@ -14,6 +14,7 @@ __all__ = (
     'patch_windows_taskbar_icon',
 )
 
+import functools
 from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
@@ -213,6 +214,7 @@ def create_shortcut(target: Path, arguments: str | None = None,
         )
 
 
+@functools.cache
 def get_desktop_path() -> Path:
     """Cross-platform utility to obtain the path to the desktop.
 
@@ -229,10 +231,6 @@ def get_desktop_path() -> Path:
     """
     import os
     import sys
-
-    # Assume that once found, the desktop path does not change
-    if hasattr(get_desktop_path, '__cached__'):
-        return get_desktop_path.__cached__
 
     platform: str = sys.platform.lower()
     desktop: Path
@@ -269,10 +267,10 @@ def get_desktop_path() -> Path:
                     config_val: str = line.split('=')[1].strip('\'\"')
                     desktop = Path(config_val).resolve(True).absolute()
 
-    get_desktop_path.__cached__ = desktop
     return desktop
 
 
+@functools.cache
 def get_start_menu_path() -> Path:
     """Cross-platform utility to obtain the path to the Start Menu or equivalent.
 
@@ -291,10 +289,6 @@ def get_start_menu_path() -> Path:
     """
     import os
     import sys
-
-    # Assume that once found, the start menu path does not change
-    if hasattr(get_start_menu_path, '__cached__'):
-        return get_start_menu_path.__cached__
 
     platform: str = sys.platform.lower()
     start_menu: Path
@@ -322,7 +316,6 @@ def get_start_menu_path() -> Path:
 
         start_menu = home / '.local/share/applications'
 
-    get_start_menu_path.__cached__ = start_menu
     return start_menu
 
 

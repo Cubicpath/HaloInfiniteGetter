@@ -456,7 +456,7 @@ class Singleton:
             )
 
         cls.__instance = cls._singleton_base_type.__new__(cls)  # type: ignore
-        cls.__init__(cls.__instance, *args, **kwargs)
+        cls.__init__(cls.__instance, *args, **kwargs)  # pyright: ignore[reportArgumentType]
 
     @classmethod
     def instance(cls: type[_SingletonT]) -> _SingletonT:  # Real return type is weakref.ProxyType[Singleton]
