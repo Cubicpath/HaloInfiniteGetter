@@ -10,7 +10,7 @@ py7zr == 0.20.4
     psutil; sys_platform != "cygwin"
     pybcj >= 0.6.0
     pycryptodomex >= 3.6.6
-    pyppmd >= 0.18.1, < 1.1.0
+    pyppmd >= 0.18.1, < 1.2.0
     pyzstd >= 0.14.4
     texttable
 
