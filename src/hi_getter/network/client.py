@@ -160,8 +160,7 @@ class Client(QObject):
 
         def handle_reply(response: Response):
             if not response.code or response.headers.get('Content-Type') is not None and not response.data:
-                print(response, response.get_internal_error())
-                print(f'COULDNT GET {response.url}')
+                print(f'COULDNT GET {response.url.toDisplayString()} {response.get_internal_error()}')
                 return
 
             if not response.ok:
@@ -186,7 +185,7 @@ class Client(QObject):
                     **kwargs) -> None:
         def handle_reply(response: Response):
             if not response.code or not (etag := response.headers.get('ETag', '').strip('"')):
-                print(f'COULDNT CHECK {response.url}', response.get_internal_error())
+                print(f'COULDNT CHECK {response.url.toDisplayString()} {response.get_internal_error()}')
                 return
 
             if response.code == 401 and update_auth_on_401 and self.wpauth is not None:
@@ -342,11 +341,11 @@ class Client(QObject):
                 if consumer is not None:
                     consumer(path, response_data)
 
-            self._get(path, finished=handle_reply, timeout=120)
+            self._get(path, finished=handle_reply, timeout=0)
 
         else:
             if check_etags:
-                self._check_etag(path, consumer=consumer, timeout=120)
+                self._check_etag(path, consumer=consumer, timeout=0)
 
             print(f'READING {path}')
             data: dict[str, Any] | bytes = os_path.read_bytes()
