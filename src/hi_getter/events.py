@@ -7,6 +7,8 @@ from __future__ import annotations
 __all__ = (
     'Event',
     'EventBus',
+    'EventPredicate',
+    'EventRunnable',
 )
 
 from collections import defaultdict
@@ -64,13 +66,13 @@ class Event:
 
 
 _ET = TypeVar('_ET', bound=Event)  # Bound to Event. Can use Event subclass instances in place of Event instances.
-_EventPredicate: TypeAlias = Callable[[_ET], bool]
-_EventRunnable: TypeAlias = Callable[[_ET], None]
+EventPredicate: TypeAlias = Callable[[_ET], bool]
+EventRunnable: TypeAlias = Callable[[_ET], None]
 
 
 class _Subscribers(defaultdict[type[Event], list[tuple[
-    _EventRunnable,          # Callable to run
-    _EventPredicate | None   # Optional predicate to run callable
+    EventRunnable,          # Callable to run
+    EventPredicate | None   # Optional predicate to run callable
 ]]], Generic[_ET]):
     """Class which holds the event subscribers for an :py:class:`EventBus`."""
 
@@ -87,7 +89,7 @@ class _Subscribers(defaultdict[type[Event], list[tuple[
     def add(self,
             event: type[_ET],
             callable_pair:
-            tuple[_EventRunnable, _EventPredicate | None]
+            tuple[EventRunnable, EventPredicate | None]
             ) -> None:
         """Add a callable pair to an Event subscriber list.
 
@@ -258,9 +260,9 @@ class EventBus(Generic[_ET], metaclass=_EventBusMeta):
 
     # pylint: disable=useless-param-doc
     def subscribe(self,
-                  __callable: _EventRunnable, /,
+                  __callable: EventRunnable, /,
                   event: type[_ET],
-                  event_predicate: _EventPredicate | None = None
+                  event_predicate: EventPredicate | None = None
                   ) -> None:
         """Subscribe a :py:class:`Callable` to an :py:class:`Event` type.
 
