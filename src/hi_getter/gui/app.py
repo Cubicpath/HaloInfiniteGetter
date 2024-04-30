@@ -29,7 +29,10 @@ from PySide6.QtWidgets import *
 
 from .._version import __version__
 from ..constants import *
+from ..events import Event
 from ..events import EventBus
+from ..events import EventPredicate
+from ..events import EventRunnable
 from ..lang import Translator
 from ..models import DeferredCallable
 from ..models import DistributedCallable
@@ -48,6 +51,7 @@ from ..utils import has_package
 from ..utils import hide_windows_file
 from ..utils import http_code_map
 from ..utils import icon_from_bytes
+from ..utils import return_arg
 from ..utils import set_or_swap_icon
 
 _DEFAULTS_FILE: Final[Path] = HI_RESOURCE_PATH / 'default_settings.toml'
@@ -58,6 +62,46 @@ _ButtonsWithRoles: TypeAlias = (
     Sequence[tuple[QAbstractButton, QMessageBox.ButtonRole] | QMessageBox.StandardButton] |
     QMessageBox.StandardButton
 )
+
+# list of (bus_id, func, event, event_predicate)
+_startup_events: list[tuple[str, EventRunnable, type[Event], EventPredicate | None]] = []
+
+
+def deferred_event_connection(
+        *,
+        bus_id: str,
+        event: type[Event],
+        event_predicate: EventPredicate | None = None,
+        wrapper: Callable | None = DeferredCallable
+) -> Callable[[EventRunnable], EventRunnable]:
+    """Delay an event connection until after GetterApp is initialized.
+
+    After the application has started, this function does nothing and will emit a warning.
+
+    This is NOT a wrapper function, the original decorated function is not modified in any way.
+
+    :param bus_id: EventBus ID.
+    :param event: Event class to subscribe to.
+    :param event_predicate: Optional predicate to see if the subscriber is run.
+    :param wrapper: The wrapper used when adding the function to _startup_events.
+            By default, this is a dummy DeferredCallable wrapper, used to trim the event arguments.
+    :return: A decorator function which adds the passed function to _startup_events.
+    """
+    if 'GetterApp' in globals() and GetterApp.is_instantiated():
+        return return_arg  # Do nothing
+
+    def decorator(subscriber_func: EventRunnable) -> EventRunnable:
+        # Remember original
+        _func = subscriber_func
+
+        # Wrap the function (to pass arguments through using DeferredCallable or functools.partial)
+        if wrapper:
+            subscriber_func = wrapper(subscriber_func)
+
+        _startup_events.append((bus_id, subscriber_func, event, event_predicate))
+        return _func
+
+    return decorator
 
 
 class _DialogResponse(NamedTuple):
@@ -204,6 +248,9 @@ class GetterApp(Singleton, QApplication):
     def _connect_events(self) -> None:
         """Register callables to events."""
         EventBus['settings'] = self.settings.event_bus
+        for _args in _startup_events:
+            EventBus[_args[0]].subscribe(*_args[1:4])
+
         EventBus['settings'].subscribe(
             DeferredCallable(self.load_themes),
             TomlEvents.Import)
@@ -257,6 +304,11 @@ class GetterApp(Singleton, QApplication):
             # Register the object for dynamic translation
             self._registered_translations.callables.add(translate)
 
+    @deferred_event_connection(
+        bus_id='settings',
+        event=TomlEvents.Set,
+        event_predicate=lambda e: e.key == 'gui/themes/selected'
+    )
     def update_stylesheet(self) -> None:
         """Set the application stylesheet to the one currently selected in settings."""
         try:
