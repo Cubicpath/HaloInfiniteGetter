@@ -27,7 +27,7 @@ classifiers = [
 requires-python = ">=3.10"
 dynamic = ["version", "description",]
 dependencies = [
-    "PySide6_Essentials>=6.4.2",
+    "PySide6_Essentials>=6.7.0",
     "toml>=0.10.2",
 ]
 
