@@ -5,7 +5,7 @@
 # ------------------
 
 # Mostly Whitespace-Correction
-autopep8 == 2.1.0
+autopep8 == 2.2.0
     pycodestyle >= 2.11.0
 
 # Automatically Upgrade Syntax
